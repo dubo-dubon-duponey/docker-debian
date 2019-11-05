@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
+set -o errexit -o errtrace -o functrace -o nounset -o pipefail
 
-if ! hadolint --ignore DL4006 ./*Dockerfile*; then
+if ! hadolint ./*Dockerfile*; then
   >&2 printf "Failed linting on Dockerfile\n"
   exit 1
 fi

@@ -23,7 +23,7 @@ RUN           apt-get update -qq -o Acquire::Check-Valid-Until=false \
 
 WORKDIR       /bootstrapper
 
-# hadolint ignore=SC2215
+# hadolint ignore=SC2215,DL4006
 RUN           --security=insecure set -Eeu; \
               targetarch="$(dpkg --print-architecture | awk -F- "{ print \$NF }")"; \
               export targetarch; \
