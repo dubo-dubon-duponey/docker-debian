@@ -24,7 +24,8 @@ RUN           apt-get update -o Acquire::Check-Valid-Until=false > /dev/null \
 WORKDIR       /bootstrapper
 
 # hadolint ignore=SC2215
-RUN           --security=insecure targetarch="$(dpkg --print-architecture | awk -F- "{ print \$NF }")"; \
+RUN           --security=insecure set -TEeu; \
+              targetarch="$(dpkg --print-architecture | awk -F- "{ print \$NF }")"; \
               export targetarch; \
               case "$targetarch" in \
                 amd64) \
@@ -75,8 +76,9 @@ RUN           apt-get update -o Acquire::Check-Valid-Until=false > /dev/null \
 # Building our rootfs on all platforms we support (armel, armhf, arm64, amd64)
 WORKDIR       /bootstrapper
 
-# hadolint ignore=SC2215,SC2154
-RUN           --security=insecure export targetarch=armel; \
+# hadolint ignore=SC2215
+RUN           --security=insecure set -TEeu; \
+              export targetarch=armel; \
               export targetarchpath=/rootfs/linux/arm/v6; \
               mkdir -p "$targetarchpath"; \
               debuerreotype-init --arch "$targetarch" --debian --no-merged-usr --debootstrap="qemu-debootstrap" rootfs-"$targetarch" "$DEBIAN_SUITE" "$DEBIAN_DATE"; \
@@ -85,8 +87,9 @@ RUN           --security=insecure export targetarch=armel; \
               debuerreotype-minimizing-config rootfs-"$targetarch"; \
               debuerreotype-slimify rootfs-"$targetarch"
 
-# hadolint ignore=SC2215,SC2154
-RUN           --security=insecure export targetarch=armhf; \
+# hadolint ignore=SC2215
+RUN           --security=insecure set -TEeu; \
+              export targetarch=armhf; \
               export targetarchpath=/rootfs/linux/arm/v7; \
               mkdir -p "$targetarchpath"; \
               debuerreotype-init --arch "$targetarch" --debian --no-merged-usr --debootstrap="qemu-debootstrap" rootfs-"$targetarch" "$DEBIAN_SUITE" "$DEBIAN_DATE"; \
@@ -95,8 +98,9 @@ RUN           --security=insecure export targetarch=armhf; \
               debuerreotype-minimizing-config rootfs-"$targetarch"; \
               debuerreotype-slimify rootfs-"$targetarch"
 
-# hadolint ignore=SC2215,SC2154
-RUN           --security=insecure export targetarch=arm64; \
+# hadolint ignore=SC2215
+RUN           --security=insecure set -TEeu; \
+              export targetarch=arm64; \
               export targetarchpath=/rootfs/linux/arm64; \
               mkdir -p "$targetarchpath"; \
               debuerreotype-init --arch "$targetarch" --debian --no-merged-usr --debootstrap="qemu-debootstrap" rootfs-"$targetarch" "$DEBIAN_SUITE" "$DEBIAN_DATE"; \
@@ -105,8 +109,9 @@ RUN           --security=insecure export targetarch=arm64; \
               debuerreotype-minimizing-config rootfs-"$targetarch"; \
               debuerreotype-slimify rootfs-"$targetarch"
 
-# hadolint ignore=SC2215,SC2154
-RUN           --security=insecure targetarch=amd64; \
+# hadolint ignore=SC2215
+RUN           --security=insecure set -TEeu; \
+              targetarch=amd64; \
               export targetarchpath=/rootfs/linux/amd64; \
               mkdir -p "$targetarchpath"; \
               debuerreotype-init --arch "$targetarch" --debian --no-merged-usr --debootstrap="qemu-debootstrap" rootfs-"$targetarch" "$DEBIAN_SUITE" "$DEBIAN_DATE"; \
