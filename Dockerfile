@@ -16,8 +16,8 @@ ARG           DEBIAN_DATE=2019-11-01T00:00:00Z
 ARG           DEBIAN_SUITE=buster
 
 # Get debuerreotype and debootstrtap in
-RUN           apt-get update -o Acquire::Check-Valid-Until=false > /dev/null \
-              && apt-get install --no-install-recommends -y \
+RUN           apt-get update -qq -o Acquire::Check-Valid-Until=false \
+              && apt-get install --no-install-recommends -qq \
                 debuerreotype=0.9-1 \
                 debootstrap=1.0.114
 
@@ -67,8 +67,8 @@ ADD           rootfs/$BUILDPLATFORM/debootstrap.tar /
 
 # Installing qemu and debue/deboot
 # hadolint ignore=DL3009
-RUN           apt-get update -o Acquire::Check-Valid-Until=false > /dev/null \
-              && apt-get install --no-install-recommends -y  \
+RUN           apt-get update -qq -o Acquire::Check-Valid-Until=false \
+              && apt-get install --no-install-recommends -qq  \
                 debuerreotype=0.9-1 \
                 debootstrap=1.0.114 \
                 qemu-user-static=1:3.1+dfsg-8+deb10u2
