@@ -114,7 +114,7 @@ if [ ! -f rootfs/"$HOST_PLATFORM"/debootstrap.sha ]; then
   >&2 printf "No basic rootfs detected. We need to bootstrap from an existing debian image from the Hub."
   build::bootstrap::rebootstrap "$DEBIAN_SUITE" "$HOST_PLATFORM"
 fi
-exit
+
 if [ ! -f rootfs/"${DEBIAN_SUITE}-${DEBIAN_DATE}".sha ]; then
   >&2 printf "Building %s rootfs for the requested target (%s)." "$DEBIAN_SUITE" "$DEBIAN_DATE"
   build::bootstrap::debootstrap "$DEBIAN_SUITE" "$DEBIAN_DATE"
