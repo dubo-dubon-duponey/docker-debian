@@ -56,14 +56,17 @@ build::bootstrap::setup(){
 }
 
 build::bootstrap::rebootstrap(){
-  local suite="$1"
+  local rebootstrap_from="$1"
+  local suite="$2"
+
   docker buildx build -f Dockerfile --target rebootstrap \
     --allow security.insecure \
-    --build-arg "DEBIAN_REBOOTSTRAP=$DEBIAN_REBOOTSTRAP" \
+    --build-arg "DEBIAN_REBOOTSTRAP=$rebootstrap_from" \
     --build-arg "DEBIAN_SUITE=$suite" \
     --tag local/dubodubonduponey/rebootstrap \
     --output type=docker \
     .
+
   docker rm -f bootstrap 2>/dev/null || true
   export DOCKER_CONTENT_TRUST=0
   docker run --name bootstrap local/dubodubonduponey/rebootstrap true
@@ -73,14 +76,17 @@ build::bootstrap::rebootstrap(){
 }
 
 build::bootstrap::debootstrap(){
-  local suite="$1"
-  local requested_date="$2"
+  local requested_date="$1"
+  local suite="$2"
+
   docker buildx build -f Dockerfile --target debootstrap \
     --allow security.insecure \
     --build-arg "DEBIAN_DATE=$requested_date" \
+    --build-arg "DEBIAN_SUITE=$suite" \
     --tag local/dubodubonduponey/debootstrap/"${requested_date%%T*}" \
     --output type=docker \
     .
+
   docker rm -f bootstrap 2>/dev/null || true
   export DOCKER_CONTENT_TRUST=0
   docker run --name bootstrap local/dubodubonduponey/debootstrap/"${requested_date%%T*}" true
@@ -100,7 +106,7 @@ build::debian(){
 
   docker buildx build -f Dockerfile --target debian \
     --build-arg "DEBIAN_DATE=$requested_date" \
-    --tag docker.io/dubodubonduponey/debian:"${requested_date%%T*}" \
+    --tag "$IMAGE_NAME:${requested_date%%T*}" \
     --platform "$platforms" \
     --output type=registry \
     .
@@ -112,12 +118,12 @@ build::bootstrap::setup
 
 if [ ! -f rootfs/"$HOST_PLATFORM"/debootstrap.sha ]; then
   >&2 printf "No basic rootfs detected. We need to bootstrap from an existing debian image from the Hub."
-  build::bootstrap::rebootstrap "$DEBIAN_SUITE" "$HOST_PLATFORM"
+  build::bootstrap::rebootstrap "$DEBIAN_REBOOTSTRAP" "$DEBIAN_SUITE"
 fi
 
 if [ ! -f rootfs/"${DEBIAN_SUITE}-${DEBIAN_DATE}".sha ]; then
   >&2 printf "Building %s rootfs for the requested target (%s)." "$DEBIAN_SUITE" "$DEBIAN_DATE"
-  build::bootstrap::debootstrap "$DEBIAN_SUITE" "$DEBIAN_DATE"
+  build::bootstrap::debootstrap "$DEBIAN_DATE" "$DEBIAN_SUITE"
 fi
 
 build::debian::setup
