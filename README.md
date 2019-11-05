@@ -31,6 +31,30 @@ Whatever this image is, the resulting sha should always be the same.
 
 Once you have the first rootfs from above for your host platform (debootstrap.tar), you can now generate the final rootfs for all desired platforms.
 
-They will be stored undeer 
-What about the debootstrap.tar file?
+They will be stored under the rootfs folder.
 
+Their sha should NEVER vary (unless you change the requested date).
+
+### Stage-3 Debian multi-arch image
+
+The final stage is as simple as:
+
+```
+FROM          scratch                                                                                                   AS debian
+
+ARG           DEBIAN_DATE=2019-11-01T00:00:00Z
+ARG           DEBIAN_SUITE=buster
+ARG           TARGETPLATFORM
+
+ADD           ./rootfs/$TARGETPLATFORM/"${DEBIAN_SUITE}-${DEBIAN_DATE}".tar /
+```
+
+And will produce Debian images with a consistent sha.
+
+Please note that apt sources list is left pointing at snapshot.debian.org for the requested date.
+
+What this means is that your image will NOT receive updates of any kind from apt in the future.
+It is pinned at a specific point in the past that you decide on at build time.
+If you want updates, it is expected that you rebuild the image later on with a more recent date.
+
+Of course you may change this by editing the sources.list file to point to the live Debian archive.
