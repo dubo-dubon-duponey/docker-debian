@@ -24,7 +24,7 @@ RUN           apt-get update -qq -o Acquire::Check-Valid-Until=false \
 WORKDIR       /bootstrapper
 
 # hadolint ignore=SC2215,DL4006
-RUN           --security=insecure set -Eeu; \
+RUN           --security=insecure set -eu; \
               targetarch="$(dpkg --print-architecture | awk -F- "{ print \$NF }")"; \
               export targetarch; \
               case "$targetarch" in \
@@ -77,7 +77,7 @@ RUN           apt-get update -qq -o Acquire::Check-Valid-Until=false \
 WORKDIR       /bootstrapper
 
 # hadolint ignore=SC2215
-RUN           --security=insecure set -Eeu; \
+RUN           --security=insecure set -eu; \
               export targetarch=armel; \
               export targetarchpath=/rootfs/linux/arm/v6; \
               mkdir -p "$targetarchpath"; \
@@ -88,7 +88,7 @@ RUN           --security=insecure set -Eeu; \
               debuerreotype-slimify rootfs-"$targetarch"
 
 # hadolint ignore=SC2215
-RUN           --security=insecure set -Eeu; \
+RUN           --security=insecure set -eu; \
               export targetarch=armhf; \
               export targetarchpath=/rootfs/linux/arm/v7; \
               mkdir -p "$targetarchpath"; \
@@ -99,7 +99,7 @@ RUN           --security=insecure set -Eeu; \
               debuerreotype-slimify rootfs-"$targetarch"
 
 # hadolint ignore=SC2215
-RUN           --security=insecure set -Eeu; \
+RUN           --security=insecure set -eu; \
               export targetarch=arm64; \
               export targetarchpath=/rootfs/linux/arm64; \
               mkdir -p "$targetarchpath"; \
@@ -110,7 +110,7 @@ RUN           --security=insecure set -Eeu; \
               debuerreotype-slimify rootfs-"$targetarch"
 
 # hadolint ignore=SC2215
-RUN           --security=insecure set -Eeu; \
+RUN           --security=insecure set -eu; \
               targetarch=amd64; \
               export targetarchpath=/rootfs/linux/amd64; \
               mkdir -p "$targetarchpath"; \
