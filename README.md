@@ -4,7 +4,7 @@ Build your own, reproducible Debian Buster base images from scratch, depending o
 
 ## TL;DR
 
-```
+```bash
 DEBIAN_DATE=2019-11-01T00:00:00Z
 IMAGE_NAME=yourregistry/you/debian
 PLATFORMS="linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v6"
@@ -39,7 +39,7 @@ Their sha should NEVER vary (unless you change the requested date).
 
 The final stage is as simple as:
 
-```
+```bash
 FROM          scratch                                                                                                   AS debian
 
 ARG           DEBIAN_DATE=2019-11-01T00:00:00Z
