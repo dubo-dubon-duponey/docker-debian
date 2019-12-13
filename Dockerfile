@@ -1,5 +1,10 @@
 # syntax = docker/dockerfile@sha256:888f21826273409b5ef5ff9ceb90c64a8f8ec7760da30d1ffbe6c3e2d323a7bd
 ARG           DEBIAN_REBOOTSTRAP=docker.io/dubodubonduponey/debian@sha256:68e9b2b386453c99bc3aeca7bdc448243dfe819aaa0a14dd65a0d5fdd0a66276
+########################################################################################################################
+# Prepare a rootfs that we will use as a builder base later on
+# The only purpose of this is to make sure we have a local debian artifact so that we do not depend on anything online
+# We do use the advanced buildx dockerfile syntax ^^^
+########################################################################################################################
 # hadolint ignore=DL3006
 FROM          $DEBIAN_REBOOTSTRAP                                                                                       AS rebootstrap
 # Notes:
@@ -23,22 +28,22 @@ RUN           apt-get update -qq -o Acquire::Check-Valid-Until=false \
 
 WORKDIR       /bootstrapper
 
+# debuerreotype makes --security mandatory since they use chroot
 # hadolint ignore=SC2215,DL4006
 RUN           --security=insecure set -eu; \
               targetarch="$(dpkg --print-architecture | awk -F- "{ print \$NF }")"; \
-              export targetarch; \
               case "$targetarch" in \
                 amd64) \
-                  export targetarchpath=/rootfs/linux/amd64; \
+                  targetarchpath=/rootfs/linux/amd64; \
                 ;; \
                 arm64) \
-                  export targetarchpath=/rootfs/linux/arm64; \
+                  targetarchpath=/rootfs/linux/arm64; \
                 ;; \
                 armhf) \
-                  export targetarchpath=/rootfs/linux/arm/v7; \
+                  targetarchpath=/rootfs/linux/arm/v7; \
                 ;; \
                 armel) \
-                  export targetarchpath=/rootfs/linux/arm/v6; \
+                  targetarchpath=/rootfs/linux/arm/v6; \
                 ;; \
                 *) \
                   >&2 printf "Unsupported architecture %s" "$targetarch" \
@@ -52,11 +57,13 @@ RUN           --security=insecure set -eu; \
               debuerreotype-tar rootfs-"$targetarch" "${targetarchpath}"/debootstrap.tar; \
               sha512sum "${targetarchpath}"/debootstrap.tar > "${targetarchpath}"/debootstrap.sha
 
-# This is the actual image that will produce our final rootfs - booting off the initial rootfs obtained from above
+########################################################################################################################
+# This is the image that will produce our final rootfs - booting off the initial rootfs obtained from above
+########################################################################################################################
 FROM          --platform=$BUILDPLATFORM scratch                                                                         AS debootstrap
 
 # What we target
-ARG           DEBIAN_DATE=2019-11-01T00:00:00Z
+ARG           DEBIAN_DATE=2019-12-01T00:00:00Z
 ARG           DEBIAN_SUITE=buster
 
 # The platform we are on
@@ -78,8 +85,8 @@ WORKDIR       /bootstrapper
 
 # hadolint ignore=SC2215
 RUN           --security=insecure set -eu; \
-              export targetarch=armel; \
-              export targetarchpath=/rootfs/linux/arm/v6; \
+              targetarch=armel; \
+              targetarchpath=/rootfs/linux/arm/v6; \
               mkdir -p "$targetarchpath"; \
               debuerreotype-init --arch "$targetarch" --debian --no-merged-usr --debootstrap="qemu-debootstrap" rootfs-"$targetarch" "$DEBIAN_SUITE" "$DEBIAN_DATE"; \
               debuerreotype-apt-get rootfs-"$targetarch" update -qq; \
@@ -89,8 +96,8 @@ RUN           --security=insecure set -eu; \
 
 # hadolint ignore=SC2215
 RUN           --security=insecure set -eu; \
-              export targetarch=armhf; \
-              export targetarchpath=/rootfs/linux/arm/v7; \
+              targetarch=armhf; \
+              targetarchpath=/rootfs/linux/arm/v7; \
               mkdir -p "$targetarchpath"; \
               debuerreotype-init --arch "$targetarch" --debian --no-merged-usr --debootstrap="qemu-debootstrap" rootfs-"$targetarch" "$DEBIAN_SUITE" "$DEBIAN_DATE"; \
               debuerreotype-apt-get rootfs-"$targetarch" update -qq; \
@@ -100,8 +107,8 @@ RUN           --security=insecure set -eu; \
 
 # hadolint ignore=SC2215
 RUN           --security=insecure set -eu; \
-              export targetarch=arm64; \
-              export targetarchpath=/rootfs/linux/arm64; \
+              targetarch=arm64; \
+              targetarchpath=/rootfs/linux/arm64; \
               mkdir -p "$targetarchpath"; \
               debuerreotype-init --arch "$targetarch" --debian --no-merged-usr --debootstrap="qemu-debootstrap" rootfs-"$targetarch" "$DEBIAN_SUITE" "$DEBIAN_DATE"; \
               debuerreotype-apt-get rootfs-"$targetarch" update -qq; \
@@ -112,7 +119,7 @@ RUN           --security=insecure set -eu; \
 # hadolint ignore=SC2215
 RUN           --security=insecure set -eu; \
               targetarch=amd64; \
-              export targetarchpath=/rootfs/linux/amd64; \
+              targetarchpath=/rootfs/linux/amd64; \
               mkdir -p "$targetarchpath"; \
               debuerreotype-init --arch "$targetarch" --debian --no-merged-usr --debootstrap="qemu-debootstrap" rootfs-"$targetarch" "$DEBIAN_SUITE" "$DEBIAN_DATE"; \
               debuerreotype-apt-get rootfs-"$targetarch" update -qq; \
@@ -127,10 +134,12 @@ RUN           debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-arm64
 RUN           debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-amd64 /rootfs/linux/amd64/"${DEBIAN_SUITE}-${DEBIAN_DATE}".tar
 RUN           sha512sum /rootfs/linux/*/*.tar /rootfs/linux/*/*/*.tar > /rootfs/"${DEBIAN_SUITE}-${DEBIAN_DATE}".sha
 
-# The final, multi-arch, Debian Buster image
+########################################################################################################################
+# Our final, multi-arch, Debian Buster image, using the rootfs generated in the step above
+########################################################################################################################
 FROM          scratch                                                                                                   AS debian
 
-ARG           DEBIAN_DATE=2019-11-01T00:00:00Z
+ARG           DEBIAN_DATE=2019-12-01T00:00:00Z
 ARG           DEBIAN_SUITE=buster
 ARG           TARGETPLATFORM
 

@@ -3,7 +3,7 @@ set -o errexit -o errtrace -o functrace -o nounset -o pipefail
 
 # The suite and snapshot "date" from which you want to build your Debian buster image.
 DEBIAN_SUITE=${DEBIAN_SUITE:-buster}
-DEBIAN_DATE=${DEBIAN_DATE:-2019-11-01T00:00:00Z}
+DEBIAN_DATE=${DEBIAN_DATE:-2019-12-01T00:00:00Z}
 
 # The destination/name to use when pushing your Debian image, and the platforms you target
 IMAGE_NAME="${IMAGE_NAME:-docker.io/dubodubonduponey/debian}"
@@ -28,6 +28,9 @@ if command -v dpkg; then
     ;;
     arm64)
       HOST_PLATFORM=linux/arm64
+    ;;
+    amd64)
+      HOST_PLATFORM=linux/amd64
     ;;
     *)
       >&2 printf "Unsupported architecture %s" "$HOST_PLATFORM"
