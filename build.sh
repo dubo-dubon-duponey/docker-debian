@@ -33,7 +33,7 @@ if command -v dpkg; then
       HOST_PLATFORM=linux/amd64
     ;;
     *)
-      >&2 printf "Unsupported architecture %s" "$HOST_PLATFORM"
+      >&2 printf "Unsupported architecture %s\n" "$HOST_PLATFORM"
     ;;
   esac
 fi
@@ -123,8 +123,8 @@ build::getsha(){
   local digest
 
   owner=${owner##*/}
-  token=$(curl "https://auth.docker.io/token?service=registry.docker.io&scope=repository%3A${owner}%2F${short_name}%3Apull"  -v -L -s -H 'Authorization: ' 2>/dev/null | grep '^{' | jq -rc .token)
-  digest=$(curl https://registry-1.docker.io/v2/${owner}/${short_name}/manifests/${DEBIAN_DATE%%T*} -L -s -I -H "Authorization: Bearer ${token}" -H "Accept: application/vnd.docker.distribution.manifest.v2+json"  -H "Accept: application/vnd.docker.distribution.manifest.list.v2+json" | grep Docker-Content-Digest)
+  token=$(curl https://auth.docker.io/token?service=registry.docker.io\&scope=repository%3A"${owner}"%2F"${short_name}"%3Apull  -v -L -s -H 'Authorization: ' 2>/dev/null | grep '^{' | jq -rc .token)
+  digest=$(curl https://registry-1.docker.io/v2/"${owner}"/"${short_name}"/manifests/"${DEBIAN_DATE%%T*}" -L -s -I -H "Authorization: Bearer ${token}" -H "Accept: application/vnd.docker.distribution.manifest.v2+json"  -H "Accept: application/vnd.docker.distribution.manifest.list.v2+json" | grep Docker-Content-Digest)
   printf "%s\n" "${digest#*: }"
 }
 
@@ -133,12 +133,12 @@ docker::version_check
 build::bootstrap::setup
 
 if [ ! -f rootfs/"$HOST_PLATFORM"/debootstrap.sha ]; then
-  >&2 printf "No basic rootfs detected. We need to bootstrap from an existing debian image from the Hub."
+  >&2 printf "No basic rootfs detected. We need to bootstrap from an existing debian image from the Hub.\n"
   build::bootstrap::rebootstrap "$DEBIAN_REBOOTSTRAP" "$DEBIAN_SUITE"
 fi
 
 if [ ! -f rootfs/"${DEBIAN_SUITE}-${DEBIAN_DATE}".sha ]; then
-  >&2 printf "Building %s rootfs for the requested target (%s)." "$DEBIAN_SUITE" "$DEBIAN_DATE"
+  >&2 printf "Building %s rootfs for the requested target (%s).\n" "$DEBIAN_SUITE" "$DEBIAN_DATE"
   build::bootstrap::debootstrap "$DEBIAN_DATE" "$DEBIAN_SUITE"
 fi
 
