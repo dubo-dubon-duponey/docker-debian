@@ -1,14 +1,30 @@
 # Roll your own Debian
 
-Build your own, reproducible Debian Buster base images from scratch, depending only on `snapshot.debian.org`.
+Build your own Debian Buster images from scratch.
+
+Features:
+ * [x] reproducible builds
+ * [x] no "base" image dependency
+ * [x] not tied to a specific registry (eg: Docker Hub)
+ * [x] depends only on the availability of `snapshot.debian.org`
+ * [x] slim: ~25MB
+ * [x] multi-architecture
+     * [x] amd64
+     * [x] arm64
+     * [x] arm/v7
+     * [x] arm/v6
 
 ## TL;DR
 
 ```bash
-DEBIAN_DATE=2019-11-01T00:00:00Z
+# What you want
+DEBIAN_DATE=2019-11-01
+# "Where" to push it
 IMAGE_NAME=yourregistry/you/debian
+# Platforms you are interested in
 PLATFORMS="linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v6"
-./build.sh 
+
+./build.sh
 ```
 
 ## How does this work in detail?
