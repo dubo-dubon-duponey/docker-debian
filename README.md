@@ -23,9 +23,9 @@ We do provide one already for amd64 (`rootfs/linux/platform/debootstrap.tar`), b
 In order to generate this first rootfs, you do need an existing Debian Buster image.
 You may use Docker official image, our own Debian image (default), or any other base Debian image.
 
-To specify which image you want to use, set `DEBIAN_REBOOTSTRAP` before calling `./build.sh`.
+To specify which image you want to use, set `DEBIAN_REBOOTSTRAP` (for example: `DEBIAN_REBOOTSTRAP=debian:buster-slim`) before calling `./build.sh`.
 
-Whatever this image is, the resulting sha should always be the same.
+Whatever this "bootstrapping" image is, the resulting sha should always be the same.
 
 ### Stage-2
 
@@ -51,10 +51,10 @@ ADD           ./rootfs/$TARGETPLATFORM/"${DEBIAN_SUITE}-${DEBIAN_DATE}".tar /
 
 And will produce Debian images with a consistent sha.
 
-Please note that apt sources list is left pointing at snapshot.debian.org for the requested date.
+Please note that apt sources list is left pointing at `snapshot.debian.org` for the requested date.
 
 What this means is that your image will NOT receive updates of any kind from apt in the future.
 It is pinned at a specific point in the past that you decide on at build time.
 If you want updates, it is expected that you rebuild the image later on with a more recent date.
 
-Of course you may change this by editing the sources.list file to point to the live Debian archive.
+Of course you may change this by editing the `sources.list` file to point to the live Debian archive.
