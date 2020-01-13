@@ -18,7 +18,7 @@ Features:
 
 ```bash
 # What you want
-DEBIAN_DATE=2019-11-01
+DEBIAN_DATE=2020-01-01
 # "Where" to push it
 IMAGE_NAME=yourregistry/you/debian
 # Platforms you are interested in
@@ -58,7 +58,7 @@ The final stage is as simple as:
 ```bash
 FROM          scratch                                                                                                   AS debian
 
-ARG           DEBIAN_DATE=2019-11-01T00:00:00Z
+ARG           DEBIAN_DATE=2020-01-01T00:00:00Z
 ARG           DEBIAN_SUITE=buster
 ARG           TARGETPLATFORM
 

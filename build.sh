@@ -3,7 +3,7 @@ set -o errexit -o errtrace -o functrace -o nounset -o pipefail
 
 # The suite and snapshot "date" from which you want to build your Debian buster image.
 DEBIAN_SUITE=${DEBIAN_SUITE:-buster}
-DEBIAN_DATE=${DEBIAN_DATE:-2019-12-01}T00:00:00Z
+DEBIAN_DATE=${DEBIAN_DATE:-2020-01-01}T00:00:00Z
 
 # The destination/name to use when pushing your Debian image, and the platforms you target
 IMAGE_NAME="${IMAGE_NAME:-docker.io/dubodubonduponey/debian}"
@@ -12,8 +12,8 @@ PLATFORMS="${PLATFORMS:-linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v6}"
 # In case we are starting from scratch (eg: no rootfs tarball for your platform), the docker image to start from
 # - this one is the official Docker Hub Debian image
 # export DEBIAN_REBOOTSTRAP="docker.io/library/debian@sha256:11253793361a12861562d1d7b15b8b7e25ac30dd631e3d206ed1ca969bf97b7d"
-# - this one is our debootstrapped Debian image 2019-10-14
-export DEBIAN_REBOOTSTRAP=${DEBIAN_REBOOTSTRAP:-"docker.io/dubodubonduponey/debian@sha256:68e9b2b386453c99bc3aeca7bdc448243dfe819aaa0a14dd65a0d5fdd0a66276"}
+# - this one is our debootstrapped Debian image 2020-01-01
+export DEBIAN_REBOOTSTRAP=${DEBIAN_REBOOTSTRAP:-"docker.io/dubodubonduponey/debian@sha256:d78720282615fd0edbe6628058c084752e3690a7e1b0ef00b2290b74e0fff378"}
 
 # The machine host platform on which you are building (docker syntax)
 HOST_PLATFORM=linux/amd64

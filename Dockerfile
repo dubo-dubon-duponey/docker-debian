@@ -12,12 +12,12 @@ FROM          $DEBIAN_REBOOTSTRAP                                               
 # 2. DEBIAN_REBOOTSTRAP is the Debian base image you need to start from in order to build a first rootfs (saved in rootfs/linux/*arch*/debootrstrap.tar)
 # This rootfs is then going to be used as a base to produce all rootfs for your debian images.
 # You may use a Docker maintained Debian Buster image (library/debian:buster-slim for example).
-# Or our image (this is the default, and was built using debootstrap against Buster 2019-10-14T00:00:00Z)
+# Or our image (this is the default, and was built using debootstrap against Buster 2020-01-01T00:00:00Z)
 # You may of course (recommended), use your own debootstrapped Buster image instead.
 # All three methods will produce the same resulting rootfs.
 
 # Targetting:
-ARG           DEBIAN_DATE=2019-11-01T00:00:00Z
+ARG           DEBIAN_DATE=2020-01-01T00:00:00Z
 ARG           DEBIAN_SUITE=buster
 
 # Get debuerreotype and debootstrtap in
@@ -63,7 +63,7 @@ RUN           --security=insecure set -eu; \
 FROM          --platform=$BUILDPLATFORM scratch                                                                         AS debootstrap
 
 # What we target
-ARG           DEBIAN_DATE=2019-12-01T00:00:00Z
+ARG           DEBIAN_DATE=2020-01-01T00:00:00Z
 ARG           DEBIAN_SUITE=buster
 
 # The platform we are on
@@ -139,7 +139,7 @@ RUN           sha512sum /rootfs/linux/*/*.tar /rootfs/linux/*/*/*.tar > /rootfs/
 ########################################################################################################################
 FROM          scratch                                                                                                   AS debian
 
-ARG           DEBIAN_DATE=2019-12-01T00:00:00Z
+ARG           DEBIAN_DATE=2020-01-01T00:00:00Z
 ARG           DEBIAN_SUITE=buster
 ARG           TARGETPLATFORM
 
