@@ -3,7 +3,7 @@ set -o errexit -o errtrace -o functrace -o nounset -o pipefail
 
 # The suite and snapshot "date" from which you want to build your Debian buster image.
 DEBIAN_SUITE=${DEBIAN_SUITE:-buster}
-DEBIAN_DATE=${DEBIAN_DATE:-2020-01-01}T00:00:00Z
+DEBIAN_DATE=${DEBIAN_DATE:-2020-01-15}T00:00:00Z
 
 # The destination/name to use when pushing your Debian image, and the platforms you target
 IMAGE_NAME="${IMAGE_NAME:-docker.io/dubodubonduponey/debian}"
