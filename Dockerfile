@@ -99,6 +99,7 @@ RUN           mkdir -p "/rootfs/linux/arm/v6"; \
               mkdir -p "/rootfs/linux/arm64"; \
               mkdir -p "/rootfs/linux/amd64"
 
+# hadolint ignore=SC2215
 RUN           --security=insecure set -eu; \
               debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-armel "/rootfs/linux/arm/v6/${DEBIAN_SUITE}-${DEBIAN_DATE}".tar; \
               debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-armhf "/rootfs/linux/arm/v7/${DEBIAN_SUITE}-${DEBIAN_DATE}".tar; \
