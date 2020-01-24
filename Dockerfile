@@ -20,7 +20,7 @@ FROM          $DEBIAN_REBOOTSTRAP                                               
 ARG           DEBIAN_DATE=2020-01-01T00:00:00Z
 ARG           DEBIAN_SUITE=buster
 
-# Get debuerreotype and debootstrtap in
+# Get debuerreotype and debootstrap in
 RUN           apt-get update -qq -o Acquire::Check-Valid-Until=false \
               && apt-get install -qq --no-install-recommends \
                 debuerreotype=0.9-1 \
@@ -85,53 +85,26 @@ WORKDIR       /bootstrapper
 
 # hadolint ignore=SC2215
 RUN           --security=insecure set -eu; \
-              targetarch=armel; \
-              targetarchpath=/rootfs/linux/arm/v6; \
-              mkdir -p "$targetarchpath"; \
-              debuerreotype-init --arch "$targetarch" --debian --no-merged-usr --debootstrap="qemu-debootstrap" rootfs-"$targetarch" "$DEBIAN_SUITE" "$DEBIAN_DATE"; \
-              debuerreotype-apt-get rootfs-"$targetarch" update -qq; \
-              debuerreotype-apt-get rootfs-"$targetarch" dist-upgrade -yqq; \
-              debuerreotype-minimizing-config rootfs-"$targetarch"; \
-              debuerreotype-slimify rootfs-"$targetarch"
-
-# hadolint ignore=SC2215
-RUN           --security=insecure set -eu; \
-              targetarch=armhf; \
-              targetarchpath=/rootfs/linux/arm/v7; \
-              mkdir -p "$targetarchpath"; \
-              debuerreotype-init --arch "$targetarch" --debian --no-merged-usr --debootstrap="qemu-debootstrap" rootfs-"$targetarch" "$DEBIAN_SUITE" "$DEBIAN_DATE"; \
-              debuerreotype-apt-get rootfs-"$targetarch" update -qq; \
-              debuerreotype-apt-get rootfs-"$targetarch" dist-upgrade -yqq; \
-              debuerreotype-minimizing-config rootfs-"$targetarch"; \
-              debuerreotype-slimify rootfs-"$targetarch"
-
-# hadolint ignore=SC2215
-RUN           --security=insecure set -eu; \
-              targetarch=arm64; \
-              targetarchpath=/rootfs/linux/arm64; \
-              mkdir -p "$targetarchpath"; \
-              debuerreotype-init --arch "$targetarch" --debian --no-merged-usr --debootstrap="qemu-debootstrap" rootfs-"$targetarch" "$DEBIAN_SUITE" "$DEBIAN_DATE"; \
-              debuerreotype-apt-get rootfs-"$targetarch" update -qq; \
-              debuerreotype-apt-get rootfs-"$targetarch" dist-upgrade -yqq; \
-              debuerreotype-minimizing-config rootfs-"$targetarch"; \
-              debuerreotype-slimify rootfs-"$targetarch"
-
-# hadolint ignore=SC2215
-RUN           --security=insecure set -eu; \
-              targetarch=amd64; \
-              targetarchpath=/rootfs/linux/amd64; \
-              mkdir -p "$targetarchpath"; \
-              debuerreotype-init --arch "$targetarch" --debian --no-merged-usr --debootstrap="qemu-debootstrap" rootfs-"$targetarch" "$DEBIAN_SUITE" "$DEBIAN_DATE"; \
-              debuerreotype-apt-get rootfs-"$targetarch" update -qq; \
-              debuerreotype-apt-get rootfs-"$targetarch" dist-upgrade -yqq; \
-              debuerreotype-minimizing-config rootfs-"$targetarch"; \
-              debuerreotype-slimify rootfs-"$targetarch"
+              for targetarch in armel armhf arm64 amd64; do \
+                debuerreotype-init --arch "$targetarch" --debian --no-merged-usr --debootstrap="qemu-debootstrap" rootfs-"$targetarch" "$DEBIAN_SUITE" "$DEBIAN_DATE"; \
+                debuerreotype-apt-get rootfs-"$targetarch" update -qq; \
+                debuerreotype-apt-get rootfs-"$targetarch" dist-upgrade -yqq; \
+                debuerreotype-minimizing-config rootfs-"$targetarch"; \
+                debuerreotype-slimify rootfs-"$targetarch"; \
+              done
 
 # Generate tarballs, sha, exit
-RUN           debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-armel /rootfs/linux/arm/v6/"${DEBIAN_SUITE}-${DEBIAN_DATE}".tar
-RUN           debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-armhf /rootfs/linux/arm/v7/"${DEBIAN_SUITE}-${DEBIAN_DATE}".tar
-RUN           debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-arm64 /rootfs/linux/arm64/"${DEBIAN_SUITE}-${DEBIAN_DATE}".tar
-RUN           debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-amd64 /rootfs/linux/amd64/"${DEBIAN_SUITE}-${DEBIAN_DATE}".tar
+RUN           mkdir -p "/rootfs/linux/arm/v6"; \
+              mkdir -p "/rootfs/linux/arm/v7"; \
+              mkdir -p "/rootfs/linux/arm64"; \
+              mkdir -p "/rootfs/linux/amd64"
+
+RUN           --security=insecure set -eu; \
+              debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-armel "/rootfs/linux/arm/v6/${DEBIAN_SUITE}-${DEBIAN_DATE}".tar; \
+              debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-armhf "/rootfs/linux/arm/v7/${DEBIAN_SUITE}-${DEBIAN_DATE}".tar; \
+              debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-arm64 "/rootfs/linux/arm64/${DEBIAN_SUITE}-${DEBIAN_DATE}".tar; \
+              debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-amd64 "/rootfs/linux/amd64/${DEBIAN_SUITE}-${DEBIAN_DATE}".tar
+
 RUN           sha512sum /rootfs/linux/*/*.tar /rootfs/linux/*/*/*.tar > /rootfs/"${DEBIAN_SUITE}-${DEBIAN_DATE}".sha
 
 ########################################################################################################################
