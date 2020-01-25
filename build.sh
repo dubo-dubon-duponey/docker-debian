@@ -134,12 +134,12 @@ docker::version_check
 
 build::bootstrap::setup
 
-if [ ! -f "$root"/rootfs/"$HOST_PLATFORM"/debootstrap.sha ]; then
+if [ ! -f "$root/rootfs/$HOST_PLATFORM/debootstrap.sha" ]; then
   >&2 printf "No basic rootfs detected. We need to bootstrap from an existing debian image from the Hub.\n"
   build::bootstrap::rebootstrap "$DEBIAN_REBOOTSTRAP" "$DEBIAN_SUITE"
 fi
 
-if [ ! -f "$root"/rootfs/"${DEBIAN_SUITE}-${DEBIAN_DATE}".sha ]; then
+if [ ! -f "$root/rootfs/${DEBIAN_SUITE}-${DEBIAN_DATE}.sha" ]; then
   >&2 printf "Building %s rootfs for the requested target (%s).\n" "$DEBIAN_SUITE" "$DEBIAN_DATE"
   build::bootstrap::debootstrap "$DEBIAN_DATE" "$DEBIAN_SUITE"
 fi
