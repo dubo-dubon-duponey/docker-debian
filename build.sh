@@ -15,6 +15,8 @@ PLATFORMS="${PLATFORMS:-linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v6}"
 # - this one is our debootstrapped Debian image 2020-01-01
 export DEBIAN_REBOOTSTRAP=${DEBIAN_REBOOTSTRAP:-"docker.io/dubodubonduponey/debian@sha256:d78720282615fd0edbe6628058c084752e3690a7e1b0ef00b2290b74e0fff378"}
 
+root="$(cd "$(dirname "${BASH_SOURCE[0]:-$PWD}")" 2>/dev/null 1>&2 && pwd)"
+
 # The machine host platform on which you are building (docker syntax)
 HOST_PLATFORM=linux/amd64
 if command -v dpkg; then
@@ -54,7 +56,7 @@ docker::version_check(){
 }
 
 build::bootstrap::setup(){
-  docker buildx create --node "dubo-dubon-duponey-debootstrap-0" --name "dubo-dubon-duponey-debootstrap" --buildkitd-flags "--allow-insecure-entitlement=security.insecure"
+  docker buildx create --node "dubo-dubon-duponey-debootstrap-0" --name "dubo-dubon-duponey-debootstrap" --buildkitd-flags "--allow-insecure-entitlement=security.insecure" > /dev/null
   docker buildx use "dubo-dubon-duponey-debootstrap"
 }
 
@@ -62,19 +64,19 @@ build::bootstrap::rebootstrap(){
   local rebootstrap_from="$1"
   local suite="$2"
 
-  docker buildx build -f Dockerfile --target rebootstrap \
+  docker buildx build -f "$root"/Dockerfile --target rebootstrap \
     --allow security.insecure \
     --build-arg "DEBIAN_REBOOTSTRAP=$rebootstrap_from" \
     --build-arg "DEBIAN_SUITE=$suite" \
     --tag local/dubodubonduponey/rebootstrap \
     --output type=docker \
-    .
+    "$root"
 
   docker rm -f bootstrap 2>/dev/null || true
   export DOCKER_CONTENT_TRUST=0
   docker run --name bootstrap local/dubodubonduponey/rebootstrap true
   export DOCKER_CONTENT_TRUST=1
-  docker cp bootstrap:/rootfs .
+  docker cp bootstrap:/rootfs "$root"
   docker rm bootstrap
 }
 
@@ -82,24 +84,24 @@ build::bootstrap::debootstrap(){
   local requested_date="$1"
   local suite="$2"
 
-  docker buildx build -f Dockerfile --target debootstrap \
+  docker buildx build -f "$root"/Dockerfile --target debootstrap \
     --allow security.insecure \
     --build-arg "DEBIAN_DATE=$requested_date" \
     --build-arg "DEBIAN_SUITE=$suite" \
     --tag local/dubodubonduponey/debootstrap/"${requested_date%%T*}" \
     --output type=docker \
-    .
+    "$root"
 
   docker rm -f bootstrap 2>/dev/null || true
   export DOCKER_CONTENT_TRUST=0
   docker run --name bootstrap local/dubodubonduponey/debootstrap/"${requested_date%%T*}" true
   export DOCKER_CONTENT_TRUST=1
-  docker cp bootstrap:/rootfs .
+  docker cp bootstrap:/rootfs "$root"
   docker rm bootstrap
 }
 
 build::debian::setup(){
-  docker buildx create --node "dubo-dubon-duponey-debian-0" --name "dubo-dubon-duponey-debian"
+  docker buildx create --node "dubo-dubon-duponey-debian-0" --name "dubo-dubon-duponey-debian" > /dev/null
   docker buildx use "dubo-dubon-duponey-debian"
 }
 
@@ -107,12 +109,12 @@ build::debian(){
   local requested_date="$1"
   local platforms="$2"
 
-  docker buildx build -f Dockerfile --target debian \
+  docker buildx build -f "$root"/Dockerfile --target debian \
     --build-arg "DEBIAN_DATE=$requested_date" \
     --tag "$IMAGE_NAME:${requested_date%%T*}" \
     --platform "$platforms" \
     --output type=registry \
-    .
+    "$root"
 }
 
 build::getsha(){
@@ -132,12 +134,12 @@ docker::version_check
 
 build::bootstrap::setup
 
-if [ ! -f rootfs/"$HOST_PLATFORM"/debootstrap.sha ]; then
+if [ ! -f "$root"/rootfs/"$HOST_PLATFORM"/debootstrap.sha ]; then
   >&2 printf "No basic rootfs detected. We need to bootstrap from an existing debian image from the Hub.\n"
   build::bootstrap::rebootstrap "$DEBIAN_REBOOTSTRAP" "$DEBIAN_SUITE"
 fi
 
-if [ ! -f rootfs/"${DEBIAN_SUITE}-${DEBIAN_DATE}".sha ]; then
+if [ ! -f "$root"/rootfs/"${DEBIAN_SUITE}-${DEBIAN_DATE}".sha ]; then
   >&2 printf "Building %s rootfs for the requested target (%s).\n" "$DEBIAN_SUITE" "$DEBIAN_DATE"
   build::bootstrap::debootstrap "$DEBIAN_DATE" "$DEBIAN_SUITE"
 fi

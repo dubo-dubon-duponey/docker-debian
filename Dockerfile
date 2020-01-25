@@ -70,7 +70,7 @@ ARG           DEBIAN_SUITE=buster
 ARG           BUILDPLATFORM
 
 # Adding our rootfs
-ADD           rootfs/$BUILDPLATFORM/debootstrap.tar /
+ADD           ./rootfs/$BUILDPLATFORM/debootstrap.tar /
 
 # Installing qemu and debue/deboot
 # hadolint ignore=DL3009
