@@ -1,9 +1,18 @@
 #!/usr/bin/env bash
 set -o errexit -o errtrace -o functrace -o nounset -o pipefail
 
+# Behavioral
+PROXY=${PROXY=-}
+PUSH=
+CACHE=
+NO_PUSH="${NO_PUSH:-}"
+NO_CACHE="${NO_CACHE:-}"
+[ "$NO_PUSH" ] || PUSH=--push
+[ ! "$NO_CACHE" ] || CACHE=--no-cache
+
 # The suite and snapshot "date" from which you want to build your Debian buster image.
 DEBIAN_SUITE=${DEBIAN_SUITE:-buster}
-DEBIAN_DATE=${DEBIAN_DATE:-2020-01-15}T00:00:00Z
+DEBIAN_DATE=${DEBIAN_DATE:-2020-02-15}T00:00:00Z
 
 # The destination/name to use when pushing your Debian image, and the platforms you target
 IMAGE_NAME="${IMAGE_NAME:-docker.io/dubodubonduponey/debian}"
@@ -68,8 +77,10 @@ build::bootstrap::rebootstrap(){
     --allow security.insecure \
     --build-arg "DEBIAN_REBOOTSTRAP=$rebootstrap_from" \
     --build-arg "DEBIAN_SUITE=$suite" \
+    --build-arg="http_proxy=$PROXY" \
     --tag local/dubodubonduponey/rebootstrap \
     --output type=docker \
+    ${CACHE} \
     "$root"
 
   docker rm -f bootstrap 2>/dev/null || true
@@ -88,8 +99,10 @@ build::bootstrap::debootstrap(){
     --allow security.insecure \
     --build-arg "DEBIAN_DATE=$requested_date" \
     --build-arg "DEBIAN_SUITE=$suite" \
+    --build-arg="http_proxy=$PROXY" \
     --tag local/dubodubonduponey/debootstrap/"${requested_date%%T*}" \
     --output type=docker \
+    ${CACHE} \
     "$root"
 
   docker rm -f bootstrap 2>/dev/null || true
@@ -111,9 +124,11 @@ build::debian(){
 
   docker buildx build -f "$root"/Dockerfile --target debian \
     --build-arg "DEBIAN_DATE=$requested_date" \
+    --build-arg="http_proxy=$PROXY" \
     --tag "$IMAGE_NAME:${requested_date%%T*}" \
     --platform "$platforms" \
     --output type=registry \
+    ${CACHE} ${PUSH} \
     "$root"
 }
 
