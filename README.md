@@ -5,7 +5,7 @@ Build your own Debian Buster images from scratch.
 Features:
  * [x] reproducible builds
  * [x] no "base" image dependency
- * [x] not tied to a specific registry (eg: Docker Hub)
+ * [x] not tied to any specific registry
  * [x] depends only on the availability of `snapshot.debian.org`
  * [x] slim: ~25MB
  * [x] multi-architecture
@@ -29,11 +29,13 @@ PLATFORMS="linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v6"
 
 ## How does this work in detail?
 
-### Stage-1 rootfs
+### rootfs
 
-The purpose of the first stage image is solely to generate a viable Debian rootfs for your host platform.
+The purpose of the first stage is solely to generate a viable, local Debian rootfs for your host platform - it only runs if there is locally available rootfs.
 
-We do provide one already for amd64 (`rootfs/linux/platform/debootstrap.tar`), but encourage you to delete it and rebuild it, then verify the sha did not change:
+If you checked out this repository without modification, and assuming you are on amd64, this will not run, since a rootfs is provided already (under `rootfs/linux/platform/debootstrap.tar`).
+
+Though, even in that case, we encourage you to delete it and rebuild it, then verify the sha is still the same:
 `37b44e53477829775dbe19f5cc752229697996923a6e02cf51443360f63eb409ec9cf2767b66afed28e1191fa291b2b2d408e8cc8e66d40c653fc105a4bc2d07`
 
 In order to generate this first rootfs, you do need an existing Debian Buster image.
@@ -43,15 +45,15 @@ To specify which image you want to use, set `DEBIAN_REBOOTSTRAP` (for example: `
 
 Whatever this "bootstrapping" image is, the resulting sha should always be the same.
 
-### Stage-2
+### Stage-1
 
-Once you have the first rootfs from above for your host platform (debootstrap.tar), you can now generate the final rootfs for all desired platforms.
+Once you have the first rootfs from above for your host platform (debootstrap.tar), you can now generate the final rootfs for all desired platforms, without any dependency on an external registry or image.
 
 They will be stored under the rootfs folder.
 
 Their sha should NEVER vary (unless you change the requested date).
 
-### Stage-3 Debian multi-arch image
+### Stage-2 Debian multi-arch image
 
 The final stage is as simple as:
 

@@ -1,20 +1,21 @@
 # syntax = docker/dockerfile@sha256:888f21826273409b5ef5ff9ceb90c64a8f8ec7760da30d1ffbe6c3e2d323a7bd
 ARG           DEBIAN_REBOOTSTRAP=docker.io/dubodubonduponey/debian@sha256:68e9b2b386453c99bc3aeca7bdc448243dfe819aaa0a14dd65a0d5fdd0a66276
+# ATTENTION: we do use the advanced buildx dockerfile syntax on the first line here ^^^
 ########################################################################################################################
-# Prepare a rootfs that we will use as a builder base later on
-# The only purpose of this is to make sure we have a local debian artifact so that we do not depend on anything online
-# We do use the advanced buildx dockerfile syntax ^^^
-########################################################################################################################
-# hadolint ignore=DL3006
-FROM          $DEBIAN_REBOOTSTRAP                                                                                       AS rebootstrap
-# Notes:
+# This first "rebootstrap" target is meant to prepare a *local* rootfs that we will use as a builder base later on
+# The purpose of this is to make sure we have a local debian artifact so that we do not depend on anything online
+# after this stage has been run at least ONCE
+# Notes of importance:
 # 1. the use of the experimental frontend is required for --insecure to work (which is required by the use of unshare in debuerreotype)
-# 2. DEBIAN_REBOOTSTRAP is the Debian base image you need to start from in order to build a first rootfs (saved in rootfs/linux/*arch*/debootrstrap.tar)
-# This rootfs is then going to be used as a base to produce all rootfs for your debian images.
+# 2. DEBIAN_REBOOTSTRAP is the *online* Debian base image you need to initialize and generate your local *builder* rootfs.
 # You may use a Docker maintained Debian Buster image (library/debian:buster-slim for example).
-# Or our image (this is the default, and was built using debootstrap against Buster 2020-01-01T00:00:00Z)
+# Or our image (this is the default, and was built using debootstrap against Buster 2020-01-01)
 # You may of course (recommended), use your own debootstrapped Buster image instead.
 # All three methods will produce the same resulting rootfs.
+########################################################################################################################
+
+# hadolint ignore=DL3006
+FROM          $DEBIAN_REBOOTSTRAP                                                                                       AS rebootstrap
 
 # Targetting:
 ARG           DEBIAN_DATE=2020-01-01T00:00:00Z

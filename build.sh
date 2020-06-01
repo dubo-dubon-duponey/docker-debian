@@ -150,7 +150,7 @@ docker::version_check
 build::bootstrap::setup
 
 if [ ! -f "$root/rootfs/$HOST_PLATFORM/debootstrap.sha" ]; then
-  >&2 printf "No basic rootfs detected. We need to bootstrap from an existing debian image from the Hub.\n"
+  >&2 printf "No local rootfs detected. We need to bootstrap from an existing debian image (currently selected: %s).\n" "$DEBIAN_REBOOTSTRAP"
   build::bootstrap::rebootstrap "$DEBIAN_REBOOTSTRAP" "$DEBIAN_SUITE"
 fi
 
