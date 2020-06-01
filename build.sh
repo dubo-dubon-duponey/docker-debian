@@ -2,17 +2,17 @@
 set -o errexit -o errtrace -o functrace -o nounset -o pipefail
 
 # Behavioral
-PROXY=${PROXY:-}
-PUSH=
+PROXY="${PROXY:-}"
+PUSH=--push
 CACHE=
 NO_PUSH="${NO_PUSH:-}"
 NO_CACHE="${NO_CACHE:-}"
-[ "$NO_PUSH" ] || PUSH=--push
+[ "$NO_PUSH" ]  && PUSH="--output type=docker"
 [ ! "$NO_CACHE" ] || CACHE=--no-cache
 
 # The suite and snapshot "date" from which you want to build your Debian buster image.
-DEBIAN_SUITE=${DEBIAN_SUITE:-buster}
-DEBIAN_DATE=${DEBIAN_DATE:-2020-02-15}T00:00:00Z
+DEBIAN_SUITE="${DEBIAN_SUITE:-buster}"
+DEBIAN_DATE="${DEBIAN_DATE:-2020-02-15}T00:00:00Z"
 
 # The destination/name to use when pushing your Debian image, and the platforms you target
 IMAGE_NAME="${IMAGE_NAME:-docker.io/dubodubonduponey/debian}"
@@ -22,7 +22,7 @@ PLATFORMS="${PLATFORMS:-linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v6}"
 # - this one is the official Docker Hub Debian image
 # export DEBIAN_REBOOTSTRAP="docker.io/library/debian@sha256:11253793361a12861562d1d7b15b8b7e25ac30dd631e3d206ed1ca969bf97b7d"
 # - this one is our debootstrapped Debian image 2020-01-01
-export DEBIAN_REBOOTSTRAP=${DEBIAN_REBOOTSTRAP:-"docker.io/dubodubonduponey/debian@sha256:d78720282615fd0edbe6628058c084752e3690a7e1b0ef00b2290b74e0fff378"}
+export DEBIAN_REBOOTSTRAP="${DEBIAN_REBOOTSTRAP:-docker.io/dubodubonduponey/debian@sha256:d78720282615fd0edbe6628058c084752e3690a7e1b0ef00b2290b74e0fff378}"
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]:-$PWD}")" 2>/dev/null 1>&2 && pwd)"
 
@@ -128,7 +128,7 @@ build::debian(){
     --tag "$IMAGE_NAME:${requested_date%%T*}" \
     --platform "$platforms" \
     --output type=registry \
-    ${CACHE} ${PUSH} \
+    ${CACHE} "${PUSH}" \
     "$root"
 }
 
