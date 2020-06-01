@@ -2,7 +2,7 @@
 set -o errexit -o errtrace -o functrace -o nounset -o pipefail
 
 # Behavioral
-PROXY=${PROXY=-}
+PROXY=${PROXY:-}
 PUSH=
 CACHE=
 NO_PUSH="${NO_PUSH:-}"
