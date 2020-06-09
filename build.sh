@@ -2,7 +2,7 @@
 set -o errexit -o errtrace -o functrace -o nounset -o pipefail
 
 # Behavioral
-PROXY="${PROXY:-}"
+APTPROXY="${APTPROXY:-}"
 PUSH=--push
 CACHE=
 NO_PUSH="${NO_PUSH:-}"
@@ -12,7 +12,7 @@ NO_CACHE="${NO_CACHE:-}"
 
 # The suite and snapshot "date" from which you want to build your Debian buster image.
 DEBIAN_SUITE="${DEBIAN_SUITE:-buster}"
-DEBIAN_DATE="${DEBIAN_DATE:-2020-02-15}T00:00:00Z"
+DEBIAN_DATE="${DEBIAN_DATE:-2020-06-01}T00:00:00Z"
 
 # The destination/name to use when pushing your Debian image, and the platforms you target
 IMAGE_NAME="${IMAGE_NAME:-docker.io/dubodubonduponey/debian}"
@@ -27,7 +27,7 @@ export DEBIAN_REBOOTSTRAP="${DEBIAN_REBOOTSTRAP:-docker.io/dubodubonduponey/debi
 root="$(cd "$(dirname "${BASH_SOURCE[0]:-$PWD}")" 2>/dev/null 1>&2 && pwd)"
 
 # The machine host platform on which you are building (docker syntax)
-HOST_PLATFORM=linux/amd64
+HOST_PLATFORM="${HOST_PLATFORM:-linux/amd64}"
 if command -v dpkg; then
   HOST_PLATFORM="$(dpkg --print-architecture | awk -F- "{ print \$NF }" 1>/dev/null)"
   case "$HOST_PLATFORM" in
@@ -77,7 +77,7 @@ build::bootstrap::rebootstrap(){
     --allow security.insecure \
     --build-arg "DEBIAN_REBOOTSTRAP=$rebootstrap_from" \
     --build-arg "DEBIAN_SUITE=$suite" \
-    --build-arg="http_proxy=$PROXY" \
+    --build-arg="APTPROXY=$APTPROXY" \
     --tag local/dubodubonduponey/rebootstrap \
     --output type=docker \
     ${CACHE} \
@@ -99,7 +99,7 @@ build::bootstrap::debootstrap(){
     --allow security.insecure \
     --build-arg "DEBIAN_DATE=$requested_date" \
     --build-arg "DEBIAN_SUITE=$suite" \
-    --build-arg="http_proxy=$PROXY" \
+    --build-arg="APTPROXY=$APTPROXY" \
     --tag local/dubodubonduponey/debootstrap/"${requested_date%%T*}" \
     --output type=docker \
     ${CACHE} \
@@ -122,13 +122,13 @@ build::debian(){
   local requested_date="$1"
   local platforms="$2"
 
+  # shellcheck disable=SC2086
   docker buildx build -f "$root"/Dockerfile --target debian \
     --build-arg "DEBIAN_DATE=$requested_date" \
-    --build-arg="http_proxy=$PROXY" \
+    --build-arg="APTPROXY=$APTPROXY" \
     --tag "$IMAGE_NAME:${requested_date%%T*}" \
     --platform "$platforms" \
-    --output type=registry \
-    ${CACHE} "${PUSH}" \
+    ${CACHE} ${PUSH} \
     "$root"
 }
 

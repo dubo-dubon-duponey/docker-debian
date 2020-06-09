@@ -21,8 +21,13 @@ FROM          $DEBIAN_REBOOTSTRAP                                               
 ARG           DEBIAN_DATE=2020-01-01T00:00:00Z
 ARG           DEBIAN_SUITE=buster
 
+# Honor proxy
+ARG           APTPROXY=""
+RUN           printf 'Acquire::HTTP::proxy "%s";\n' "$APTPROXY" > /etc/apt/apt.conf.d/99-dbdbdp-proxy.conf
+RUN           printf 'Acquire::Check-Valid-Until no;\n' > /etc/apt/apt.conf.d/99-dbdbdp-no-check-valid-until.conf
+
 # Get debuerreotype and debootstrap in
-RUN           apt-get update -qq -o Acquire::Check-Valid-Until=false \
+RUN           apt-get update -qq \
               && apt-get install -qq --no-install-recommends \
                 debuerreotype=0.9-1 \
                 debootstrap=1.0.114
@@ -30,6 +35,7 @@ RUN           apt-get update -qq -o Acquire::Check-Valid-Until=false \
 WORKDIR       /bootstrapper
 
 # debuerreotype makes --security mandatory since they use chroot
+# XXX also note that debuerreotype does not honor apt proxy config from above, hence the exception in using http_proxy directly...
 # hadolint ignore=SC2215,DL4006
 RUN           --security=insecure set -eu; \
               targetarch="$(dpkg --print-architecture | awk -F- "{ print \$NF }")"; \
@@ -52,7 +58,7 @@ RUN           --security=insecure set -eu; \
                 ;; \
               esac; \
               mkdir -p "$targetarchpath"; \
-              debuerreotype-init --arch "$targetarch" --debian --no-merged-usr rootfs-"$targetarch" "$DEBIAN_SUITE" "$DEBIAN_DATE"; \
+              http_proxy="$APTPROXY" debuerreotype-init --arch "$targetarch" --debian --no-merged-usr rootfs-"$targetarch" "$DEBIAN_SUITE" "$DEBIAN_DATE"; \
               debuerreotype-minimizing-config rootfs-"$targetarch"; \
               debuerreotype-slimify rootfs-"$targetarch"; \
               debuerreotype-tar rootfs-"$targetarch" "${targetarchpath}"/debootstrap.tar; \
@@ -73,10 +79,15 @@ ARG           BUILDPLATFORM
 # Adding our rootfs
 ADD           ./rootfs/$BUILDPLATFORM/debootstrap.tar /
 
+# Honor proxy
+ARG           APTPROXY=""
+RUN           printf 'Acquire::HTTP::proxy "%s";\n' "$APTPROXY" > /etc/apt/apt.conf.d/99-dbdbdp-proxy.conf
+RUN           printf 'Acquire::Check-Valid-Until no;\n' > /etc/apt/apt.conf.d/99-dbdbdp-no-check-valid-until.conf
+
 # Installing qemu and debue/deboot
 # hadolint ignore=DL3009
-RUN           apt-get update -qq -o Acquire::Check-Valid-Until=false \
-              && apt-get install -qq --no-install-recommends  \
+RUN           apt-get update -qq \
+              && apt-get install -qq --no-install-recommends \
                 debuerreotype=0.9-1 \
                 debootstrap=1.0.114 \
                 qemu-user-static=1:3.1+dfsg-8+deb10u2
@@ -84,10 +95,11 @@ RUN           apt-get update -qq -o Acquire::Check-Valid-Until=false \
 # Building our rootfs on all platforms we support (armel, armhf, arm64, amd64)
 WORKDIR       /bootstrapper
 
+# XXX see note above about http_proxy and debu
 # hadolint ignore=SC2215
 RUN           --security=insecure set -eu; \
               for targetarch in armel armhf arm64 amd64; do \
-                debuerreotype-init --arch "$targetarch" --debian --no-merged-usr --debootstrap="qemu-debootstrap" rootfs-"$targetarch" "$DEBIAN_SUITE" "$DEBIAN_DATE"; \
+                http_proxy="$APTPROXY" debuerreotype-init --arch "$targetarch" --debian --no-merged-usr --debootstrap="qemu-debootstrap" rootfs-"$targetarch" "$DEBIAN_SUITE" "$DEBIAN_DATE"; \
                 debuerreotype-apt-get rootfs-"$targetarch" update -qq; \
                 debuerreotype-apt-get rootfs-"$targetarch" dist-upgrade -yqq; \
                 debuerreotype-minimizing-config rootfs-"$targetarch"; \
@@ -120,4 +132,8 @@ ARG           TARGETPLATFORM
 
 ADD           ./rootfs/$TARGETPLATFORM/"${DEBIAN_SUITE}-${DEBIAN_DATE}".tar /
 
-RUN           printf 'Acquire::Check-Valid-Until no;\n' > /etc/apt/apt.conf.d/99no-check-valid-until
+RUN           printf 'Acquire::Check-Valid-Until no;\n' > /etc/apt/apt.conf.d/99-dbdbdp-no-check-valid-until.conf
+
+# Ensure that subsequent calls to apt will honor on build proxy argument
+ONBUILD ARG   APTPROXY=""
+ONBUILD RUN   printf 'Acquire::HTTP::proxy "%s";\n' "$APTPROXY" > /etc/apt/apt.conf.d/99-dbdbdp-proxy.conf
