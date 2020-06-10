@@ -62,6 +62,6 @@ If you want to build on a host that is not amd64, and you are not on a Debian de
 
 ### Support
 
-This is used regularly on macos and Debian buster (on amd64).
+This is used regularly on macos (on amd64).
 
-Support for other OSes and architectures may be sketchy, but bring it on if you have issues.
+Support for other OSes and architectures is largely untested, but bring it on if you have issues.
