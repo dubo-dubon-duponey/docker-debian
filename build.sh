@@ -29,7 +29,7 @@ root="$(cd "$(dirname "${BASH_SOURCE[0]:-$PWD}")" 2>/dev/null 1>&2 && pwd)"
 # The machine host platform on which you are building (docker syntax)
 HOST_PLATFORM="${HOST_PLATFORM:-linux/amd64}"
 if command -v dpkg; then
-  HOST_PLATFORM="$(dpkg --print-architecture | awk -F- "{ print \$NF }" 1>/dev/null)"
+  HOST_PLATFORM="$(dpkg --print-architecture | awk -F- "{ print \$NF }" 2>/dev/null)"
   case "$HOST_PLATFORM" in
     armhf)
       HOST_PLATFORM=linux/arm/v7
@@ -45,6 +45,7 @@ if command -v dpkg; then
     ;;
     *)
       >&2 printf "Unsupported architecture %s\n" "$HOST_PLATFORM"
+      exit
     ;;
   esac
 fi
