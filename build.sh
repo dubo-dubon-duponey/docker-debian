@@ -15,7 +15,10 @@ DEBIAN_SUITE="${DEBIAN_SUITE:-buster}"
 DEBIAN_DATE="${DEBIAN_DATE:-2020-06-01}T00:00:00Z"
 
 # The destination/name to use when pushing your Debian image, and the platforms you target
-IMAGE_NAME="${IMAGE_NAME:-docker.io/dubodubonduponey/debian}"
+REGISTRY="${REGISTRY:-index.docker.io}"
+VENDOR="${VENDOR:-dubodubonduponey}"
+IMAGE_NAME="${IMAGE_NAME:-debian}"
+
 PLATFORMS="${PLATFORMS:-linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v6}"
 
 # In case we are starting from scratch (eg: no rootfs tarball for your platform), the docker image to start from
@@ -82,13 +85,13 @@ build::bootstrap::rebootstrap(){
     --tag local/dubodubonduponey/rebootstrap \
     --output type=docker \
     ${CACHE} \
-    "$root"
+    "$root/context/bootstrap"
 
   docker rm -f bootstrap 2>/dev/null || true
   export DOCKER_CONTENT_TRUST=0
   docker run --name bootstrap local/dubodubonduponey/rebootstrap true
   export DOCKER_CONTENT_TRUST=1
-  docker cp bootstrap:/rootfs "$root"
+  docker cp bootstrap:/rootfs "$root/context/bootstrap"
   docker rm bootstrap
 }
 
@@ -104,13 +107,13 @@ build::bootstrap::debootstrap(){
     --tag local/dubodubonduponey/debootstrap/"${requested_date%%T*}" \
     --output type=docker \
     ${CACHE} \
-    "$root"
+    "$root/context/bootstrap"
 
   docker rm -f bootstrap 2>/dev/null || true
   export DOCKER_CONTENT_TRUST=0
   docker run --name bootstrap local/dubodubonduponey/debootstrap/"${requested_date%%T*}" true
   export DOCKER_CONTENT_TRUST=1
-  docker cp bootstrap:/rootfs "$root"
+  docker cp bootstrap:/rootfs "$root/context/debian"
   docker rm bootstrap
 }
 
@@ -127,10 +130,10 @@ build::debian(){
   docker buildx build -f "$root"/Dockerfile --target debian \
     --build-arg "DEBIAN_DATE=$requested_date" \
     --build-arg="APTPROXY=$APTPROXY" \
-    --tag "$IMAGE_NAME:${requested_date%%T*}" \
+    --tag "$REGISTRY/$VENDOR/$IMAGE_NAME:${requested_date%%T*}" \
     --platform "$platforms" \
     ${CACHE} ${PUSH} \
-    "$root"
+    "$root/context/debian"
 }
 
 build::getsha(){
@@ -143,19 +146,19 @@ build::getsha(){
   owner=${owner##*/}
   token=$(curl https://auth.docker.io/token?service=registry.docker.io\&scope=repository%3A"${owner}"%2F"${short_name}"%3Apull  -v -L -s -H 'Authorization: ' 2>/dev/null | grep '^{' | jq -rc .token)
   digest=$(curl https://registry-1.docker.io/v2/"${owner}"/"${short_name}"/manifests/"${DEBIAN_DATE%%T*}" -L -s -I -H "Authorization: Bearer ${token}" -H "Accept: application/vnd.docker.distribution.manifest.v2+json"  -H "Accept: application/vnd.docker.distribution.manifest.list.v2+json" | grep Docker-Content-Digest)
-  printf "%s\n" "${digest#*: }"
+  printf "%s" "${digest#*: }" | tr -d $'\r'
 }
 
 docker::version_check
 
 build::bootstrap::setup
 
-if [ ! -f "$root/rootfs/$HOST_PLATFORM/debootstrap.sha" ]; then
+if [ ! -f "$root/context/bootstrap/rootfs/$HOST_PLATFORM/debootstrap.sha" ]; then
   >&2 printf "No local rootfs detected. We need to bootstrap from an existing debian image (currently selected: %s).\n" "$DEBIAN_REBOOTSTRAP"
   build::bootstrap::rebootstrap "$DEBIAN_REBOOTSTRAP" "$DEBIAN_SUITE"
 fi
 
-if [ ! -f "$root/rootfs/${DEBIAN_SUITE}-${DEBIAN_DATE}.sha" ]; then
+if [ ! -f "$root/context/debian/rootfs/${DEBIAN_SUITE}-${DEBIAN_DATE}.sha" ]; then
   >&2 printf "Building %s rootfs for the requested target (%s).\n" "$DEBIAN_SUITE" "$DEBIAN_DATE"
   build::bootstrap::debootstrap "$DEBIAN_DATE" "$DEBIAN_SUITE"
 fi
@@ -163,4 +166,5 @@ fi
 build::debian::setup
 build::debian "$DEBIAN_DATE" "$PLATFORMS"
 
-build::getsha "$IMAGE_NAME"
+# XXX need to normalize this to use REGISTRY env var so we can test if we are on docker hub
+# printf "%s@%s" "$IMAGE_NAME" "$(build::getsha "$IMAGE_NAME")"

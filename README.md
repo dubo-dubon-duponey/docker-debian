@@ -27,9 +27,13 @@ This project makes use of [debuerreotype](https://github.com/debuerreotype/debue
 ```bash
 # What you want
 DEBIAN_DATE=2020-01-01
+# Your name
+VENDOR="YOU"
 
-# On what registry you want to push it
-IMAGE_NAME=yourregistry/you/debian
+# Optional - defaults to Docker Hub otherwise
+# REGISTRY="myregistry.foo"
+# Optional - defaults to "debian"
+# IMAGE_NAME="foofoo"
 
 # Platforms you are interested in
 PLATFORMS="linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v6"
@@ -43,7 +47,7 @@ PLATFORMS="linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v6"
 You may want to tweak the following:
 
 ```
-# if you want to use an apt proxy
+# if you want to use a caching proxy for apt requests (http only)
 APTPROXY=http://somewhere
 
 # if you just want to build locally and not push the resulting image to a registry at all

@@ -1,4 +1,4 @@
-# syntax = docker/dockerfile@sha256:888f21826273409b5ef5ff9ceb90c64a8f8ec7760da30d1ffbe6c3e2d323a7bd
+# syntax = docker/dockerfile@sha256:de85b2f3a3e8a2f7fe48e8e84a65f6fdd5cd5183afa6412fff9caa6871649c44
 ARG           DEBIAN_REBOOTSTRAP=docker.io/dubodubonduponey/debian@sha256:68e9b2b386453c99bc3aeca7bdc448243dfe819aaa0a14dd65a0d5fdd0a66276
 # ATTENTION: we do use the advanced buildx dockerfile syntax on the first line here ^^^
 ########################################################################################################################
@@ -21,10 +21,12 @@ FROM          $DEBIAN_REBOOTSTRAP                                               
 ARG           DEBIAN_DATE=2020-01-01T00:00:00Z
 ARG           DEBIAN_SUITE=buster
 
-# Honor proxy
+# Using snapshot, packages sig are outdated by nature
+RUN           printf 'Acquire::Check-Valid-Until no;\n' > /etc/apt/apt.conf.d/99-dbdbdp-no-check-valid-until.conf
+
+# Honor proxy - but only if it's not https
 ARG           APTPROXY=""
 RUN           printf 'Acquire::HTTP::proxy "%s";\n' "$APTPROXY" > /etc/apt/apt.conf.d/99-dbdbdp-proxy.conf
-RUN           printf 'Acquire::Check-Valid-Until no;\n' > /etc/apt/apt.conf.d/99-dbdbdp-no-check-valid-until.conf
 
 # Get debuerreotype and debootstrap in
 RUN           apt-get update -qq \
@@ -100,8 +102,8 @@ WORKDIR       /bootstrapper
 RUN           --security=insecure set -eu; \
               for targetarch in armel armhf arm64 amd64; do \
                 http_proxy="$APTPROXY" debuerreotype-init --arch "$targetarch" --debian --no-merged-usr --debootstrap="qemu-debootstrap" rootfs-"$targetarch" "$DEBIAN_SUITE" "$DEBIAN_DATE"; \
-                debuerreotype-apt-get rootfs-"$targetarch" update -qq; \
-                debuerreotype-apt-get rootfs-"$targetarch" dist-upgrade -yqq; \
+                http_proxy="$APTPROXY" debuerreotype-apt-get rootfs-"$targetarch" update -qq; \
+                http_proxy="$APTPROXY" debuerreotype-apt-get rootfs-"$targetarch" dist-upgrade -yqq; \
                 debuerreotype-minimizing-config rootfs-"$targetarch"; \
                 debuerreotype-slimify rootfs-"$targetarch"; \
               done
