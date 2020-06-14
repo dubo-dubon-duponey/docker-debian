@@ -19,7 +19,7 @@ REGISTRY="${REGISTRY:-index.docker.io}"
 VENDOR="${VENDOR:-dubodubonduponey}"
 IMAGE_NAME="${IMAGE_NAME:-debian}"
 
-PLATFORMS="${PLATFORMS:-linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v6}"
+PLATFORMS="${PLATFORMS:-linux/amd64,linux/arm64,linux/arm/v7}"
 
 # In case we are starting from scratch (eg: no rootfs tarball for your platform), the docker image to start from
 # - this one is the official Docker Hub Debian image
@@ -77,7 +77,7 @@ build::bootstrap::rebootstrap(){
   local rebootstrap_from="$1"
   local suite="$2"
 
-  docker buildx build -f "$root"/Dockerfile --target rebootstrap \
+  docker buildx build --pull -f "$root"/Dockerfile --target rebootstrap \
     --allow security.insecure \
     --build-arg "DEBIAN_REBOOTSTRAP=$rebootstrap_from" \
     --build-arg "DEBIAN_SUITE=$suite" \
@@ -99,7 +99,7 @@ build::bootstrap::debootstrap(){
   local requested_date="$1"
   local suite="$2"
 
-  docker buildx build -f "$root"/Dockerfile --target debootstrap \
+  docker buildx build --pull -f "$root"/Dockerfile --target debootstrap \
     --allow security.insecure \
     --build-arg "DEBIAN_DATE=$requested_date" \
     --build-arg "DEBIAN_SUITE=$suite" \
@@ -127,7 +127,7 @@ build::debian(){
   local platforms="$2"
 
   # shellcheck disable=SC2086
-  docker buildx build -f "$root"/Dockerfile --target debian \
+  docker buildx build --pull -f "$root"/Dockerfile --target debian \
     --build-arg "DEBIAN_DATE=$requested_date" \
     --build-arg="APTPROXY=$APTPROXY" \
     --tag "$REGISTRY/$VENDOR/$IMAGE_NAME:${requested_date%%T*}" \
