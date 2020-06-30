@@ -27,4 +27,7 @@ export targetDir epoch
 [ -n "$targetDir" ] # just to be safe
 
 # XXX getting rid of the unshare calls to avoid having to grant insecure privileges to the container
+cp /etc/resolv.conf "$targetDir"/etc/resolv.conf
+cp /etc/apt/apt.conf.d/99-dbdbdp-proxy.conf "$targetDir"/etc/apt/
+
 exec chroot "$targetDir" /usr/bin/env -i PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" TZ="$TZ" LC_ALL="$LC_ALL" SOURCE_DATE_EPOCH="$epoch" "$cmd" "$@"
