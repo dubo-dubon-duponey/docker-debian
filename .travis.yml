@@ -8,11 +8,22 @@ addons:
     packages:
     - shellcheck
 
+before_install:
+  # Install a more recent version of docker (19.03 at least)
+  - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+  - sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+  - sudo apt-get update
+  - sudo apt-get -y -o Dpkg::Options::="--force-confnew" install docker-ce
+
 install:
   - curl -sL -o hadolint "https://github.com/hadolint/hadolint/releases/download/v1.16.0/hadolint-$(uname -s)-$(uname -m)"
     && chmod 700 ./hadolint
 
 script:
+  # Install a more recent version of buildx (0.4 at least)
+  - printf "\n" | ./build.sh install-buildx
+  # Enable multi arch support through qemu
+  # - printf "\n" | ./build.sh enable-multiarch
   - PATH=$PATH:$(pwd) ./test.sh
 
 matrix:
