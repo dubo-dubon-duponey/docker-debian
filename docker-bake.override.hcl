@@ -2,6 +2,10 @@ variable "REGISTRY" {
   default = "docker.io"
 }
 
+variable "VENDOR" {
+  default = "dubodubonduponey"
+}
+
 # Date to debootstrap
 variable "DEBIAN_DATE" {
   default = "2020-01-01"
@@ -65,6 +69,6 @@ target "debian" {
     DEBIAN_DATE = "${DEBIAN_DATE}"
   }
   tags = [
-    "${REGISTRY}/dubodubonduponey/debian:${DEBIAN_SUITE}-${DEBIAN_DATE}",
+    "${REGISTRY}/${VENDOR}/debian:${DEBIAN_SUITE}-${DEBIAN_DATE}",
   ]
 }
