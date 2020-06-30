@@ -1,4 +1,4 @@
-ARG           DEBIAN_REBOOTSTRAP=docker.io/dubodubonduponey/debian@sha256:68e9b2b386453c99bc3aeca7bdc448243dfe819aaa0a14dd65a0d5fdd0a66276
+ARG           DEBIAN_REBOOTSTRAP=docker.io/dubodubonduponey/debian@sha256:cb25298b653310dd8b7e52b743053415452708912fe0e8d3d0d4ccf6c4003746
 ########################################################################################################################
 # This first "rebootstrap" target is meant to prepare a *local* rootfs that we will use as a builder base later on
 # The purpose of this is to make sure we have a local debian artifact so that we do not depend on anything online
@@ -101,7 +101,7 @@ COPY          ./debuerreotype-chroot /usr/sbin
 
 # XXX see note above about http_proxy and debu
 RUN           set -eu; \
-              for targetarch in armel armhf arm64 amd64; do \
+              for targetarch in i386 s390x ppc64el armel armhf arm64 amd64; do \
                 http_proxy="$APTPROXY" debuerreotype-init --arch "$targetarch" --debian --no-merged-usr --debootstrap="qemu-debootstrap" rootfs-"$targetarch" "$DEBIAN_SUITE" "${DEBIAN_DATE}T00:00:00Z"; \
                 http_proxy="$APTPROXY" debuerreotype-apt-get rootfs-"$targetarch" update -qq; \
                 http_proxy="$APTPROXY" debuerreotype-apt-get rootfs-"$targetarch" dist-upgrade -yqq; \
@@ -114,11 +114,17 @@ RUN           mkdir -p "/rootfs/linux/arm/v6"
 RUN           mkdir -p "/rootfs/linux/arm/v7"
 RUN           mkdir -p "/rootfs/linux/arm64"
 RUN           mkdir -p "/rootfs/linux/amd64"
+RUN           mkdir -p "/rootfs/linux/386"
+RUN           mkdir -p "/rootfs/linux/s390x"
+RUN           mkdir -p "/rootfs/linux/ppc64le"
 
 RUN           debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-armel "/rootfs/linux/arm/v6/${DEBIAN_SUITE}-${DEBIAN_DATE}".tar
 RUN           debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-armhf "/rootfs/linux/arm/v7/${DEBIAN_SUITE}-${DEBIAN_DATE}".tar
 RUN           debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-arm64 "/rootfs/linux/arm64/${DEBIAN_SUITE}-${DEBIAN_DATE}".tar
 RUN           debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-amd64 "/rootfs/linux/amd64/${DEBIAN_SUITE}-${DEBIAN_DATE}".tar
+RUN           debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-i386 "/rootfs/linux/arm/386/${DEBIAN_SUITE}-${DEBIAN_DATE}".tar
+RUN           debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-s390x "/rootfs/linux/arm/s390x/${DEBIAN_SUITE}-${DEBIAN_DATE}".tar
+RUN           debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-ppc64el "/rootfs/linux/arm/ppc64le/${DEBIAN_SUITE}-${DEBIAN_DATE}".tar
 
 RUN           sha512sum /rootfs/linux/*/*.tar /rootfs/linux/*/*/*.tar > /rootfs/"${DEBIAN_SUITE}-${DEBIAN_DATE}".sha
 

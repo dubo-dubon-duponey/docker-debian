@@ -19,4 +19,7 @@ matrix:
   include:
     - os: linux
       dist: bionic
-      env: TEST_DOES_NOT_BUILD=true
+      env:
+        - DEBIAN_SUITE=buster
+        - DEBIAN_DATE=2020-01-01
+        - TEST_DOES_NOT_BUILD=

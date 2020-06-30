@@ -14,7 +14,7 @@ variable "DEBIAN_SUITE" {
 
 # Root image to start from in case we do not even have a local rootfs
 variable DEBIAN_REBOOTSTRAP {
-  default = "docker.io/dubodubonduponey/debian@sha256:d78720282615fd0edbe6628058c084752e3690a7e1b0ef00b2290b74e0fff378"
+  default = "docker.io/dubodubonduponey/debian@sha256:cb25298b653310dd8b7e52b743053415452708912fe0e8d3d0d4ccf6c4003746"
 }
 
 variable "PWD" {
@@ -31,7 +31,6 @@ target "rebootstrap" {
   target = "rebootstrap"
   args = {
     DEBIAN_REBOOTSTRAP = "${DEBIAN_REBOOTSTRAP}"
-    DEBIAN_SUITE = "${DEBIAN_SUITE}"
   }
   tags = []
   platforms = ["local"]
