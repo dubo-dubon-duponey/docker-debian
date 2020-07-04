@@ -1,5 +1,9 @@
 language: bash
 
+cache:
+  directories:
+    - cache
+
 services:
   - docker
 
@@ -27,7 +31,7 @@ install:
     && chmod 700 ./hadolint
 
 script:
-  - PATH=$PATH:$(pwd) ./test.sh 2>&1
+  - PATH=$PATH:$(pwd) ./test.sh
 
 matrix:
   include:
