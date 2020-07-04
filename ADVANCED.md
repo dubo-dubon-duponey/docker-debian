@@ -10,7 +10,7 @@ This typically should only be ran once.
 If you checked out this repository without modification, and assuming you are on amd64, a working rootfs is provided already (under `context/debootstrap/rootfs/linux/amd64/debootstrap.tar`).
 
 Though, even in that case, we encourage you to delete it and rebuild it, then verify the sha is unchanged:
-`9fec4b6c9b334ab7bc1553f8dc5a5766f3ce129e1619b7b67fa7fde27ca979a6a8ba83780d5ec6742e2d67f9aeaef3ad9972a0edff045796b74a98874096720c`
+`91797bb9e689ecb5aa1fd2b0ed517fd9ebd3e73a66eefd631d7f82ce6dbde701069a1dc1f44dd41bf70cf1913cb8573c91aeedda762ef3e6ea2cef6dcb4b5505`
 
 In order to generate this first rootfs, you do need an existing Debian Buster image.
 You may use Docker official image, our own Debian image (this is the default), or any other base Debian image.

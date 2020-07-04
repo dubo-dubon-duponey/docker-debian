@@ -27,9 +27,7 @@ install:
     && chmod 700 ./hadolint
 
 script:
-  # Enable multi arch support through qemu
-  # - printf "\n" | ./build.sh enable-multiarch
-  - PATH=$PATH:$(pwd) ./test.sh
+  - PATH=$PATH:$(pwd) ./test.sh 2>&1
 
 matrix:
   include:
