@@ -15,11 +15,11 @@ fi
 
 if [ ! "$TEST_DOES_NOT_BUILD" ]; then
   # Rebootstrap and check that the result is the same
-  ./build.sh --progress plain rebootstrap
+  ./build.sh --no-cache --progress plain rebootstrap
   s="$(cat context/debootstrap/rootfs/linux/amd64/debootstrap.sha)"
   >&2 printf "rebootstrap produced %s\n" "$s"
-  if [ "${s%% *}" != "91797bb9e689ecb5aa1fd2b0ed517fd9ebd3e73a66eefd631d7f82ce6dbde701069a1dc1f44dd41bf70cf1913cb8573c91aeedda762ef3e6ea2cef6dcb4b5505" ]; then
-    >&2 printf "ALERT - rebootstrap is no longer producing 91797bb9e689ecb5aa1fd2b0ed517fd9ebd3e73a66eefd631d7f82ce6dbde701069a1dc1f44dd41bf70cf1913cb8573c91aeedda762ef3e6ea2cef6dcb4b5505\n"
+  if [ "${s%% *}" != "02ff894af506ddbc2f22b7227822e6d052b24e7fbc8ce09a3ec1c5274b626a7147913bba3bcf13d6fb1330609a608ed724b98806f3d3f715164d9c70d461cec1" ]; then
+    >&2 printf "ALERT - rebootstrap is no longer producing 02ff894af506ddbc2f22b7227822e6d052b24e7fbc8ce09a3ec1c5274b626a7147913bba3bcf13d6fb1330609a608ed724b98806f3d3f715164d9c70d461cec1\n"
     exit 1
   else
     >&2 printf "rebootstrap ok\n"
@@ -29,8 +29,8 @@ if [ ! "$TEST_DOES_NOT_BUILD" ]; then
   DEBIAN_DATE=2020-01-01 ./build.sh --progress plain debootstrap
   s="$(grep amd64 context/debian/rootfs/buster-2020-01-01.sha)"
   >&2 printf "debootstrap produced %s\n" "$s"
-  if [ "${s%% *}" != "91797bb9e689ecb5aa1fd2b0ed517fd9ebd3e73a66eefd631d7f82ce6dbde701069a1dc1f44dd41bf70cf1913cb8573c91aeedda762ef3e6ea2cef6dcb4b5505" ]; then
-    >&2 printf "ALERT - debootstrap is no longer producing 91797bb9e689ecb5aa1fd2b0ed517fd9ebd3e73a66eefd631d7f82ce6dbde701069a1dc1f44dd41bf70cf1913cb8573c91aeedda762ef3e6ea2cef6dcb4b5505\n"
+  if [ "${s%% *}" != "02ff894af506ddbc2f22b7227822e6d052b24e7fbc8ce09a3ec1c5274b626a7147913bba3bcf13d6fb1330609a608ed724b98806f3d3f715164d9c70d461cec1" ]; then
+    >&2 printf "ALERT - debootstrap is no longer producing 02ff894af506ddbc2f22b7227822e6d052b24e7fbc8ce09a3ec1c5274b626a7147913bba3bcf13d6fb1330609a608ed724b98806f3d3f715164d9c70d461cec1\n"
     exit 1
   else
     >&2 printf "debootstrap ok\n"

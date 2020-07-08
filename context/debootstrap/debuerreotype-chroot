@@ -26,8 +26,13 @@ export targetDir epoch
 
 [ -n "$targetDir" ] # just to be safe
 
-# XXX getting rid of the unshare calls to avoid having to grant insecure privileges to the container
 cp /etc/resolv.conf "$targetDir"/etc/resolv.conf
-cp /etc/apt/apt.conf.d/99-dbdbdp-proxy.conf "$targetDir"/etc/apt/
+cp /etc/apt/apt.conf.d/99-dbdbdp-proxy.conf "$targetDir"/etc/apt/apt.conf.d/
 
-exec chroot "$targetDir" /usr/bin/env -i PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" TZ="$TZ" LC_ALL="$LC_ALL" SOURCE_DATE_EPOCH="$epoch" "$cmd" "$@"
+chroot "$targetDir" /usr/bin/env -i PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" TZ="$TZ" LC_ALL="$LC_ALL" SOURCE_DATE_EPOCH="$epoch" "$cmd" "$@"
+
+rm "$targetDir"/etc/apt/apt.conf.d/99-dbdbdp-proxy.conf
+rm "$targetDir"/etc/resolv.conf
+touch "$targetDir"/etc/resolv.conf
+epoch="$(date --date "2020-01-01T00:00:00Z" +%s)"
+touch --no-dereference --date="@$epoch" "$targetDir"/etc/resolv.conf

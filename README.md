@@ -5,9 +5,8 @@ Build your own Debian image from scratch.
 Features:
  * reproducible builds
      * a given date and Debian version always gives you the exact same resulting rootfs
- * no "base" image dependency
+ * no third-party image dependency
      * the provided builder rootfs is all you need to get started, and you do not need ANY Docker image from anywhere
- * not tied to any specific registry
  * proxy support for fully air-gaped build
  * depends only on the availability of `snapshot.debian.org` (*)
  * slim
@@ -24,7 +23,7 @@ This project heavily relies on [debuerreotype](https://github.com/debuerreotype/
 
 ## TL;DR
 
-Assuming you are on linux/amd64 (yes Docker for Mac, that means you too):
+Assuming you are on `linux/amd64` (yes Docker for Mac, that means you too):
 
 ```bash
 # What you want

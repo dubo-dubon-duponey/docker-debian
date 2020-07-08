@@ -177,4 +177,3 @@ LABEL         org.opencontainers.image.description="$BUILD_DESCRIPTION"
 # Ensure that subsequent calls to apt will honor on build proxy argument
 ONBUILD ARG   APTPROXY=""
 ONBUILD RUN   printf 'Acquire::HTTP::proxy "%s";\n' "$APTPROXY" > /etc/apt/apt.conf.d/99-dbdbdp-proxy.conf
-
