@@ -100,14 +100,13 @@ RUN           cp scripts/.* /usr/sbin/ || true
 COPY          ./debuerreotype-chroot /usr/sbin
 
 # XXX see note above about http_proxy and debu
-# i386 s390x ppc64el
 RUN           set -eu; \
-              for targetarch in armel armhf arm64 amd64; do \
+              for targetarch in armel armhf arm64 amd64 i386 s390x ppc64el; do \
                 http_proxy="$APTPROXY" debuerreotype-init --arch "$targetarch" --debian --no-merged-usr --debootstrap="qemu-debootstrap" rootfs-"$targetarch" "$DEBIAN_SUITE" "${DEBIAN_DATE}T00:00:00Z"; \
               done
 
 RUN           set -eu; \
-              for targetarch in armel armhf arm64 amd64; do \
+              for targetarch in armel armhf arm64 amd64 i386 s390x ppc64el; do \
                 http_proxy="$APTPROXY" debuerreotype-apt-get rootfs-"$targetarch" update -qq; \
                 http_proxy="$APTPROXY" debuerreotype-apt-get rootfs-"$targetarch" dist-upgrade -yqq; \
                 debuerreotype-minimizing-config rootfs-"$targetarch"; \
@@ -121,15 +120,15 @@ RUN           mkdir -p "/rootfs/linux/arm64"
 RUN           mkdir -p "/rootfs/linux/amd64"
 RUN           mkdir -p "/rootfs/linux/386"
 RUN           mkdir -p "/rootfs/linux/s390x"
-RUN           mkdir -p "/rootfs/linux/ppc64le"
+RUN           mkdir -p "/rootfs/linux/ppc64el"
 
 RUN           debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-armel "/rootfs/linux/arm/v6/${DEBIAN_SUITE}-${DEBIAN_DATE}".tar
 RUN           debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-armhf "/rootfs/linux/arm/v7/${DEBIAN_SUITE}-${DEBIAN_DATE}".tar
 RUN           debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-arm64 "/rootfs/linux/arm64/${DEBIAN_SUITE}-${DEBIAN_DATE}".tar
 RUN           debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-amd64 "/rootfs/linux/amd64/${DEBIAN_SUITE}-${DEBIAN_DATE}".tar
-#RUN           debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-i386 "/rootfs/linux/386/${DEBIAN_SUITE}-${DEBIAN_DATE}".tar
-#RUN           debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-s390x "/rootfs/linux/s390x/${DEBIAN_SUITE}-${DEBIAN_DATE}".tar
-#RUN           debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-ppc64el "/rootfs/linux/ppc64le/${DEBIAN_SUITE}-${DEBIAN_DATE}".tar
+RUN           debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-i386 "/rootfs/linux/386/${DEBIAN_SUITE}-${DEBIAN_DATE}".tar
+RUN           debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-s390x "/rootfs/linux/s390x/${DEBIAN_SUITE}-${DEBIAN_DATE}".tar
+RUN           debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-ppc64el "/rootfs/linux/ppc64el/${DEBIAN_SUITE}-${DEBIAN_DATE}".tar
 
 RUN           sha512sum /rootfs/linux/*/*.tar /rootfs/linux/*/*/*.tar > /rootfs/"${DEBIAN_SUITE}-${DEBIAN_DATE}".sha
 

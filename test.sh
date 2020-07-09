@@ -26,7 +26,7 @@ if [ ! "$TEST_DOES_NOT_BUILD" ]; then
   fi
 
   # Debootstrap and check the same
-  DEBIAN_DATE=2020-01-01 ./build.sh --progress plain debootstrap
+  DEBIAN_DATE=2020-01-01 ./build.sh --no-cache --progress plain debootstrap
   s="$(grep amd64 context/debian/rootfs/buster-2020-01-01.sha)"
   >&2 printf "debootstrap produced %s\n" "$s"
   if [ "${s%% *}" != "02ff894af506ddbc2f22b7227822e6d052b24e7fbc8ce09a3ec1c5274b626a7147913bba3bcf13d6fb1330609a608ed724b98806f3d3f715164d9c70d461cec1" ]; then

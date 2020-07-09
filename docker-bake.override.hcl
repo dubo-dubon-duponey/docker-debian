@@ -90,6 +90,15 @@ target "debian" {
     DEBIAN_SUITE = "${DEBIAN_SUITE}"
     DEBIAN_DATE = "${DEBIAN_DATE}"
   }
+  platforms = [
+    "linux/amd64",
+    "linux/arm64",
+    "linux/arm/v7",
+    "linux/arm/v6",
+    "linux/386",
+    "linux/s390x",
+    "linux/ppc64el",
+  ]
   tags = [
     "${REGISTRY}/${VENDOR}/debian:${DEBIAN_SUITE}-${DEBIAN_DATE}",
   ]
