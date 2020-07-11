@@ -10,7 +10,7 @@ services:
 addons:
   apt:
     packages:
-    - shellcheck
+      - shellcheck
 
 before_install:
   # Install a more recent version of docker (19.03 at least)
