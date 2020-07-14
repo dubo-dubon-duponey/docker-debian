@@ -1,3 +1,4 @@
 .DS_Store
 /.idea
-*T00:00:00Z*
+/cache
+/context/debian/rootfs
