@@ -39,11 +39,16 @@ Generate rootfs from Debian Buster at a specific date, for a list of platforms:
 ```bash
 # What you want
 export DEBIAN_DATE=2020-06-01
-# Your name
-export VENDOR="YOU"
 
 # Build the rootfs for all requested architectures and store them locally
 ./build.sh debootstrap
+```
+
+Generate the overlay with any changes on top of vanilla debian
+
+```bash
+export DEBIAN_DATE=2020-06-01
+./build.sh overlay
 ```
 
 Build and push a multi-architecture docker image from these rootfs:

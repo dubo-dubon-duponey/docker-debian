@@ -80,6 +80,30 @@ target "debootstrap" {
   ]
 }
 
+target "overlay" {
+  dockerfile = "${PWD}/Dockerfile"
+  context = "${PWD}/context/debootstrap"
+  target = "overlay"
+  args = {
+    APTPROXY = "${APTPROXY}"
+    DEBIAN_SUITE = "${DEBIAN_SUITE}"
+    DEBIAN_DATE = "${DEBIAN_DATE}"
+  }
+  tags = []
+  pull = true
+  no-cache = false
+  platforms = ["local"]
+  output = [
+    "${PWD}/context/debian",
+  ]
+  cache-to = [
+    "type=local,dest=${PWD}/cache/buildkit"
+  ]
+  cache-from = [
+    "type=local,src=${PWD}/cache/buildkit"
+  ]
+}
+
 target "debian" {
   inherits = ["shared"]
   context = "${PWD}/context/debian"

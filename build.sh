@@ -114,7 +114,11 @@ root="$(cd "$(dirname "${BASH_SOURCE[0]:-$PWD}")" 2>/dev/null 1>&2 && pwd)"
 LICENSE="$(head -n 1 "$root/LICENSE")"
 # https://tools.ietf.org/html/rfc3339
 # XXX it doesn't seem like BSD date can format the timezone appropriately according to RFC3339 - eg: %:z doesn't work and %z misses the colon, so the gymnastic here
-DATE="$(date +%Y-%m-%dT%T%z | sed -E 's/([0-9]{2})([0-9]{2})$/\1:\2/')"
+# This is date now
+#DATE="$(date +%Y-%m-%dT%T%z | sed -E 's/([0-9]{2})([0-9]{2})$/\1:\2/')"
+# This is last commit date - a much better date actually...
+DATE="$(git -C "$root" log -1 --format="%at" | xargs -I{} date -r {} +%Y-%m-%dT%T%z | sed -E 's/([0-9]{2})([0-9]{2})$/\1:\2/')"
+
 VERSION="$(git -C "$root" describe --match 'v[0-9]*' --dirty='.m' --always)"
 REVISION="$(git -C "$root" rev-parse HEAD)$(if ! git -C "$root" diff --no-ext-diff --quiet --exit-code; then printf ".m\\n"; fi)"
 # XXX this is dirty, resolve ssh aliasing to github by default

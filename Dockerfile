@@ -136,6 +136,31 @@ FROM          scratch                                                           
 COPY          --from=debootstrap-build /rootfs /rootfs
 
 ########################################################################################################################
+# Overlay for our additional files
+########################################################################################################################
+# hadolint ignore=DL3006
+FROM          scratch                                                                                                   AS overlay-build
+# The platform we are on
+ARG           BUILDPLATFORM
+
+# What we target
+ARG           DEBIAN_DATE=2020-01-01
+
+# Adding our rootfs
+ADD           ./rootfs/$BUILDPLATFORM/debootstrap.tar /
+
+# Since we are on snapshot, we need to ignore expired signatures
+RUN           mkdir -p /rootfs/etc/apt/apt.conf.d/
+RUN           printf 'Acquire::Check-Valid-Until no;\n' > /rootfs/etc/apt/apt.conf.d/99-dbdbdp-no-check-valid-until.conf
+
+RUN           epoch="$(date --date "${DEBIAN_DATE}T00:00:00Z" +%s)"; find /rootfs -newermt "@$epoch" -exec touch --no-dereference --date="@$epoch" '{}' +
+
+RUN           tar -cf /overlay.tar /rootfs
+
+FROM          scratch                                                                                                   AS overlay
+COPY          --from=overlay-build /overlay.tar /overlay.tar
+
+########################################################################################################################
 # Our final, multi-arch, Debian Buster image, using the rootfs generated in the step above
 ########################################################################################################################
 FROM          scratch                                                                                                   AS debian
@@ -145,8 +170,7 @@ ARG           DEBIAN_SUITE=buster
 ARG           TARGETPLATFORM
 
 ADD           ./rootfs/$TARGETPLATFORM/"${DEBIAN_SUITE}-${DEBIAN_DATE}".tar /
-
-RUN           printf 'Acquire::Check-Valid-Until no;\n' > /etc/apt/apt.conf.d/99-dbdbdp-no-check-valid-until.conf
+ADD           ./overlay.tar /
 
 ARG           BUILD_CREATED="1976-04-14T17:00:00-07:00"
 ARG           BUILD_URL="https://github.com/dubodubonduponey/nonexistent"
@@ -173,6 +197,8 @@ LABEL         org.opencontainers.image.ref.name="$BUILD_REF_NAME"
 LABEL         org.opencontainers.image.title="$BUILD_TITLE"
 LABEL         org.opencontainers.image.description="$BUILD_DESCRIPTION"
 
+ONBUILD RUN   printf 'Acquire::HTTP::proxy "%s";\n' "$APTPROXY" > /etc/apt/apt.conf.d/99-dbdbdp-proxy.conf; \
+              epoch="$(date --date "${DEBIAN_DATE}T00:00:00Z" +%s)"; find /etc -newermt "@$epoch" -exec touch --no-dereference --date="@$epoch" '{}' +
+
 # Ensure that subsequent calls to apt will honor on build proxy argument
 ONBUILD ARG   APTPROXY=""
-ONBUILD RUN   printf 'Acquire::HTTP::proxy "%s";\n' "$APTPROXY" > /etc/apt/apt.conf.d/99-dbdbdp-proxy.conf
