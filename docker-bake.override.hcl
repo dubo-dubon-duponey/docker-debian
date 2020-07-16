@@ -35,7 +35,7 @@ group "default" {
 
 target "rebootstrap" {
   dockerfile = "${PWD}/Dockerfile"
-  context = "${PWD}/context/rebootstrap"
+  context = "${PWD}/context/debootstrap"
   target = "rebootstrap"
   args = {
     APTPROXY = "${APTPROXY}"

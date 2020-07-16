@@ -13,7 +13,7 @@ ARG           DEBIAN_REBOOTSTRAP=docker.io/dubodubonduponey/debian@sha256:cb2529
 ########################################################################################################################
 
 # hadolint ignore=DL3006
-FROM          --platform=$BUILDPLATFORM $DEBIAN_REBOOTSTRAP                                                             AS rebootstrap-build
+FROM          --platform=$BUILDPLATFORM $DEBIAN_REBOOTSTRAP                                                             AS rebootstrap-builder
 
 # The platform we are on
 ARG           BUILDPLATFORM
@@ -22,31 +22,30 @@ ARG           BUILDPLATFORM
 ARG           DEBIAN_DATE=2020-01-01
 ARG           DEBIAN_SUITE=buster
 
-# Honor proxy - but only if it's not https
-ARG           APTPROXY=""
-RUN           printf 'Acquire::HTTP::proxy "%s";\n' "$APTPROXY" > /etc/apt/apt.conf.d/99-dbdbdp-proxy.conf
-# Using snapshot, packages sig are outdated by nature
-RUN           printf 'Acquire::Check-Valid-Until no;\n' > /etc/apt/apt.conf.d/99-dbdbdp-no-check-valid-until.conf
+# Honor proxy
+ARG           APTPROXY
+# Honor other apt options, specifically using snapshot, packages sig are outdated by nature
+ARG           APTOPTIONS="Acquire::Check-Valid-Until=no"
+
+# Copy over our deviation script
+COPY          ./apt-get /usr/local/sbin/
 
 # Get debuerreotype and debootstrap in
 RUN           apt-get update -qq \
               && apt-get install -qq --no-install-recommends \
-                git=1:2.20.1-2+deb10u1 \
                 debootstrap=1.0.114
 
 WORKDIR       /bootstrapper
 
 # 0.10
-ARG           GIT_REPO=github.com/debuerreotype/debuerreotype
-ARG           GIT_VERSION=20b4f32e93b9f0b039e2fd9fefd8527a5cb21b3e
-RUN           git clone git://$GIT_REPO .
-RUN           git checkout $GIT_VERSION
+ADD           ./debuerreotype .
 RUN           cp scripts/* /usr/sbin/
 RUN           cp scripts/.* /usr/sbin/ || true
-COPY          ./debuerreotype-chroot /usr/sbin
 
-# XXX note that debuerreotype does not honor apt proxy config from above, hence the exception in using http_proxy directly...
-# hadolint ignore=DL4006
+# Copy over our debu deviation script - other scripts insist in calling a script in the SAME dir
+COPY          ./debuerreotype-chroot  /usr/sbin/
+
+# XXX note that debuerreotype does not honor apt proxy config no matter how it's being set, so, enforcing it directly below through http_proxy
 RUN           set -eu; \
               targetarch="$(dpkg --print-architecture | awk -F- "{ print \$NF }")"; \
               mkdir -p "/rootfs/$BUILDPLATFORM"; \
@@ -56,47 +55,53 @@ RUN           set -eu; \
               debuerreotype-tar rootfs-"$targetarch" "/rootfs/$BUILDPLATFORM/debootstrap.tar"; \
               sha512sum "/rootfs/$BUILDPLATFORM/debootstrap.tar" > "/rootfs/$BUILDPLATFORM/debootstrap.sha"
 
+########################################################################################################################
+# Export of the above
+########################################################################################################################
 FROM          scratch                                                                                                   AS rebootstrap
-COPY          --from=rebootstrap-build /rootfs /rootfs
+COPY          --from=rebootstrap-builder /rootfs /rootfs
 
 ########################################################################################################################
-# This is the image that will produce our final rootfs - booting off the initial rootfs obtained from above
+# This is a builder image from scratch leveraging the initial rootfs from above
+# It provides a clean-room environment with no external image dependency from a stable rootfs
 ########################################################################################################################
-FROM          --platform=$BUILDPLATFORM scratch                                                                         AS debootstrap-build
+FROM          --platform=$BUILDPLATFORM scratch                                                                         AS builder
 
 # The platform we are on
 ARG           BUILDPLATFORM
 
 # What we target
-ARG           DEBIAN_DATE=2020-01-01
-ARG           DEBIAN_SUITE=buster
+ONBUILD ARG   DEBIAN_DATE=2020-01-01
+ONBUILD ARG   DEBIAN_SUITE=buster
+
+# Our environmental variable
+ONBUILD ARG   APTPROXY
+ONBUILD ARG   APTOPTIONS="Acquire::Check-Valid-Until=no"
 
 # Adding our rootfs
 ADD           ./rootfs/$BUILDPLATFORM/debootstrap.tar /
+COPY          ./apt-get /usr/local/sbin/
 
-# Honor proxy
-ARG           APTPROXY=""
-RUN           printf 'Acquire::HTTP::proxy "%s";\n' "$APTPROXY" > /etc/apt/apt.conf.d/99-dbdbdp-proxy.conf
-# Using snapshot, packages sig are outdated by nature
-RUN           printf 'Acquire::Check-Valid-Until no;\n' > /etc/apt/apt.conf.d/99-dbdbdp-no-check-valid-until.conf
+
+########################################################################################################################
+# This is a builder image that will produce our final rootfs for all architectures
+########################################################################################################################
+FROM          builder                                                                                                   AS debootstrap-builder
 
 # Installing qemu and debue/deboot
 RUN           apt-get update -qq \
               && apt-get install -qq --no-install-recommends \
-                git=1:2.20.1-2+deb10u1 \
                 debootstrap=1.0.114 \
                 qemu-user-static=1:3.1+dfsg-8+deb10u2
 
-# Building our rootfs on all platforms we support (armel, armhf, arm64, amd64)
 WORKDIR       /bootstrapper
 
 # 0.10
-ARG           GIT_REPO=github.com/debuerreotype/debuerreotype
-ARG           GIT_VERSION=20b4f32e93b9f0b039e2fd9fefd8527a5cb21b3e
-RUN           git clone git://$GIT_REPO .
-RUN           git checkout $GIT_VERSION
+ADD           ./debuerreotype .
 RUN           cp scripts/* /usr/sbin/
 RUN           cp scripts/.* /usr/sbin/ || true
+
+# Copy over our debu deviation script - other scripts insist in calling a script in the SAME dir
 COPY          ./debuerreotype-chroot /usr/sbin
 
 # XXX see note above about http_proxy and debu
@@ -108,7 +113,15 @@ RUN           set -eu; \
 RUN           set -eu; \
               for targetarch in armel armhf arm64 amd64 i386 s390x ppc64el; do \
                 http_proxy="$APTPROXY" debuerreotype-apt-get rootfs-"$targetarch" update -qq; \
+              done
+
+RUN           set -eu; \
+              for targetarch in armel armhf arm64 amd64 i386 s390x ppc64el; do \
                 http_proxy="$APTPROXY" debuerreotype-apt-get rootfs-"$targetarch" dist-upgrade -yqq; \
+              done
+
+RUN           set -eu; \
+              for targetarch in armel armhf arm64 amd64 i386 s390x ppc64el; do \
                 debuerreotype-minimizing-config rootfs-"$targetarch"; \
                 debuerreotype-slimify rootfs-"$targetarch"; \
               done
@@ -132,33 +145,23 @@ RUN           debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-ppc64
 
 RUN           sha512sum /rootfs/linux/*/*.tar /rootfs/linux/*/*/*.tar > /rootfs/"${DEBIAN_SUITE}-${DEBIAN_DATE}".sha
 
-FROM          scratch                                                                                                   AS debootstrap
-COPY          --from=debootstrap-build /rootfs /rootfs
-
 ########################################################################################################################
 # Overlay for our additional files
 ########################################################################################################################
-# hadolint ignore=DL3006
-FROM          scratch                                                                                                   AS overlay-build
-# The platform we are on
-ARG           BUILDPLATFORM
-
-# What we target
-ARG           DEBIAN_DATE=2020-01-01
-
-# Adding our rootfs
-ADD           ./rootfs/$BUILDPLATFORM/debootstrap.tar /
-
-# Since we are on snapshot, we need to ignore expired signatures
-RUN           mkdir -p /rootfs/etc/apt/apt.conf.d/
-RUN           printf 'Acquire::Check-Valid-Until no;\n' > /rootfs/etc/apt/apt.conf.d/99-dbdbdp-no-check-valid-until.conf
-
+FROM          builder                                                                                                   AS overlay-builder
+# Add our apt-get deviation, set date, pack it up
+COPY          ./apt-get /rootfs/usr/local/sbin/apt-get
 RUN           epoch="$(date --date "${DEBIAN_DATE}T00:00:00Z" +%s)"; find /rootfs -newermt "@$epoch" -exec touch --no-dereference --date="@$epoch" '{}' +
-
 RUN           tar -cf /overlay.tar /rootfs
 
+########################################################################################################################
+# Exports of the above
+########################################################################################################################
+FROM          scratch                                                                                                   AS debootstrap
+COPY          --from=debootstrap-builder /rootfs /rootfs
+
 FROM          scratch                                                                                                   AS overlay
-COPY          --from=overlay-build /overlay.tar /overlay.tar
+COPY          --from=overlay-builder /overlay.tar /overlay.tar
 
 ########################################################################################################################
 # Our final, multi-arch, Debian Buster image, using the rootfs generated in the step above
@@ -197,8 +200,5 @@ LABEL         org.opencontainers.image.ref.name="$BUILD_REF_NAME"
 LABEL         org.opencontainers.image.title="$BUILD_TITLE"
 LABEL         org.opencontainers.image.description="$BUILD_DESCRIPTION"
 
-ONBUILD RUN   printf 'Acquire::HTTP::proxy "%s";\n' "$APTPROXY" > /etc/apt/apt.conf.d/99-dbdbdp-proxy.conf; \
-              epoch="$(date --date "${DEBIAN_DATE}T00:00:00Z" +%s)"; find /etc -newermt "@$epoch" -exec touch --no-dereference --date="@$epoch" '{}' +
-
-# Ensure that subsequent calls to apt will honor on build proxy argument
 ONBUILD ARG   APTPROXY=""
+ONBUILD ARG   APTOPTIONS="Acquire::Check-Valid-Until=no"

@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+set -o errexit -o errtrace -o functrace -o nounset -o pipefail
+
+# Get all arguments
+args=("$@")
+
+# Optionally honor proxy configuration
+[ ! "${APTPROXY:-}" ] || args+=("-o" "Acquire::HTTP::proxy=$APTPROXY")
+
+# Optionally honor random options (see https://linux.die.net/man/5/apt.conf)
+APTOPTIONS=${APTOPTIONS:-}
+for i in ${APTOPTIONS[*]}; do
+  args+=("-o" "$i")
+done
+
+# Call the real apt-get now
+/usr/bin/apt-get "${args[@]}"
