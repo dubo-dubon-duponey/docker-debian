@@ -31,7 +31,8 @@ ARG           APTOPTIONS="Acquire::Check-Valid-Until=no"
 COPY          ./apt-get /usr/local/sbin/
 
 # Get debuerreotype and debootstrap in
-RUN           apt-get update -qq \
+RUN           set -eu; \
+              apt-get update -qq \
               && apt-get install -qq --no-install-recommends \
                 debootstrap=1.0.114
 
@@ -39,8 +40,10 @@ WORKDIR       /bootstrapper
 
 # 0.10
 ADD           ./debuerreotype .
-RUN           cp scripts/* /usr/sbin/
-RUN           cp scripts/.* /usr/sbin/ || true
+
+RUN           set -eu; \
+              cp scripts/* /usr/sbin/; \
+              cp scripts/.* /usr/sbin/ || true
 
 # Copy over our debu deviation script - other scripts insist in calling a script in the SAME dir
 COPY          ./debuerreotype-chroot  /usr/sbin/
@@ -89,7 +92,8 @@ COPY          ./apt-get /usr/local/sbin/
 FROM          builder                                                                                                   AS debootstrap-builder
 
 # Installing qemu and debue/deboot
-RUN           apt-get update -qq \
+RUN           set -eu; \
+              apt-get update -qq \
               && apt-get install -qq --no-install-recommends \
                 debootstrap=1.0.114 \
                 qemu-user-static=1:3.1+dfsg-8+deb10u2
@@ -98,8 +102,10 @@ WORKDIR       /bootstrapper
 
 # 0.10
 ADD           ./debuerreotype .
-RUN           cp scripts/* /usr/sbin/
-RUN           cp scripts/.* /usr/sbin/ || true
+
+RUN           set -eu; \
+              cp scripts/* /usr/sbin/; \
+              cp scripts/.* /usr/sbin/ || true
 
 # Copy over our debu deviation script - other scripts insist in calling a script in the SAME dir
 COPY          ./debuerreotype-chroot /usr/sbin
@@ -127,23 +133,24 @@ RUN           set -eu; \
               done
 
 # Generate tarballs, sha, exit
-RUN           mkdir -p "/rootfs/linux/arm/v6"
-RUN           mkdir -p "/rootfs/linux/arm/v7"
-RUN           mkdir -p "/rootfs/linux/arm64"
-RUN           mkdir -p "/rootfs/linux/amd64"
-RUN           mkdir -p "/rootfs/linux/386"
-RUN           mkdir -p "/rootfs/linux/s390x"
-RUN           mkdir -p "/rootfs/linux/ppc64el"
+RUN           set -eu; \
+              mkdir -p "/rootfs/linux/arm/v6"; \
+              mkdir -p "/rootfs/linux/arm/v7"; \
+              mkdir -p "/rootfs/linux/arm64"; \
+              mkdir -p "/rootfs/linux/amd64"; \
+              mkdir -p "/rootfs/linux/386"; \
+              mkdir -p "/rootfs/linux/s390x"; \
+              mkdir -p "/rootfs/linux/ppc64el"
 
-RUN           debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-armel "/rootfs/linux/arm/v6/${DEBIAN_SUITE}-${DEBIAN_DATE}".tar
-RUN           debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-armhf "/rootfs/linux/arm/v7/${DEBIAN_SUITE}-${DEBIAN_DATE}".tar
-RUN           debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-arm64 "/rootfs/linux/arm64/${DEBIAN_SUITE}-${DEBIAN_DATE}".tar
-RUN           debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-amd64 "/rootfs/linux/amd64/${DEBIAN_SUITE}-${DEBIAN_DATE}".tar
-RUN           debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-i386 "/rootfs/linux/386/${DEBIAN_SUITE}-${DEBIAN_DATE}".tar
-RUN           debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-s390x "/rootfs/linux/s390x/${DEBIAN_SUITE}-${DEBIAN_DATE}".tar
-RUN           debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-ppc64el "/rootfs/linux/ppc64el/${DEBIAN_SUITE}-${DEBIAN_DATE}".tar
-
-RUN           sha512sum /rootfs/linux/*/*.tar /rootfs/linux/*/*/*.tar > /rootfs/"${DEBIAN_SUITE}-${DEBIAN_DATE}".sha
+RUN           set -eu; \
+              debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-armel "/rootfs/linux/arm/v6/${DEBIAN_SUITE}-${DEBIAN_DATE}".tar; \
+              debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-armhf "/rootfs/linux/arm/v7/${DEBIAN_SUITE}-${DEBIAN_DATE}".tar; \
+              debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-arm64 "/rootfs/linux/arm64/${DEBIAN_SUITE}-${DEBIAN_DATE}".tar; \
+              debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-amd64 "/rootfs/linux/amd64/${DEBIAN_SUITE}-${DEBIAN_DATE}".tar; \
+              debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-i386 "/rootfs/linux/386/${DEBIAN_SUITE}-${DEBIAN_DATE}".tar; \
+              debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-s390x "/rootfs/linux/s390x/${DEBIAN_SUITE}-${DEBIAN_DATE}".tar; \
+              debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-ppc64el "/rootfs/linux/ppc64el/${DEBIAN_SUITE}-${DEBIAN_DATE}".tar; \
+              sha512sum /rootfs/linux/*/*.tar /rootfs/linux/*/*/*.tar > /rootfs/"${DEBIAN_SUITE}-${DEBIAN_DATE}".sha
 
 ########################################################################################################################
 # Overlay for our additional files
@@ -151,8 +158,11 @@ RUN           sha512sum /rootfs/linux/*/*.tar /rootfs/linux/*/*/*.tar > /rootfs/
 FROM          builder                                                                                                   AS overlay-builder
 # Add our apt-get deviation, set date, pack it up
 COPY          ./apt-get /rootfs/usr/local/sbin/apt-get
-RUN           epoch="$(date --date "${DEBIAN_DATE}T00:00:00Z" +%s)"; find /rootfs -newermt "@$epoch" -exec touch --no-dereference --date="@$epoch" '{}' +
-RUN           tar -cf /overlay.tar /rootfs
+
+RUN           set -eu; \
+              epoch="$(date --date "${DEBIAN_DATE}T00:00:00Z" +%s)"; find /rootfs -newermt "@$epoch" -exec touch --no-dereference --date="@$epoch" '{}' +
+RUN           set -eu; \
+              tar -C /rootfs -cf /overlay.tar .
 
 ########################################################################################################################
 # Exports of the above
@@ -200,5 +210,7 @@ LABEL         org.opencontainers.image.ref.name="$BUILD_REF_NAME"
 LABEL         org.opencontainers.image.title="$BUILD_TITLE"
 LABEL         org.opencontainers.image.description="$BUILD_DESCRIPTION"
 
-ONBUILD ARG   APTPROXY=""
+ONBUILD ARG   APTPROXY
 ONBUILD ARG   APTOPTIONS="Acquire::Check-Valid-Until=no"
+ONBUILD ARG   http_proxy
+ONBUILD ARG   https_proxy
