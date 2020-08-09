@@ -39,7 +39,7 @@ RUN           set -eu; \
 WORKDIR       /bootstrapper
 
 # 0.10
-ADD           ./debuerreotype .
+COPY          ./debuerreotype .
 
 RUN           set -eu; \
               cp scripts/* /usr/sbin/; \
@@ -49,6 +49,7 @@ RUN           set -eu; \
 COPY          ./debuerreotype-chroot  /usr/sbin/
 
 # XXX note that debuerreotype does not honor apt proxy config no matter how it's being set, so, enforcing it directly below through http_proxy
+# hadolint ignore=DL4006
 RUN           set -eu; \
               targetarch="$(dpkg --print-architecture | awk -F- "{ print \$NF }")"; \
               mkdir -p "/rootfs/$BUILDPLATFORM"; \
@@ -101,7 +102,7 @@ RUN           set -eu; \
 WORKDIR       /bootstrapper
 
 # 0.10
-ADD           ./debuerreotype .
+COPY          ./debuerreotype .
 
 RUN           set -eu; \
               cp scripts/* /usr/sbin/; \
@@ -171,6 +172,7 @@ FROM          scratch                                                           
 COPY          --from=debootstrap-builder /rootfs /rootfs
 
 FROM          scratch                                                                                                   AS overlay
+# hadolint ignore=DL3010
 COPY          --from=overlay-builder /overlay.tar /overlay.tar
 
 ########################################################################################################################
