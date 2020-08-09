@@ -117,7 +117,7 @@ LICENSE="$(head -n 1 "$root/LICENSE")"
 # This is date now
 #DATE="$(date +%Y-%m-%dT%T%z | sed -E 's/([0-9]{2})([0-9]{2})$/\1:\2/')"
 # This is last commit date - a much better date actually...
-DATE="$(date -r "$(git -C "$root" log -1 --format="%at")" +%Y-%m-%dT%T%z 2>/dev/null || date --date="@$(git -C "$root" log -1 --format="%at")" | sed -E 's/([0-9]{2})([0-9]{2})$/\1:\2/')"
+DATE="$(date -r "$(git -C "$root" log -1 --format="%at")" +%Y-%m-%dT%T%z 2>/dev/null || date --date="@$(git -C "$root" log -1 --format="%at")" +%Y-%m-%dT%T%z | sed -E 's/([0-9]{2})([0-9]{2})$/\1:\2/')"
 
 VERSION="$(git -C "$root" describe --match 'v[0-9]*' --dirty='.m' --always)"
 REVISION="$(git -C "$root" rev-parse HEAD)$(if ! git -C "$root" diff --no-ext-diff --quiet --exit-code; then printf ".m\\n"; fi)"
