@@ -140,7 +140,7 @@ ARG           DEBOOTSTRAP_SUITE=buster
 ARG           DEBOOTSTRAP_DATE=2020-01-01
 ARG           TARGETPLATFORM
 
-ADD           ./rootfs/$TARGETPLATFORM/"${DEBIAN_SUITE}-${DEBIAN_DATE}".tar /
+ADD           ./rootfs/$TARGETPLATFORM/"${DEBOOTSTRAP_SUITE}-${DEBOOTSTRAP_DATE}".tar /
 ```
 
 And will produce Debian images from the stage-1 rootfs.

@@ -145,9 +145,9 @@ COPY          ./debuerreotype/scripts /usr/sbin/
 COPY          ./debuerreotype-chroot  /usr/sbin/
 
 # i386 s390x ppc64el
-#              debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-i386 "/rootfs/linux/386/${DEBIAN_SUITE}-${DEBIAN_DATE}".tar; \
-#              debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-s390x "/rootfs/linux/s390x/${DEBIAN_SUITE}-${DEBIAN_DATE}".tar; \
-#              debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-ppc64el "/rootfs/linux/ppc64el/${DEBIAN_SUITE}-${DEBIAN_DATE}".tar; \
+#              debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-i386 "/rootfs/linux/386/${DEBOOTSTRAP_SUITE}-${DEBOOTSTRAP_DATE}".tar; \
+#              debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-s390x "/rootfs/linux/s390x/${DEBOOTSTRAP_SUITE}-${DEBOOTSTRAP_DATE}".tar; \
+#              debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-ppc64el "/rootfs/linux/ppc64el/${DEBOOTSTRAP_SUITE}-${DEBOOTSTRAP_DATE}".tar; \
 # hadolint ignore=DL4006
 RUN           set -eu; \
               for targetarch in armel armhf arm64 amd64; do \

@@ -2,11 +2,11 @@ variable "IMAGE_NAME" {
   default = "untitled"
 }
 
-variable "DEBIAN_DATE" {
+variable "DEBOOTSTRAP_DATE" {
   default = "2020-01-01"
 }
 
-variable "DEBIAN_SUITE" {
+variable "DEBOOTSTRAP_SUITE" {
   default = "buster"
 }
 
@@ -132,8 +132,8 @@ target "shared" {
     GOPROXY = "${GOPROXY}"
     GO111MODULE = "${GO111MODULE}"
 
-    BUILDER_BASE = "${equal(BUILDER_BASE,"") ? "${REGISTRY}/dubodubonduponey/base:builder-${DEBIAN_SUITE}-${DEBIAN_DATE}" : "${BUILDER_BASE}"}"
-    RUNTIME_BASE = "${equal(RUNTIME_BASE,"") ? "${REGISTRY}/dubodubonduponey/base:runtime-${DEBIAN_SUITE}-${DEBIAN_DATE}" : "${RUNTIME_BASE}"}"
+    BUILDER_BASE = "${equal(BUILDER_BASE,"") ? "${REGISTRY}/dubodubonduponey/base:builder-${DEBOOTSTRAP_SUITE}-${DEBOOTSTRAP_DATE}" : "${BUILDER_BASE}"}"
+    RUNTIME_BASE = "${equal(RUNTIME_BASE,"") ? "${REGISTRY}/dubodubonduponey/base:runtime-${DEBOOTSTRAP_SUITE}-${DEBOOTSTRAP_DATE}" : "${RUNTIME_BASE}"}"
 
     BUILD_TITLE = "${TITLE}"
     BUILD_DESCRIPTION = "${DESCRIPTION}"

@@ -37,7 +37,7 @@ Generate rootfs from Debian Buster at a specific date, for all platforms:
 
 ```bash
 # What you want
-export DEBIAN_DATE=2020-06-01
+export DEBOOTSTRAP_DATE=2020-06-01
 
 # Build the rootfs for all requested architectures and store them locally
 ./build.sh debootstrap
@@ -47,7 +47,7 @@ Build and push a multi-architecture docker image from these rootfs:
 
 ```bash
 # What you want
-export DEBIAN_DATE=2020-06-01
+export DEBOOTSTRAP_DATE=2020-06-01
 # Your name
 export VENDOR="YOU"
 # On what platforms you want it (default to all supported platforms if left unspecified):
@@ -77,7 +77,7 @@ IMAGE_NAME="debian"
 
 An advanced example:
 ```
-DEBIAN_DATE=2020-06-01 ./build.sh --no-cache --set "debian.tags=dubodubonduponey/debian:buster-2020-06-01" --set "debian.tags=registry.dev.REDACTED/dubodubonduponey/debian:buster-2020-06-01" --push --progress plain
+DEBOOTSTRAP_DATE=2020-06-01 ./build.sh --no-cache --set "debian.tags=dubodubonduponey/debian:buster-2020-06-01" --set "debian.tags=registry.dev.REDACTED/dubodubonduponey/debian:buster-2020-06-01" --push --progress plain
 ```
 
 You may also (of course) entirely bypass the provided build script and use the bake files directly for further control.
