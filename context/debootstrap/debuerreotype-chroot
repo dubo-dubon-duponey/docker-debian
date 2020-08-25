@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
+# The purpose of this is to remove unshare which does require extra privileges
+
 thisDir="$(dirname "$(readlink -f "$BASH_SOURCE")")"
+# shellcheck source=/dev/null
 source "$thisDir/.constants.sh" \
 	'<target-dir> <command> [args...]' \
 	'rootfs apt-get update'
@@ -24,9 +27,16 @@ epoch="$(< "$targetDir/debuerreotype-epoch")"
 
 export targetDir epoch
 
+# Carry forward resolv.conf
 cp /etc/resolv.conf "$targetDir"/etc/resolv.conf
+# And our smarter apt-get
+[ -e "$targetDir"/usr/local/sbin/apt-get ] || {
+  cp /usr/local/sbin/apt-get "$targetDir"/usr/local/sbin/apt-get
+  touch --no-dereference --date="@$epoch" "$targetDir"/usr/local/sbin/apt-get
+}
 
-chroot "$targetDir" /usr/bin/env -i http_proxy="$APTPROXY" PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" TZ="$TZ" LC_ALL="$LC_ALL" SOURCE_DATE_EPOCH="$epoch" "$cmd" "$@"
+# Chroot, with the additional environment
+chroot "$targetDir" /usr/bin/env -i APT_SOURCES="${DEBOOTSTRAP_SOURCES:-}" APT_TRUSTED="${DEBOOTSTRAP_TRUSTED:-}" APT_OPTIONS="${DEBOOTSTRAP_OPTIONS:-}" PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" TZ="$TZ" LC_ALL="$LC_ALL" SOURCE_DATE_EPOCH="$epoch" "$cmd" "$@"
 
 rm "$targetDir"/etc/resolv.conf
 touch "$targetDir"/etc/resolv.conf
