@@ -18,8 +18,8 @@ if [ ! "$TEST_DOES_NOT_BUILD" ]; then
   ./build.sh --no-cache --progress plain rebootstrap
   s="$(cat context/debootstrap/rootfs/linux/amd64/debootstrap.sha)"
   >&2 printf "rebootstrap produced %s\n" "$s"
-  if [ "${s%% *}" != "02ff894af506ddbc2f22b7227822e6d052b24e7fbc8ce09a3ec1c5274b626a7147913bba3bcf13d6fb1330609a608ed724b98806f3d3f715164d9c70d461cec1" ]; then
-    >&2 printf "ALERT - rebootstrap is no longer producing 02ff894af506ddbc2f22b7227822e6d052b24e7fbc8ce09a3ec1c5274b626a7147913bba3bcf13d6fb1330609a608ed724b98806f3d3f715164d9c70d461cec1\n"
+  if [ "${s%% *}" != "01b66f7b60e8dd551d990f1185aba5f20376f63bee2e9b527d7c63d6075961b20344dca84e38b3df737dcb021ffcae1d1739948ad0ef8f3aa2dbd0f02ec41382" ]; then
+    >&2 printf "ALERT - rebootstrap is no longer producing 01b66f7b60e8dd551d990f1185aba5f20376f63bee2e9b527d7c63d6075961b20344dca84e38b3df737dcb021ffcae1d1739948ad0ef8f3aa2dbd0f02ec41382\n"
     exit 1
   else
     >&2 printf "rebootstrap ok\n"
@@ -29,8 +29,8 @@ if [ ! "$TEST_DOES_NOT_BUILD" ]; then
   DEBOOTSTRAP_DATE=2020-01-01 ./build.sh --no-cache --progress plain debootstrap
   s="$(grep amd64 context/debian/rootfs/buster-2020-01-01.sha)"
   >&2 printf "debootstrap produced %s\n" "$s"
-  if [ "${s%% *}" != "02ff894af506ddbc2f22b7227822e6d052b24e7fbc8ce09a3ec1c5274b626a7147913bba3bcf13d6fb1330609a608ed724b98806f3d3f715164d9c70d461cec1" ]; then
-    >&2 printf "ALERT - debootstrap is no longer producing 02ff894af506ddbc2f22b7227822e6d052b24e7fbc8ce09a3ec1c5274b626a7147913bba3bcf13d6fb1330609a608ed724b98806f3d3f715164d9c70d461cec1\n"
+  if [ "${s%% *}" != "01b66f7b60e8dd551d990f1185aba5f20376f63bee2e9b527d7c63d6075961b20344dca84e38b3df737dcb021ffcae1d1739948ad0ef8f3aa2dbd0f02ec41382" ]; then
+    >&2 printf "ALERT - debootstrap is no longer producing 01b66f7b60e8dd551d990f1185aba5f20376f63bee2e9b527d7c63d6075961b20344dca84e38b3df737dcb021ffcae1d1739948ad0ef8f3aa2dbd0f02ec41382\n"
     exit 1
   else
     >&2 printf "debootstrap ok\n"
