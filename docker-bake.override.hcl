@@ -44,7 +44,7 @@ variable "DEBOOTSTRAP_TRUSTED" {
 }
 
 variable "APT_OPTIONS" {
-  default = "Acquire::HTTP::User-Agent=DuboDubonDuponey/0.1"
+  default = "Acquire::HTTP::User-Agent=DuboDubonDuponey/0.1 Acquire::Check-Valid-Until=no"
 }
 
 variable "APT_SOURCES" {
