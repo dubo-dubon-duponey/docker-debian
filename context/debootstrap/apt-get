@@ -26,6 +26,7 @@ if [ "$APT_TRUSTED" ]; then
 fi
 
 # Call the real apt-get now
+# >&2 printf "Running deviation: apt-get %s\n" "${args[*]}"
 /usr/bin/apt-get "${args[@]}"
 
 rm -f /tmp/sources.list

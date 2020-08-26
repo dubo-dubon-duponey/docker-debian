@@ -10,7 +10,7 @@ variable "VENDOR" {
 
 # Root image to start from in case we do not even have a local rootfs
 variable "REBOOTSTRAP_IMAGE" {
-  default = "docker.io/dubodubonduponey/debian@sha256:128b6ec052ca29dada299c7848b36ea7ce8413b18ee2bc1799e001e98cc117f6"
+  default = "docker.io/dubodubonduponey/debian@sha256:cb25298b653310dd8b7e52b743053415452708912fe0e8d3d0d4ccf6c4003746"
 }
 
 # What to debootstrap
@@ -19,7 +19,11 @@ variable "DEBOOTSTRAP_DATE" {
 }
 
 variable "DEBOOTSTRAP_SUITE" {
-default = "buster"
+  default = "buster"
+}
+
+variable "DEBOOTSTRAP_PLATFORMS" {
+  default = "armel armhf arm64 amd64"
 }
 
 variable "DEBOOTSTRAP_REPOSITORY" {
@@ -28,7 +32,7 @@ variable "DEBOOTSTRAP_REPOSITORY" {
 
 # Debootstrap additional options
 variable "DEBOOTSTRAP_OPTIONS" {
-  default = "Acquire::HTTP::User-Agent=DuboDubonDuponey/0.1"
+  default = "Acquire::HTTP::User-Agent=DuboDubonDuponey/0.1 Acquire::Check-Valid-Until=no"
 }
 
 variable "DEBOOTSTRAP_SOURCES" {
@@ -109,6 +113,7 @@ target "debootstrap" {
     DEBOOTSTRAP_REPOSITORY = "${DEBOOTSTRAP_REPOSITORY}"
     DEBOOTSTRAP_DATE = "${DEBOOTSTRAP_DATE}"
     DEBOOTSTRAP_SUITE = "${DEBOOTSTRAP_SUITE}"
+    DEBOOTSTRAP_PLATFORMS = "${DEBOOTSTRAP_PLATFORMS}"
 
     DEBOOTSTRAP_OPTIONS = "${DEBOOTSTRAP_OPTIONS}"
     DEBOOTSTRAP_SOURCES = "${DEBOOTSTRAP_SOURCES}"

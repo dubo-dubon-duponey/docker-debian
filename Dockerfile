@@ -1,4 +1,4 @@
-ARG           REBOOTSTRAP_IMAGE=docker.io/dubodubonduponey/debian@sha256:128b6ec052ca29dada299c7848b36ea7ce8413b18ee2bc1799e001e98cc117f6
+ARG           REBOOTSTRAP_IMAGE=docker.io/dubodubonduponey/debian@sha256:cb25298b653310dd8b7e52b743053415452708912fe0e8d3d0d4ccf6c4003746
 ########################################################################################################################
 # This first "rebootstrap" target is meant to prepare a *local* rootfs that we will use as a local builder base later on
 # The purpose of this is to make sure our further builder images do not depend on ANY registry
@@ -69,23 +69,27 @@ WORKDIR       /bootstrapper
 # hadolint ignore=DL4006
 RUN           set -eu; \
               targetarch="$(dpkg --print-architecture | awk -F- "{ print \$NF }")"; \
-              mkdir -p "/rootfs/$BUILDPLATFORM"; \
               if [ "${DEBOOTSTRAP_REPOSITORY:-}" ]; then \
                 if [ "${DEBOOTSTRAP_TRUSTED:-}" ]; then \
                   printf "%s" "$DEBOOTSTRAP_TRUSTED" | base64 -d > /tmp/dbdbdp.gpg; \
-                  debuerreotype-init --arch "$targetarch" --no-merged-usr --non-debian --keyring /tmp/dbdbdp.gpg rootfs-"$targetarch" "$DEBOOTSTRAP_SUITE" "$DEBOOTSTRAP_REPOSITORY"; \
+                  debuerreotype-init --arch "$targetarch" --no-merged-usr --non-debian --keyring /tmp/dbdbdp.gpg rootfs "$DEBOOTSTRAP_SUITE" "$DEBOOTSTRAP_REPOSITORY"; \
                 else \
-                  debuerreotype-init --arch "$targetarch" --no-merged-usr --non-debian rootfs-"$targetarch" "$DEBOOTSTRAP_SUITE" "$DEBOOTSTRAP_REPOSITORY"; \
+                  debuerreotype-init --arch "$targetarch" --no-merged-usr --non-debian rootfs "$DEBOOTSTRAP_SUITE" "$DEBOOTSTRAP_REPOSITORY"; \
                 fi; \
               else \
-                debuerreotype-init --arch "$targetarch" --no-merged-usr --debian rootfs-"$targetarch" "$DEBOOTSTRAP_SUITE" "${DEBOOTSTRAP_DATE}T00:00:00Z"; \
-              fi; \
+                debuerreotype-init --arch "$targetarch" --no-merged-usr --debian rootfs "$DEBOOTSTRAP_SUITE" "${DEBOOTSTRAP_DATE}T00:00:00Z"; \
+              fi
+
+RUN           set -eu; \
               if [ "${DEBOOTSTRAP_SOURCES_COMMIT:-}" ]; then \
-                printf "%s\n" "$DEBOOTSTRAP_SOURCES_COMMIT" > rootfs-"$targetarch"/etc/apt/sources.list; \
+                printf "%s\n" "$DEBOOTSTRAP_SOURCES_COMMIT" > rootfs/etc/apt/sources.list; \
               fi; \
-              debuerreotype-minimizing-config rootfs-"$targetarch"; \
-              debuerreotype-slimify rootfs-"$targetarch"; \
-              debuerreotype-tar rootfs-"$targetarch" "/rootfs/$BUILDPLATFORM/debootstrap.tar"; \
+              debuerreotype-minimizing-config rootfs; \
+              debuerreotype-slimify rootfs
+
+RUN           set -eu; \
+              mkdir -p "/rootfs/$BUILDPLATFORM"; \
+              debuerreotype-tar rootfs "/rootfs/$BUILDPLATFORM/debootstrap.tar"; \
               sha512sum "/rootfs/$BUILDPLATFORM/debootstrap.tar" > "/rootfs/$BUILDPLATFORM/debootstrap.sha"
 
 ########################################################################################################################
@@ -126,6 +130,8 @@ ONBUILD ARG   DEBOOTSTRAP_TRUSTED
 ONBUILD ARG   DEBOOTSTRAP_SUITE=buster
 ONBUILD ARG   DEBOOTSTRAP_DATE=2020-01-01
 ONBUILD ARG   DEBOOTSTRAP_REPOSITORY
+ONBUILD ARG   DEBOOTSTRAP_PLATFORMS="armel armhf arm64 amd64"
+# i386 s390x ppc64el
 
 ########################################################################################################################
 # This is a builder image that will produce our final rootfs for all architectures
@@ -144,13 +150,9 @@ WORKDIR       /bootstrapper
 COPY          ./debuerreotype/scripts /usr/sbin/
 COPY          ./debuerreotype-chroot  /usr/sbin/
 
-# i386 s390x ppc64el
-#              debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-i386 "/rootfs/linux/386/${DEBOOTSTRAP_SUITE}-${DEBOOTSTRAP_DATE}".tar; \
-#              debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-s390x "/rootfs/linux/s390x/${DEBOOTSTRAP_SUITE}-${DEBOOTSTRAP_DATE}".tar; \
-#              debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-ppc64el "/rootfs/linux/ppc64el/${DEBOOTSTRAP_SUITE}-${DEBOOTSTRAP_DATE}".tar; \
 # hadolint ignore=DL4006
 RUN           set -eu; \
-              for targetarch in armel armhf arm64 amd64; do \
+              for targetarch in $DEBOOTSTRAP_PLATFORMS; do \
                 if [ "${DEBOOTSTRAP_REPOSITORY:-}" ]; then \
                   if [ "${DEBOOTSTRAP_TRUSTED:-}" ]; then \
                     printf "%s" "$DEBOOTSTRAP_TRUSTED" | base64 -d > /tmp/dbdbdp.gpg; \
@@ -167,17 +169,17 @@ RUN           set -eu; \
               done
 
 RUN           set -eu; \
-              for targetarch in armel armhf arm64 amd64; do \
+              for targetarch in $DEBOOTSTRAP_PLATFORMS; do \
                 debuerreotype-apt-get rootfs-"$targetarch" update -qq; \
               done
 
 RUN           set -eu; \
-              for targetarch in armel armhf arm64 amd64; do \
+              for targetarch in $DEBOOTSTRAP_PLATFORMS; do \
                 debuerreotype-apt-get rootfs-"$targetarch" dist-upgrade -yqq; \
               done
 
 RUN           set -eu; \
-              for targetarch in armel armhf arm64 amd64; do \
+              for targetarch in $DEBOOTSTRAP_PLATFORMS; do \
                 debuerreotype-minimizing-config rootfs-"$targetarch"; \
                 debuerreotype-slimify rootfs-"$targetarch"; \
               done
@@ -188,11 +190,19 @@ RUN           set -eu; \
               mkdir -p "/rootfs/linux/arm/v7"; \
               mkdir -p "/rootfs/linux/arm64"; \
               mkdir -p "/rootfs/linux/amd64"; \
-              debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-armel "/rootfs/linux/arm/v6/${DEBOOTSTRAP_SUITE}-${DEBOOTSTRAP_DATE}".tar; \
-              debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-armhf "/rootfs/linux/arm/v7/${DEBOOTSTRAP_SUITE}-${DEBOOTSTRAP_DATE}".tar; \
-              debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-arm64 "/rootfs/linux/arm64/${DEBOOTSTRAP_SUITE}-${DEBOOTSTRAP_DATE}".tar; \
-              debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-amd64 "/rootfs/linux/amd64/${DEBOOTSTRAP_SUITE}-${DEBOOTSTRAP_DATE}".tar; \
-              sha512sum /rootfs/linux/*/*.tar /rootfs/linux/*/*/*.tar > /rootfs/"${DEBOOTSTRAP_SUITE}-${DEBOOTSTRAP_DATE}".sha
+              mkdir -p "/rootfs/linux/386"; \
+              mkdir -p "/rootfs/linux/s390x"; \
+              mkdir -p "/rootfs/linux/ppc64el"; \
+              debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-armel "/rootfs/linux/arm/v6/${DEBOOTSTRAP_SUITE}-${DEBOOTSTRAP_DATE}".tar 2>/dev/null || true; \
+              debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-armhf "/rootfs/linux/arm/v7/${DEBOOTSTRAP_SUITE}-${DEBOOTSTRAP_DATE}".tar 2>/dev/null || true; \
+              debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-arm64 "/rootfs/linux/arm64/${DEBOOTSTRAP_SUITE}-${DEBOOTSTRAP_DATE}".tar 2>/dev/null || true; \
+              debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-amd64 "/rootfs/linux/amd64/${DEBOOTSTRAP_SUITE}-${DEBOOTSTRAP_DATE}".tar 2>/dev/null || true; \
+              debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-i386 "/rootfs/linux/386/${DEBOOTSTRAP_SUITE}-${DEBOOTSTRAP_DATE}".tar 2>/dev/null || true; \
+              debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-s390x "/rootfs/linux/s390x/${DEBOOTSTRAP_SUITE}-${DEBOOTSTRAP_DATE}".tar 2>/dev/null || true; \
+              debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-ppc64el "/rootfs/linux/ppc64el/${DEBOOTSTRAP_SUITE}-${DEBOOTSTRAP_DATE}".tar 2>/dev/null || true; \
+              rm -f /rootfs/"${DEBOOTSTRAP_SUITE}-${DEBOOTSTRAP_DATE}".sha; \
+              sha512sum /rootfs/linux/*/*/*.tar >> /rootfs/"${DEBOOTSTRAP_SUITE}-${DEBOOTSTRAP_DATE}".sha 2>/dev/null || true; \
+              sha512sum /rootfs/linux/*/*.tar >> /rootfs/"${DEBOOTSTRAP_SUITE}-${DEBOOTSTRAP_DATE}".sha 2>/dev/null || true
 
 ########################################################################################################################
 # Export of the above
