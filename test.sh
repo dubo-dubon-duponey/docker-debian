@@ -27,35 +27,31 @@ if [ ! "${TEST_DOES_NOT_BUILD:-}" ]; then
   ./build.sh --no-cache --progress plain rebootstrap
   result="$(cat context/debootstrap/rootfs/linux/amd64/debootstrap.sha)"
 
-  if [ "${result%% *}" != "c681d82882f0b08cac7f21eae9dcb82b9f9938c2185229b830bfa1f721fba0af45498dee7a00ccc98d355d60e44abaa664ebf75d571cb247d8e8248f5f072ca3" ]; then
-    >&2 printf "ALERT - rebootstrap is no longer producing the expected value, but instead %s\n" "$result"
-    exit 1
-  fi
-
   # That is official buster-slim, circa 2020-08-25
   export REBOOTSTRAP_IMAGE="debian@sha256:b2cade793f3558c90d018ed386cd61bf5e4ec06bf8ed6761bed3dd7e2c425ecc"
   ./build.sh --no-cache --progress plain rebootstrap
-  result="$(cat context/debootstrap/rootfs/linux/amd64/debootstrap.sha)"
+  result2="$(cat context/debootstrap/rootfs/linux/amd64/debootstrap.sha)"
 
-  if [ "${result%% *}" != "c681d82882f0b08cac7f21eae9dcb82b9f9938c2185229b830bfa1f721fba0af45498dee7a00ccc98d355d60e44abaa664ebf75d571cb247d8e8248f5f072ca3" ]; then
-    >&2 printf "ALERT - rebootstrap is no longer producing the expected value, but instead %s\n" "$result"
+  if [ "${result%% *}" != "${result2%% *}" ]; then
+    >&2 printf "ALERT - rebootstrap is no longer consistant results: %s versus %s\n" "$result" "$result2"
     exit 1
   fi
 fi
 
+export APT_OPTIONS="Acquire::Check-Valid-Until=no"
+export DEBOOTSTRAP_OPTIONS=""
+export DEBOOTSTRAP_SOURCES=""
+export DEBOOTSTRAP_PLATFORMS=amd64
+
 if [ ! "${TEST_DOES_NOT_BUILD:-}" ]; then
-
-  export APT_OPTIONS="Acquire::Check-Valid-Until=no"
-  export DEBOOTSTRAP_OPTIONS=""
-  export DEBOOTSTRAP_SOURCES=""
-  export DEBOOTSTRAP_PLATFORMS=amd64
-
   ./build.sh --no-cache --progress plain debootstrap
-
   result="$(grep amd64 context/debian/rootfs/buster-"$DEBOOTSTRAP_DATE".sha)"
 
-  if [ "${result%% *}" != "e365595a4c31f64c850615d2422d8d3d82d479fade75db80f64ebe48045fec035c98becc783aef4a5de152c27cdb8e99ee8a7942a00a3100100f7187b76456f8" ]; then
-    >&2 printf "ALERT - rebootstrap is no longer producing the expected value, but instead %s\n" "$result"
+  ./build.sh --no-cache --progress plain debootstrap
+  result2="$(grep amd64 context/debian/rootfs/buster-"$DEBOOTSTRAP_DATE".sha)"
+
+  if [ "${result%% *}" != "${result2%% *}" ]; then
+    >&2 printf "ALERT - debootstrap is no longer consistant results: %s versus %s\n" "$result" "$result2"
     exit 1
   fi
 fi

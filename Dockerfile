@@ -23,6 +23,9 @@ ARG           LANG="C.UTF-8"
 ARG           LC_ALL="C.UTF-8"
 ARG           TZ="America/Los_Angeles"
 
+ARG           http_proxy
+ARG           https_proxy
+
 # For this builder image
 # > optional options to pass to APT
 ARG           APT_OPTIONS
@@ -115,6 +118,9 @@ ONBUILD ARG   TERM="xterm"
 ONBUILD ARG   LANG="C.UTF-8"
 ONBUILD ARG   LC_ALL="C.UTF-8"
 ONBUILD ARG   TZ="America/Los_Angeles"
+
+ONBUILD ARG   http_proxy
+ONBUILD ARG   https_proxy
 
 ONBUILD ARG   APT_OPTIONS="Acquire::Check-Valid-Until=no"
 ONBUILD ARG   APT_SOURCES

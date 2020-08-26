@@ -59,6 +59,15 @@ variable "APT_TRUSTED" {
   default = ""
 }
 
+# Do we have http and https proxies for other operations?
+variable "http_proxy" {
+  default = ""
+}
+
+variable "https_proxy" {
+  default = ""
+}
+
 variable "PWD" {
   default = ""
 }
@@ -72,6 +81,7 @@ target "rebootstrap" {
   context = "${PWD}/context/debootstrap"
   target = "rebootstrap"
   args = {
+    http_proxy = "${http_proxy}"
     APT_OPTIONS = "${APT_OPTIONS}"
     APT_SOURCES = "${APT_SOURCES}"
     APT_TRUSTED = "${APT_TRUSTED}"
@@ -105,6 +115,8 @@ target "debootstrap" {
   context = "${PWD}/context/debootstrap"
   target = "debootstrap"
   args = {
+    http_proxy = "${http_proxy}"
+    https_proxy = "${https_proxy}"
     APT_OPTIONS = "${APT_OPTIONS}"
     APT_SOURCES = "${APT_SOURCES}"
     APT_TRUSTED = "${APT_TRUSTED}"
