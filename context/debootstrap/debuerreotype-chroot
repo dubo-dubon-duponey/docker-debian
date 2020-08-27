@@ -36,12 +36,8 @@ cp /etc/resolv.conf "$targetDir"/etc/resolv.conf
 }
 
 # Chroot, with the additional environment
-# >&2 printf "Running deviation: chroot %s\n" ""$targetDir" /usr/bin/env -i APT_SOURCES="${DEBOOTSTRAP_SOURCES:-}" APT_TRUSTED="${DEBOOTSTRAP_TRUSTED:-}" APT_OPTIONS="${DEBOOTSTRAP_OPTIONS:-}" PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" TZ="$TZ" LC_ALL="$LC_ALL" SOURCE_DATE_EPOCH="$epoch" "$cmd" $*"
 chroot "$targetDir" /usr/bin/env -i http_proxy="${http_proxy:-}" https_proxy="${https_proxy:-}" APT_SOURCES="${DEBOOTSTRAP_SOURCES:-}" APT_TRUSTED="${DEBOOTSTRAP_TRUSTED:-}" APT_OPTIONS="${DEBOOTSTRAP_OPTIONS:-}" PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" TZ="$TZ" LC_ALL="$LC_ALL" SOURCE_DATE_EPOCH="$epoch" "$cmd" "$@"
 
 rm "$targetDir"/etc/resolv.conf
 touch "$targetDir"/etc/resolv.conf
 touch --no-dereference --date="@$epoch" "$targetDir"/etc/resolv.conf
-
-# cp /usr/local/sbin/apt-get "$targetDir"/usr/local/sbin/
-# rm "$targetDir"/usr/local/sbin/apt-get

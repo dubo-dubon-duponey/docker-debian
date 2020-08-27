@@ -136,7 +136,7 @@ target "debootstrap" {
   no-cache = false
   platforms = ["local"]
   output = [
-    "${PWD}/context/debian",
+    "${PWD}/context/debian/cache",
   ]
   cache-to = [
     "type=local,dest=${PWD}/cache/buildkit"
@@ -161,10 +161,10 @@ target "debian" {
     "linux/arm64",
     "linux/arm/v7",
     "linux/arm/v6",
+    "linux/386",
+    "linux/s390x",
+    "linux/ppc64el",
   ]
-  #"linux/386",
-  #"linux/s390x",
-  #"linux/ppc64el",
   tags = [
     "${REGISTRY}/${VENDOR}/debian:${DEBOOTSTRAP_SUITE}-${DEBOOTSTRAP_DATE}",
   ]

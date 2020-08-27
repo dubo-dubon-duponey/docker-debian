@@ -136,8 +136,7 @@ ONBUILD ARG   DEBOOTSTRAP_TRUSTED
 ONBUILD ARG   DEBOOTSTRAP_SUITE=buster
 ONBUILD ARG   DEBOOTSTRAP_DATE=2020-01-01
 ONBUILD ARG   DEBOOTSTRAP_REPOSITORY
-ONBUILD ARG   DEBOOTSTRAP_PLATFORMS="armel armhf arm64 amd64"
-# i386 s390x ppc64el
+ONBUILD ARG   DEBOOTSTRAP_PLATFORMS="armel armhf arm64 amd64 i386 s390x ppc64el"
 
 ########################################################################################################################
 # This is a builder image that will produce our final rootfs for all architectures
@@ -225,7 +224,7 @@ ARG           DEBOOTSTRAP_SUITE=buster
 ARG           DEBOOTSTRAP_DATE=2020-01-01
 ARG           TARGETPLATFORM
 
-ADD           ./rootfs/$TARGETPLATFORM/"${DEBOOTSTRAP_SUITE}-${DEBOOTSTRAP_DATE}".tar /
+ADD           ./cache/rootfs/$TARGETPLATFORM/"${DEBOOTSTRAP_SUITE}-${DEBOOTSTRAP_DATE}".tar /
 
 ARG           BUILD_CREATED="1976-04-14T17:00:00-07:00"
 ARG           BUILD_URL="https://github.com/dubo-dubon-duponey/docker-debian"
