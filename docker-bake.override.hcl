@@ -69,7 +69,7 @@ variable "https_proxy" {
 }
 
 variable "PWD" {
-  default = ""
+  default = "."
 }
 
 group "default" {
@@ -82,6 +82,7 @@ target "rebootstrap" {
   target = "rebootstrap"
   args = {
     http_proxy = "${http_proxy}"
+    https_proxy = "${https_proxy}"
     APT_OPTIONS = "${APT_OPTIONS}"
     APT_SOURCES = "${APT_SOURCES}"
     APT_TRUSTED = "${APT_TRUSTED}"

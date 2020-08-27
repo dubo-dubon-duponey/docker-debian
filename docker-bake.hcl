@@ -78,7 +78,7 @@ variable "LICENSE" {
 
 # Apt related settings
 variable "APT_OPTIONS" {
-  default = "Acquire::HTTP::User-Agent=DuboDubonDuponey/0.1"
+  default = "Acquire::HTTP::User-Agent=DuboDubonDuponey/0.1 Acquire::Check-Valid-Until=no"
 }
 
 variable "APT_SOURCES" {
@@ -110,7 +110,7 @@ variable "https_proxy" {
 
 # Just a hack to workaround buildkit path funkyness
 variable "PWD" {
-  default = ""
+  default = "."
 }
 
 # Toggle on content trust by default
@@ -120,7 +120,7 @@ variable "DOCKER_CONTENT_TRUST" {
 
 target "shared" {
   dockerfile = "${PWD}/Dockerfile"
-  context = "${PWD}"
+  context = "${PWD}/context"
   args = {
     APT_OPTIONS = "${APT_OPTIONS}"
     APT_SOURCES = "${APT_SOURCES}"
