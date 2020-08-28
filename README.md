@@ -10,24 +10,25 @@ Features:
  * no third-party image dependency
      * the provided builder rootfs is all you need to get started (*), and you do not need ANY Docker image from anywhere
  * support for fully air-gaped build
- * depends only on the availability of `snapshot.debian.org` (*)
+ * depends only on the availability of `snapshot.debian.org` (**)
  * slim
      * resulting images are in the range of 25MB
- * multi-architecture (**)
+ * multi-architecture
      * amd64
      * arm64
      * arm/v7
      * arm/v6
+     * 386
+     * s390x
+     * ppc64el
 
-(*) if your build host is linux/amd64, otherwise, you first have to build your own initial rootfs
+(*) if your build host is linux/amd64, otherwise, you first have to build your own initial rootfs from an existing Debian image
 
-(**) or alternatively a Debian packages repository / proxy
-
-(***) 386 s390x and ppc64el should build as well though you would have to modify the Dockerfile
+(**) or alternatively your own Debian packages repository mirror (like aptly) / proxy (like aptutil)
 
 ## TL;DR
 
-If your build host is linux/amd64, you can skip this first step. Otherwise, run this once:
+If your build host is linux/amd64, you can skip this first step. Otherwise (or if paranoid), run this once:
 
 ```bash
 ./build.sh rebootstrap
@@ -51,21 +52,19 @@ export DEBOOTSTRAP_DATE=2020-06-01
 # Your name
 export VENDOR="YOU"
 # On what platforms you want it (default to all supported platforms if left unspecified):
-export PLATFORMS="linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v6"
+export PLATFORMS="linux/amd64,linux/arm64"
 
 # Assemble and push Docker images from the locally stored rootfs
 ./build.sh debian --push
 ```
 
-## Additional flags and advanced configuration
+## Advanced flags
 
 You may want to further customize the build by using any of the following:
 
 ```bash
 # Registry to push your final Debian image to - defaults to Docker Hub if left unspecified
 REGISTRY="docker.io"
-# destination image name - defaults to "debian" if left unspecified
-IMAGE_NAME="debian"
 
 # Additionally, any argument passed to build.sh is fed to docker buildx bake.
 # Specifically you may want to use:
@@ -83,13 +82,3 @@ DEBOOTSTRAP_DATE=2020-06-01 ./build.sh --no-cache --set "debian.tags=dubodubondu
 You may also (of course) entirely bypass the provided build script and use the bake files directly for further control.
 
 For more details and advanced options, see [advanced](ADVANCED.md).
-
-## About the committed "rootfs" and the rebootstrap target
-
-If you are on another host that linux/amd64, or just because you are (rightfully) paranoid, you may rebuild the provided rootfs by calling:
-
-```bash
-./build.sh rebootstrap
-```
-
-Be sure to understand what `REBOOTSTRAP_IMAGE=XXXX` is and does (see [advanced](ADVANCED.md) documentation).

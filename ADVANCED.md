@@ -140,7 +140,7 @@ ARG           DEBOOTSTRAP_SUITE=buster
 ARG           DEBOOTSTRAP_DATE=2020-01-01
 ARG           TARGETPLATFORM
 
-ADD           ./rootfs/$TARGETPLATFORM/"${DEBOOTSTRAP_SUITE}-${DEBOOTSTRAP_DATE}".tar /
+ADD           ./cache/rootfs/$TARGETPLATFORM/"${DEBOOTSTRAP_SUITE}-${DEBOOTSTRAP_DATE}".tar /
 ```
 
 And will produce Debian images from the stage-1 rootfs.
@@ -158,7 +158,7 @@ Alternatively, use `DEBOOTSTRAP_SOURCES_COMMIT` above during stage 1.
 
 ### About cache and build context
 
-The `context/debian/rootfs` folder is part of Docker build context for the final stage.
+The `context/debian/cache/rootfs` folder is part of Docker build context for the final stage.
 
 As such, if it grows really big (with many different versions), the last stage will become slower.
 
@@ -166,6 +166,6 @@ It is recommended to clean-up this folder from older / useless versions from tim
 
 ### Support
 
-This is used regularly on macOS (intel).
+This is tested regularly on macOS (amd64) and Ubuntu 20.04 (amd64), with Docker 19.03.
 
-Support for other OSes and architectures is not tested daily, but bring it on if you have issues.
+Support on other OSes and architectures is not tested daily, but bring it on if you have issues.
