@@ -23,7 +23,7 @@ variable "DEBOOTSTRAP_SUITE" {
 }
 
 variable "DEBOOTSTRAP_PLATFORMS" {
-  default = "armel armhf arm64 amd64"
+  default = "armel armhf arm64 amd64 i386 s390x ppc64el"
 }
 
 variable "DEBOOTSTRAP_REPOSITORY" {
