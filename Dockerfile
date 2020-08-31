@@ -197,14 +197,14 @@ RUN           set -eu; \
               mkdir -p "/rootfs/linux/amd64"; \
               mkdir -p "/rootfs/linux/386"; \
               mkdir -p "/rootfs/linux/s390x"; \
-              mkdir -p "/rootfs/linux/ppc64el"; \
+              mkdir -p "/rootfs/linux/ppc64le"; \
               debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-armel "/rootfs/linux/arm/v6/${DEBOOTSTRAP_SUITE}-${DEBOOTSTRAP_DATE}".tar 2>/dev/null || true; \
               debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-armhf "/rootfs/linux/arm/v7/${DEBOOTSTRAP_SUITE}-${DEBOOTSTRAP_DATE}".tar 2>/dev/null || true; \
               debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-arm64 "/rootfs/linux/arm64/${DEBOOTSTRAP_SUITE}-${DEBOOTSTRAP_DATE}".tar 2>/dev/null || true; \
               debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-amd64 "/rootfs/linux/amd64/${DEBOOTSTRAP_SUITE}-${DEBOOTSTRAP_DATE}".tar 2>/dev/null || true; \
               debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-i386 "/rootfs/linux/386/${DEBOOTSTRAP_SUITE}-${DEBOOTSTRAP_DATE}".tar 2>/dev/null || true; \
               debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-s390x "/rootfs/linux/s390x/${DEBOOTSTRAP_SUITE}-${DEBOOTSTRAP_DATE}".tar 2>/dev/null || true; \
-              debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-ppc64el "/rootfs/linux/ppc64el/${DEBOOTSTRAP_SUITE}-${DEBOOTSTRAP_DATE}".tar 2>/dev/null || true; \
+              debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs-ppc64el "/rootfs/linux/ppc64le/${DEBOOTSTRAP_SUITE}-${DEBOOTSTRAP_DATE}".tar 2>/dev/null || true; \
               rm -f /rootfs/"${DEBOOTSTRAP_SUITE}-${DEBOOTSTRAP_DATE}".sha; \
               sha512sum /rootfs/linux/*/*/*.tar >> /rootfs/"${DEBOOTSTRAP_SUITE}-${DEBOOTSTRAP_DATE}".sha 2>/dev/null || true; \
               sha512sum /rootfs/linux/*/*.tar >> /rootfs/"${DEBOOTSTRAP_SUITE}-${DEBOOTSTRAP_DATE}".sha 2>/dev/null || true

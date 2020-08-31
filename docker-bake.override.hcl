@@ -163,7 +163,7 @@ target "debian" {
     "linux/arm/v6",
     "linux/386",
     "linux/s390x",
-    "linux/ppc64el",
+    "linux/ppc64le",
   ]
   tags = [
     "${REGISTRY}/${VENDOR}/debian:${DEBOOTSTRAP_SUITE}-${DEBOOTSTRAP_DATE}",
