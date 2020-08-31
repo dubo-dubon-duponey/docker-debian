@@ -20,7 +20,7 @@ Features:
      * arm/v6
      * 386
      * s390x
-     * ppc64el
+     * ppc64le
 
 (*) if your build host is linux/amd64, otherwise, you first have to build your own initial rootfs from an existing Debian image
 
