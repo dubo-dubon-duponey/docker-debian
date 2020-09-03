@@ -17,13 +17,13 @@ if [ "$APT_OPTIONS" ]; then
 fi
 
 # Optionally override source list
-if [ "$APT_SOURCES" ]; then
+if [ "${APT_SOURCES:-}" ]; then
   printf "%s\n" "$APT_SOURCES" > /tmp/sources.list
   args+=("-o" "Dir::Etc::SourceList=/tmp/sources.list")
 fi
 
 # Optionally add additional trusteddb
-if [ "$APT_TRUSTED" ]; then
+if [ "${APT_TRUSTED:-}" ]; then
   printf "%s" "$APT_TRUSTED" | base64 -d > /etc/apt/trusted.gpg.d/dbdbdp.gpg
 fi
 
