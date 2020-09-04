@@ -160,7 +160,7 @@ target "shared" {
     "linux/ppc64le",
   ]
   cache-to = [
-    "type=local,dest=${PWD}/cache/buildkit"
+    "type=local,dest=${PWD}/cache/buildkit,mode=max"
   ]
   cache-from = [
     "type=local,src=${PWD}/cache/buildkit"
