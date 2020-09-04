@@ -72,6 +72,7 @@ WORKDIR       /bootstrapper
 # hadolint ignore=DL4006
 RUN           set -eu; \
               targetarch="$(dpkg --print-architecture | awk -F- "{ print \$NF }")"; \
+              echo "Yes, I know this is leaking credentials to an internal apt repo."; \
               if [ "${DEBOOTSTRAP_REPOSITORY:-}" ]; then \
                 if [ "${DEBOOTSTRAP_TRUSTED:-}" ]; then \
                   printf "%s" "$DEBOOTSTRAP_TRUSTED" | base64 -d > /tmp/dbdbdp.gpg; \
