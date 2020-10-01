@@ -149,7 +149,7 @@ RUN           set -eu; \
               apt-get update -qq \
               && apt-get install -qq --no-install-recommends \
                 debootstrap=1.0.114 \
-                qemu-user-static=1:3.1+dfsg-8+deb10u7
+                qemu-user-static=1:3.1+dfsg-8+deb10u8
 
 WORKDIR       /bootstrapper
 
