@@ -58,7 +58,7 @@ setup::buildctl(){
 setup::buildkit(){
   docker inspect dbdbdp-buildkit 1>/dev/null 2>&1 || \
     docker run --rm \
-      -p 4242:4242 \
+      -d -p 4242:4242 \
       --name dbdbdp-buildkit \
       --user root \
       --entrypoint buildkitd \
