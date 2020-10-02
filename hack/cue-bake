@@ -3,6 +3,8 @@ set -o errexit -o errtrace -o functrace -o nounset -o pipefail
 
 # Where to put buildctl if it's not in the path
 BIN_LOCATION="$HOME/Projects/Command/bin"
+BUILDKIT_IMAGE="dubodubonduponey/buildkit"
+BUILDCTL_IMAGE="dubodubonduponey/buildkit"
 
 # shellcheck source=/dev/null
 root="$(cd "$(dirname "${BASH_SOURCE[0]:-$PWD}")" 2>/dev/null 1>&2 && pwd)/../"
@@ -36,7 +38,7 @@ setup::buildctl(){
   if ! command -v "$destination/buildctl" > /dev/null; then
     mkdir -p "$destination"
     docker rm -f installbuildctl || true
-    docker run --name installbuildctl --entrypoint buildctl dubodubonduponey/buildkit --version
+    docker run --name installbuildctl --entrypoint buildctl "$BUILDCTL_IMAGE" --version
     case $(uname) in
       "Darwin")
         docker cp installbuildctl:/boot/bin/buildctl_mac "$destination/buildctl"
@@ -55,16 +57,15 @@ setup::buildctl(){
 
 setup::buildkit(){
   docker inspect dbdbdp-buildkit 1>/dev/null 2>&1 || \
-    docker run \
-      --name dbdbdp-buildkit \
-      --rm -d \
+    docker run --rm \
       -p 4242:4242 \
+      --name dbdbdp-buildkit \
+      --user root \
+      --entrypoint buildkitd \
       --privileged \
-      moby/buildkit --addr tcp://0.0.0.0:4242
-#      --security-opt seccomp=unconfined \
-#      --security-opt apparmor=unconfined \
+      "$BUILDKIT_IMAGE" \
+        --root /data/buildkit --addr tcp://0.0.0.0:4242
 #      --read-only \
-#      dubodubonduponey/buildkit
 }
 
 # Automated metadata
@@ -102,11 +103,11 @@ case "${1:-}" in
     # Setup buildkitd container optionally
     if [ ! "${BUILDKIT_HOST:-}" ]; then
       BUILDKIT_HOST=tcp://0.0.0.0:4242
-      setup::buildkit # > /dev/null
+      setup::buildkit
     fi
     export BUILDKIT_HOST
 
-    target="${1:-default}"
+    target="${1:-image}"
     shift || true
 
     cd "$root"
