@@ -11,7 +11,7 @@ ARG           REBOOTSTRAP_IMAGE=docker.io/dubodubonduponey/debian@sha256:cb25298
 # Obviously, if you already have a working local rootfs for Debian, you do not need this stage at all, right?
 ########################################################################################################################
 
-# hadolint ignore=DL3006
+# hadolint ignore=DL3006,DL3029
 FROM          --platform=$BUILDPLATFORM $REBOOTSTRAP_IMAGE                                                              AS rebootstrap-builder
 
 # The platform we are on
@@ -106,6 +106,7 @@ COPY          --from=rebootstrap-builder /rootfs /rootfs
 # This is a builder image from scratch leveraging our initial rootfs from above
 # It provides a clean-room environment with no external image dependency
 ########################################################################################################################
+# hadolint ignore=DL3029
 FROM          --platform=$BUILDPLATFORM scratch                                                                         AS builder
 
 # The platform we are on

@@ -15,7 +15,7 @@ fi
 
 APT_OPTIONS="${APT_OPTIONS:-}"
 
-http_proxy="$(printf "%s" "$APT_OPTIONS" | grep "Acquire::HTTP::proxy" || true | sed -E 's/^.*Acquire::HTTP::proxy=([^ ]+).*/\1/')"
+http_proxy="$(printf "%s" "$APT_OPTIONS" | grep "Acquire::HTTP::proxy" | sed -E 's/^.*Acquire::HTTP::proxy=([^ ]+).*/\1/')" || true
 export http_proxy
 
 if [ ! "${TEST_DOES_NOT_BUILD:-}" ]; then
