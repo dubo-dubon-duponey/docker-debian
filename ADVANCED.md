@@ -61,8 +61,8 @@ export APT_OPTIONS="Acquire::HTTP::User-Agent=DuboDubonDuponey-APT/0.1"
 export DEBOOTSTRAP_SOURCES_COMMIT="deb http://snapshot.debian.org/archive/debian/2020-01-01T000000Z buster main"
 
 # If you have signed your local Debian repository, you should specify your key for apt and debootstrap to trust it
-APT_TRUSTED="$(base64 trusted.gpg)"
-DEBOOTSTRAP_TRUSTED="$(base64 trusted.gpg)"
+APT_GPG_KEYRING="$(base64 trusted.gpg)"
+DEBOOTSTRAP_GPG_KEYRING="$(base64 trusted.gpg)"
 
 # trusted.gpg can be generated out of band using apt-key, typically with something like
 # apt-key add public-key-used-to-sign-your-repo.gpg
@@ -94,8 +94,8 @@ export APT_SOURCES="deb http://u:p@apt.local:8080/archive/buster/20200811T000000
 # this of course can be the same as above, or a different mirror
 export DEBOOTSTRAP_REPOSITORY=http://u:p@apt.local:8080/archive/buster/20200811T000000Z/`
 
-# also set `DEBOOTSTRAP_SOURCES` to be used by the debootstrapped apt (for update and upgrade)
-export DEBOOTSTRAP_SOURCES="deb http://u:p@apt.local:8080/archive/buster/20200811T000000Z/ buster main"`
+# also set `DEBOOTSTRAP_APT_SOURCES` to be used by the debootstrapped apt (for update and upgrade)
+export DEBOOTSTRAP_APT_SOURCES="deb http://u:p@apt.local:8080/archive/buster/20200811T000000Z/ buster main"`
 
 # build...
 ./build.sh
@@ -109,8 +109,8 @@ You may optionnally specify any of the following:
 # Example, set the user-agent string:
 export APT_OPTIONS="Acquire::HTTP::User-Agent=DuboDubonDuponey-APT/0.1"
 
-# Similarly DEBOOTSTRAP_OPTIONS will control apt behavior inside the chroots
-export DEBOOTSTRAP_OPTIONS="Acquire::HTTP::User-Agent=DuboDubonDuponey-DEBOOT/0.1"
+# Similarly DEBOOTSTRAP_APT_OPTIONS will control apt behavior inside the chroots
+export DEBOOTSTRAP_APT_OPTIONS="Acquire::HTTP::User-Agent=DuboDubonDuponey-DEBOOT/0.1"
 
 # DEBOOTSTRAP_SOURCES_COMMIT will permanently overwrite /etc/apt/sources.list inside the final rootfs
 # if left unspecified, it will default instead to your DEBOOTSTRAP_REPOSITORY from above, which may be a problem for consumers of your image if they do not have access to your local mirror
@@ -120,8 +120,8 @@ deb http://snapshot.debian.org/archive/debian-security/2020-01-01T000000Z buster
 deb http://snapshot.debian.org/archive/debian/2020-01-01T000000Z buster-updates main"
 
 # If you have signed your local Debian repository, you should specify your key for apt and debootstrap to trust it
-APT_TRUSTED="$(base64 trusted.gpg)"
-DEBOOTSTRAP_TRUSTED="$(base64 trusted.gpg)"
+APT_GPG_KEYRING="$(base64 trusted.gpg)"
+DEBOOTSTRAP_GPG_KEYRING="$(base64 trusted.gpg)"
 
 # trusted.gpg can be generated out of band using apt-key, typically with something like
 # apt-key add public-key-used-to-sign-your-repo.gpg

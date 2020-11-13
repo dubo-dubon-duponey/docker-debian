@@ -1,7 +1,7 @@
 ARG           REBOOTSTRAP_IMAGE=docker.io/dubodubonduponey/debian@sha256:cb25298b653310dd8b7e52b743053415452708912fe0e8d3d0d4ccf6c4003746
 ########################################################################################################################
-# This first "rebootstrap" target is meant to prepare a *local* rootfs that we will use as a local builder base later on
-# The purpose of this is to make sure our further builder images do not depend on ANY registry
+# This first "rebootstrap" target is meant to prepare a *local* rootfs that we will use as a local base image for our builder later on
+# The purpose of this is to make sure our further builder images do not depend on ANY registry / remote image
 # Note:
 # REBOOTSTRAP_IMAGE is the *online* Debian base image you need to initialize and generate this local rootfs.
 # You may use a Docker maintained Debian Buster image (library/debian:buster-slim for example).
@@ -14,27 +14,41 @@ ARG           REBOOTSTRAP_IMAGE=docker.io/dubodubonduponey/debian@sha256:cb25298
 # hadolint ignore=DL3006,DL3029
 FROM          --platform=$BUILDPLATFORM $REBOOTSTRAP_IMAGE                                                              AS rebootstrap-builder
 
-# The platform we are on
 ARG           BUILDPLATFORM
 
+# Debian options
 ARG           DEBIAN_FRONTEND="noninteractive"
 ARG           TERM="xterm"
 ARG           LANG="C.UTF-8"
 ARG           LC_ALL="C.UTF-8"
 ARG           TZ="America/Los_Angeles"
 
-ARG           http_proxy
-ARG           https_proxy
+# Proxy options
+ARG           http_proxy=""
+ARG           https_proxy=""
 
-# For this builder image
-# > optional options to pass to APT
-ARG           APT_OPTIONS
-# > optionnally, custom sources for apt to override temporarily whatever is already in /etc/apt/sources.list
-ARG           APT_SOURCES
-# > optionnally, an additional trusted db
-ARG           APT_TRUSTED
+# Apt options (XXX some of these should be secrets instead)
+ARG           APT_OPTIONS=""
+ARG           APT_SOURCES=""
+ARG           APT_GPG_KEYRING=""
+ARG           APT_NETRC=""
+ARG           APT_TLS_CA=""
 
-# Copy over our deviation script
+# System-wide variables useful to debootstrap-init/wget (XXX secrets)
+ARG           SYSTEM_NETRC=""
+ARG           SYSTEM_TLS_CA=""
+ARG           DEBOOTSTRAP_GPG_KEYRING=""
+
+# > Which suite you want
+ARG           DEBOOTSTRAP_SUITE="buster"
+# > Then, either a date to fetch from snapshot.debian.org (will also be used as a key for the stored rootfs, so, set this to something meaningful no matter what)
+ARG           DEBOOTSTRAP_DATE="2020-01-01"
+# > Or your own repository (eg: http://mydeb.domain.com:8080/foo/bar)
+ARG           DEBOOTSTRAP_REPOSITORY=""
+# > Optionally the final content to commit for root/etc/apt/sources.list in the debootstrap
+ARG           DEBOOTSTRAP_SOURCES_COMMIT=""
+
+# Copy over our deviation script (that honors our apt variables)
 COPY          ./apt-get /usr/local/sbin/
 
 # Get debootstrap in
@@ -50,32 +64,30 @@ COPY          ./debuerreotype/scripts /usr/sbin/
 # Note: other scripts insist in calling a script in the SAME dir, so /usr/sbin it is
 COPY          ./debuerreotype-chroot  /usr/sbin/
 
-# What and how you want to debootstrap
-# > Optional options to feed to the in-debootstrap apt
-#ARG           DEBOOTSTRAP_OPTIONS
-# > Optionally the list of apt sources to use inside the debootstrap instead of whatever is already in root/etc/apt/sources.list
-#ARG           DEBOOTSTRAP_SOURCES
-# > Optionally the final content to commit for root/etc/apt/sources.list in the debootstrap
-ARG           DEBOOTSTRAP_SOURCES_COMMIT
-# > Possibly an optional trusteddb.gpg file to trust (typically, the result of importing repositories gpg key with apt-key)
-ARG           DEBOOTSTRAP_TRUSTED
-# > Which suite you want
-ARG           DEBOOTSTRAP_SUITE=buster
-
-# > Then, either a date to fetch from snapshot.debian.org (will also be used as a key for the stored rootfs)
-ARG           DEBOOTSTRAP_DATE=2020-01-01
-# > Or your own repository (http://user:pass@mydeb.domain.com:8080/foo/bar)
-ARG           DEBOOTSTRAP_REPOSITORY
-
 WORKDIR       /bootstrapper
+
+# If we have a CA and/or netrc info, honor them now
+# hadolint ignore=DL4006
+RUN           set -eu; \
+              if [ "${SYSTEM_TLS_CA:-}" ]; then \
+                mkdir -p /etc/ssl/certs; \
+                printf "%s" "$SYSTEM_TLS_CA" | base64 -d > /etc/ssl/certs/ca-certificates.crt; \
+              fi
 
 # hadolint ignore=DL4006
 RUN           set -eu; \
+              if [ "${SYSTEM_NETRC:-}" ]; then \
+                echo "Yes, I know this is leaking credentials to an internal apt repo."; \
+                printf "%s" "$SYSTEM_NETRC" | base64 -d > ~/.netrc; \
+              fi
+
+# Init the actual debootstrap into rootfs, honoring our parameters
+# hadolint ignore=DL4006
+RUN           set -eu; \
               targetarch="$(dpkg --print-architecture | awk -F- "{ print \$NF }")"; \
-              echo "Yes, I know this is leaking credentials to an internal apt repo."; \
               if [ "${DEBOOTSTRAP_REPOSITORY:-}" ]; then \
-                if [ "${DEBOOTSTRAP_TRUSTED:-}" ]; then \
-                  printf "%s" "$DEBOOTSTRAP_TRUSTED" | base64 -d > /tmp/dbdbdp.gpg; \
+                if [ "${DEBOOTSTRAP_GPG_KEYRING:-}" ]; then \
+                  printf "%s" "$DEBOOTSTRAP_GPG_KEYRING" | base64 -d > /tmp/dbdbdp.gpg; \
                   debuerreotype-init --arch "$targetarch" --no-merged-usr --non-debian --keyring /tmp/dbdbdp.gpg rootfs "$DEBOOTSTRAP_SUITE" "$DEBOOTSTRAP_REPOSITORY"; \
                 else \
                   debuerreotype-init --arch "$targetarch" --no-merged-usr --non-debian rootfs "$DEBOOTSTRAP_SUITE" "$DEBOOTSTRAP_REPOSITORY"; \
@@ -84,13 +96,18 @@ RUN           set -eu; \
                 debuerreotype-init --arch "$targetarch" --no-merged-usr --debian rootfs "$DEBOOTSTRAP_SUITE" "${DEBOOTSTRAP_DATE}T00:00:00Z"; \
               fi
 
+# If we want to spoof in sources.list, do it
 RUN           set -eu; \
               if [ "${DEBOOTSTRAP_SOURCES_COMMIT:-}" ]; then \
                 printf "%s\n" "$DEBOOTSTRAP_SOURCES_COMMIT" > rootfs/etc/apt/sources.list; \
-              fi; \
+              fi
+
+# Clean it
+RUN           set -eu; \
               debuerreotype-minimizing-config rootfs; \
               debuerreotype-slimify rootfs
 
+# Pack, hash, move on
 RUN           set -eu; \
               mkdir -p "/rootfs/$BUILDPLATFORM"; \
               debuerreotype-tar rootfs "/rootfs/$BUILDPLATFORM/debootstrap.tar"; \
@@ -121,29 +138,50 @@ ONBUILD ARG   LANG="C.UTF-8"
 ONBUILD ARG   LC_ALL="C.UTF-8"
 ONBUILD ARG   TZ="America/Los_Angeles"
 
-ONBUILD ARG   http_proxy
-ONBUILD ARG   https_proxy
+ONBUILD ARG   http_proxy=""
+ONBUILD ARG   https_proxy=""
 
 ONBUILD ARG   APT_OPTIONS="Acquire::Check-Valid-Until=no"
-ONBUILD ARG   APT_SOURCES
-ONBUILD ARG   APT_TRUSTED
+ONBUILD ARG   APT_SOURCES=""
+ONBUILD ARG   APT_GPG_KEYRING=""
+ONBUILD ARG   APT_NETRC=""
+ONBUILD ARG   APT_TLS_CA=""
 
-# Copy over our deviation script
+ONBUILD ARG   SYSTEM_NETRC=""
+ONBUILD ARG   SYSTEM_TLS_CA=""
+ONBUILD ARG   DEBOOTSTRAP_GPG_KEYRING=""
+ONBUILD ARG   DEBOOTSTRAP_SUITE="buster"
+ONBUILD ARG   DEBOOTSTRAP_DATE="2020-01-01"
+ONBUILD ARG   DEBOOTSTRAP_REPOSITORY=""
+ONBUILD ARG   DEBOOTSTRAP_SOURCES_COMMIT=""
+
+ONBUILD ARG   DEBOOTSTRAP_APT_OPTIONS=""
+ONBUILD ARG   DEBOOTSTRAP_APT_SOURCES=""
+
+# hadolint ignore=DL4006
+ONBUILD RUN   set -eu; \
+              if [ "${SYSTEM_TLS_CA:-}" ]; then \
+                mkdir -p /etc/ssl/certs; \
+                printf "%s" "$SYSTEM_TLS_CA" | base64 -d > /etc/ssl/certs/ca-certificates.crt; \
+              fi
+
+# hadolint ignore=DL4006
+ONBUILD RUN   set -eu; \
+              if [ "${SYSTEM_NETRC:-}" ]; then \
+                echo "Yes, I know this is leaking credentials to an internal apt repo."; \
+                printf "%s" "$SYSTEM_NETRC" | base64 -d > ~/.netrc; \
+              fi
+
 COPY          ./apt-get /usr/local/sbin/
-
-ONBUILD ARG   DEBOOTSTRAP_OPTIONS
-ONBUILD ARG   DEBOOTSTRAP_SOURCES
-ONBUILD ARG   DEBOOTSTRAP_SOURCES_COMMIT
-ONBUILD ARG   DEBOOTSTRAP_TRUSTED
-ONBUILD ARG   DEBOOTSTRAP_SUITE=buster
-ONBUILD ARG   DEBOOTSTRAP_DATE=2020-01-01
-ONBUILD ARG   DEBOOTSTRAP_REPOSITORY
-ONBUILD ARG   DEBOOTSTRAP_PLATFORMS="armel armhf arm64 amd64 i386 s390x ppc64el"
+COPY          ./debuerreotype/scripts /usr/sbin/
+COPY          ./debuerreotype-chroot  /usr/sbin/
 
 ########################################################################################################################
 # This is a builder image that will produce our final rootfs for all architectures
 ########################################################################################################################
 FROM          builder                                                                                                   AS debootstrap-builder
+
+ARG           DEBOOTSTRAP_PLATFORMS="armel armhf arm64 amd64 i386 s390x ppc64el"
 
 # Installing qemu and debue/deboot
 RUN           set -eu; \
@@ -154,15 +192,12 @@ RUN           set -eu; \
 
 WORKDIR       /bootstrapper
 
-COPY          ./debuerreotype/scripts /usr/sbin/
-COPY          ./debuerreotype-chroot  /usr/sbin/
-
 # hadolint ignore=DL4006
 RUN           set -eu; \
               for targetarch in $DEBOOTSTRAP_PLATFORMS; do \
                 if [ "${DEBOOTSTRAP_REPOSITORY:-}" ]; then \
-                  if [ "${DEBOOTSTRAP_TRUSTED:-}" ]; then \
-                    printf "%s" "$DEBOOTSTRAP_TRUSTED" | base64 -d > /tmp/dbdbdp.gpg; \
+                  if [ "${DEBOOTSTRAP_GPG_KEYRING:-}" ]; then \
+                    printf "%s" "$DEBOOTSTRAP_GPG_KEYRING" | base64 -d > /tmp/dbdbdp.gpg; \
                     debuerreotype-init --arch "$targetarch" --no-merged-usr --debootstrap="qemu-debootstrap" --non-debian --keyring /tmp/dbdbdp.gpg rootfs-"$targetarch" "$DEBOOTSTRAP_SUITE" "$DEBOOTSTRAP_REPOSITORY"; \
                   else \
                     debuerreotype-init --arch "$targetarch" --no-merged-usr --debootstrap="qemu-debootstrap" --non-debian rootfs-"$targetarch" "$DEBOOTSTRAP_SUITE" "$DEBOOTSTRAP_REPOSITORY"; \
@@ -175,11 +210,14 @@ RUN           set -eu; \
                 fi; \
               done
 
+# RUN which apt-get; cat rootfs-"arm64"/$(which apt-get); exit 1
+# Is any of this useful?
 RUN           set -eu; \
               for targetarch in $DEBOOTSTRAP_PLATFORMS; do \
                 debuerreotype-apt-get rootfs-"$targetarch" update -qq; \
-              done
+              done;
 
+# Is any of this useful?
 RUN           set -eu; \
               for targetarch in $DEBOOTSTRAP_PLATFORMS; do \
                 debuerreotype-apt-get rootfs-"$targetarch" dist-upgrade -yqq; \
@@ -222,8 +260,8 @@ COPY          --from=debootstrap-builder /rootfs /rootfs
 ########################################################################################################################
 FROM          scratch                                                                                                   AS debian
 
-ARG           DEBOOTSTRAP_SUITE=buster
-ARG           DEBOOTSTRAP_DATE=2020-01-01
+ARG           DEBOOTSTRAP_SUITE="buster"
+ARG           DEBOOTSTRAP_DATE="2020-01-01"
 ARG           TARGETPLATFORM
 
 ADD           ./cache/rootfs/$TARGETPLATFORM/"${DEBOOTSTRAP_SUITE}-${DEBOOTSTRAP_DATE}".tar /
@@ -253,9 +291,11 @@ LABEL         org.opencontainers.image.ref.name="$BUILD_REF_NAME"
 LABEL         org.opencontainers.image.title="$BUILD_TITLE"
 LABEL         org.opencontainers.image.description="$BUILD_DESCRIPTION"
 
-ONBUILD ARG   APT_OPTIONS
-ONBUILD ARG   APT_SOURCES
-ONBUILD ARG   APT_TRUSTED
+ONBUILD ARG   APT_OPTIONS=""
+ONBUILD ARG   APT_SOURCES=""
+ONBUILD ARG   APT_GPG_KEYRING=""
+ONBUILD ARG   APT_NETRC=""
+ONBUILD ARG   APT_TLS_CA=""
 
-ONBUILD ARG   http_proxy
-ONBUILD ARG   https_proxy
+ONBUILD ARG   http_proxy=""
+ONBUILD ARG   https_proxy=""

@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-# The purpose of this is to remove unshare which does require extra privileges
+# The purpose of this fork is to:
+# a. remove unshare which does require extra privileges
+# b. pass along some of the env down to our apt-get "smart" deviation
 
 thisDir="$(dirname "$(readlink -f "$BASH_SOURCE")")"
 # shellcheck source=/dev/null
@@ -36,7 +38,15 @@ cp /etc/resolv.conf "$targetDir"/etc/resolv.conf
 }
 
 # Chroot, with the additional environment
-chroot "$targetDir" /usr/bin/env -i http_proxy="${http_proxy:-}" https_proxy="${https_proxy:-}" APT_SOURCES="${DEBOOTSTRAP_SOURCES:-}" APT_TRUSTED="${DEBOOTSTRAP_TRUSTED:-}" APT_OPTIONS="${DEBOOTSTRAP_OPTIONS:-}" PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" TZ="$TZ" LC_ALL="$LC_ALL" SOURCE_DATE_EPOCH="$epoch" "$cmd" "$@"
+chroot "$targetDir" /usr/bin/env -i \
+  http_proxy="${http_proxy:-}" \
+  https_proxy="${https_proxy:-}" \
+  APT_OPTIONS="${DEBOOTSTRAP_APT_OPTIONS:-}" \
+  APT_SOURCES="${DEBOOTSTRAP_APT_SOURCES:-}" \
+  APT_GPG_KEYRING="${DEBOOTSTRAP_GPG_KEYRING:-}" \
+  APT_NETRC="${SYSTEM_NETRC:-}" \
+  APT_TLS_CA="${SYSTEM_TLS_CA:-}" \
+  PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" TZ="$TZ" LC_ALL="$LC_ALL" SOURCE_DATE_EPOCH="$epoch" "$cmd" "$@"
 
 rm "$targetDir"/etc/resolv.conf
 touch "$targetDir"/etc/resolv.conf

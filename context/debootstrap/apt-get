@@ -23,13 +23,28 @@ if [ "${APT_SOURCES:-}" ]; then
 fi
 
 # Optionally add additional trusteddb
-if [ "${APT_TRUSTED:-}" ]; then
-  printf "%s" "$APT_TRUSTED" | base64 -d > /etc/apt/trusted.gpg.d/dbdbdp.gpg
+if [ "${APT_GPG_KEYRING:-}" ]; then
+  printf "%s" "$APT_GPG_KEYRING" | base64 -d > /etc/apt/trusted.gpg.d/dbdbdp.gpg
+fi
+
+# Optionally trust a CA (or cert chain)
+if [ "${APT_TLS_CA:-}" ]; then
+  printf "%s" "$APT_TLS_CA" | base64 -d > /tmp/ca.pem
+  args+=("-o" "Acquire::https::CAInfo=/tmp/ca.pem")
+fi
+
+# Optionally add machine login info
+if [ "${APT_NETRC:-}" ]; then
+  printf "%s" "$APT_NETRC" | base64 -d > /tmp/auth.conf
+  args+=("-o" "Dir::Etc::netrc=/tmp/auth.conf")
 fi
 
 # Call the real apt-get now
 # >&2 printf "Running deviation: apt-get %s\n" "${args[*]}"
 /usr/bin/apt-get "${args[@]}"
 
+# Remove deviation list, ca, auth file, and gpg keyring
 rm -f /tmp/sources.list
+rm -f /tmp/ca.pem
+rm -f /tmp/auth.conf
 rm -f /etc/apt/trusted.gpg.d/dbdbdp.gpg
