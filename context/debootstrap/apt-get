@@ -41,10 +41,13 @@ fi
 
 # Call the real apt-get now
 # >&2 printf "Running deviation: apt-get %s\n" "${args[*]}"
-/usr/bin/apt-get "${args[@]}"
+ret=
+/usr/bin/apt-get "${args[@]}" || ret="$?"
 
 # Remove deviation list, ca, auth file, and gpg keyring
 rm -f /tmp/sources.list
 rm -f /tmp/ca.pem
 rm -f /tmp/auth.conf
 rm -f /etc/apt/trusted.gpg.d/dbdbdp.gpg
+
+exit $ret

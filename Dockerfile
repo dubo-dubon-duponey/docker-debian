@@ -102,9 +102,15 @@ RUN           set -eu; \
                 printf "%s\n" "$DEBOOTSTRAP_SOURCES_COMMIT" > rootfs/etc/apt/sources.list; \
               fi
 
+# If the repo was over https, additional packages had automatically been installed - purge them
+RUN           set -eu; \
+              debuerreotype-apt-get rootfs -qq purge --auto-remove apt-transport-https openssl ca-certificates libssl1.1 || true
+
 # Clean it
 RUN           set -eu; \
-              debuerreotype-minimizing-config rootfs; \
+              debuerreotype-minimizing-config rootfs
+
+RUN           set -eu; \
               debuerreotype-slimify rootfs
 
 # Pack, hash, move on
@@ -210,17 +216,16 @@ RUN           set -eu; \
                 fi; \
               done
 
-# RUN which apt-get; cat rootfs-"arm64"/$(which apt-get); exit 1
-# Is any of this useful?
 RUN           set -eu; \
               for targetarch in $DEBOOTSTRAP_PLATFORMS; do \
+                debuerreotype-apt-get rootfs-"$targetarch" -qq purge --auto-remove apt-transport-https openssl ca-certificates libssl1.1 || true; \
                 debuerreotype-apt-get rootfs-"$targetarch" update -qq; \
-              done;
-
-# Is any of this useful?
-RUN           set -eu; \
-              for targetarch in $DEBOOTSTRAP_PLATFORMS; do \
                 debuerreotype-apt-get rootfs-"$targetarch" dist-upgrade -yqq; \
+                debuerreotype-apt-get rootfs-"$targetarch" -qq autoremove; \
+                debuerreotype-apt-get rootfs-"$targetarch" -qq clean; \
+                rm -rf rootfs-"$targetarch"/var/lib/apt/lists/*; \
+                rm -rf rootfs-"$targetarch"/tmp/*; \
+                rm -rf rootfs-"$targetarch"/var/tmp/*; \
               done
 
 RUN           set -eu; \

@@ -39,6 +39,11 @@ cp /etc/resolv.conf "$targetDir"/etc/resolv.conf
 
 # Chroot, with the additional environment
 chroot "$targetDir" /usr/bin/env -i \
+  DEBIAN_FRONTEND="$DEBIAN_FRONTEND" \
+  TZ="$TZ" \
+  LANG="$LANG" \
+  TERM="$TERM" \
+  LC_ALL="$LC_ALL" \
   http_proxy="${http_proxy:-}" \
   https_proxy="${https_proxy:-}" \
   APT_OPTIONS="${DEBOOTSTRAP_APT_OPTIONS:-}" \
@@ -46,7 +51,8 @@ chroot "$targetDir" /usr/bin/env -i \
   APT_GPG_KEYRING="${DEBOOTSTRAP_GPG_KEYRING:-}" \
   APT_NETRC="${SYSTEM_NETRC:-}" \
   APT_TLS_CA="${SYSTEM_TLS_CA:-}" \
-  PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" TZ="$TZ" LC_ALL="$LC_ALL" SOURCE_DATE_EPOCH="$epoch" "$cmd" "$@"
+  PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" \
+  SOURCE_DATE_EPOCH="$epoch" "$cmd" "$@"
 
 rm "$targetDir"/etc/resolv.conf
 touch "$targetDir"/etc/resolv.conf
