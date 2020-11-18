@@ -1,7 +1,12 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
+# The purpose of this fork is to:
+# a. remove unshare which does require extra privileges
+# b. pass along some of the env down to our apt-get "smart" deviation
+
 thisDir="$(dirname "$(readlink -f "$BASH_SOURCE")")"
+# shellcheck source=/dev/null
 source "$thisDir/.constants.sh" \
 	'<target-dir> <command> [args...]' \
 	'rootfs apt-get update'
@@ -16,23 +21,39 @@ while true; do
 	esac
 done
 
-targetDir="${1:-}"; shift || eusage 'missing target-dir'
-cmd="${1:-}"; shift || eusage 'missing command'
-[ -n "$targetDir" ]
+targetDir="${1:-}"
+shift
+cmd="${1:-}"
+shift
 epoch="$(< "$targetDir/debuerreotype-epoch")"
-[ -n "$epoch" ]
 
 export targetDir epoch
 
-[ -n "$targetDir" ] # just to be safe
-
+# Carry forward resolv.conf
 cp /etc/resolv.conf "$targetDir"/etc/resolv.conf
-cp /etc/apt/apt.conf.d/99-dbdbdp-proxy.conf "$targetDir"/etc/apt/apt.conf.d/
+# And our smarter apt-get
+[ -e "$targetDir"/usr/local/sbin/apt-get ] || {
+  cp /usr/local/sbin/apt-get "$targetDir"/usr/local/sbin/apt-get
+  touch --no-dereference --date="@$epoch" "$targetDir"/usr/local/sbin/apt-get
+}
 
-chroot "$targetDir" /usr/bin/env -i PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" TZ="$TZ" LC_ALL="$LC_ALL" SOURCE_DATE_EPOCH="$epoch" "$cmd" "$@"
+# Chroot, with the additional environment
+chroot "$targetDir" /usr/bin/env -i \
+  DEBIAN_FRONTEND="$DEBIAN_FRONTEND" \
+  TZ="$TZ" \
+  LANG="$LANG" \
+  TERM="$TERM" \
+  LC_ALL="$LC_ALL" \
+  http_proxy="${http_proxy:-}" \
+  https_proxy="${https_proxy:-}" \
+  APT_OPTIONS="${DEBOOTSTRAP_APT_OPTIONS:-}" \
+  APT_SOURCES="${DEBOOTSTRAP_APT_SOURCES:-}" \
+  APT_GPG_KEYRING="${DEBOOTSTRAP_GPG_KEYRING:-}" \
+  APT_NETRC="${SYSTEM_NETRC:-}" \
+  APT_TLS_CA="${SYSTEM_TLS_CA:-}" \
+  PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" \
+  SOURCE_DATE_EPOCH="$epoch" "$cmd" "$@"
 
-rm "$targetDir"/etc/apt/apt.conf.d/99-dbdbdp-proxy.conf
 rm "$targetDir"/etc/resolv.conf
 touch "$targetDir"/etc/resolv.conf
-epoch="$(date --date "2020-01-01T00:00:00Z" +%s)"
 touch --no-dereference --date="@$epoch" "$targetDir"/etc/resolv.conf

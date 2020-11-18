@@ -8,31 +8,70 @@ if ! hadolint ./*Dockerfile*; then
   exit 1
 fi
 
-if ! shellcheck ./*.sh*; then
+if ! shellcheck ./*.sh; then
   >&2 printf "Failed shellchecking\n"
   exit 1
 fi
 
-if [ ! "$TEST_DOES_NOT_BUILD" ]; then
-  # Rebootstrap and check that the result is the same
-  ./build.sh --no-cache --progress plain rebootstrap
-  s="$(cat context/debootstrap/rootfs/linux/amd64/debootstrap.sha)"
-  >&2 printf "rebootstrap produced %s\n" "$s"
-  if [ "${s%% *}" != "02ff894af506ddbc2f22b7227822e6d052b24e7fbc8ce09a3ec1c5274b626a7147913bba3bcf13d6fb1330609a608ed724b98806f3d3f715164d9c70d461cec1" ]; then
-    >&2 printf "ALERT - rebootstrap is no longer producing 02ff894af506ddbc2f22b7227822e6d052b24e7fbc8ce09a3ec1c5274b626a7147913bba3bcf13d6fb1330609a608ed724b98806f3d3f715164d9c70d461cec1\n"
+APT_OPTIONS="${APT_OPTIONS:-}"
+
+http_proxy="$(printf "%s" "$APT_OPTIONS" | grep "Acquire::HTTP::proxy" | sed -E 's/^.*Acquire::HTTP::proxy=([^ ]+).*/\1/')" || true
+export http_proxy
+
+if [ ! "${TEST_DOES_NOT_BUILD:-}" ]; then
+  [ ! -e "./refresh.sh" ] || ./refresh.sh
+
+  # That is ours, circa 2020-01-01
+  export REBOOTSTRAP_IMAGE="docker.io/dubodubonduponey/debian@sha256:cb25298b653310dd8b7e52b743053415452708912fe0e8d3d0d4ccf6c4003746"
+
+  if ! ./hack/cue-bake rebootstrap --inject no_cache=true --inject progress=plain; then
+    >&2 printf "Failed building rebootstrap\n"
     exit 1
-  else
-    >&2 printf "rebootstrap ok\n"
   fi
 
-  # Debootstrap and check the same
-  DEBIAN_DATE=2020-01-01 ./build.sh --no-cache --progress plain debootstrap
-  s="$(grep amd64 context/debian/rootfs/buster-2020-01-01.sha)"
-  >&2 printf "debootstrap produced %s\n" "$s"
-  if [ "${s%% *}" != "02ff894af506ddbc2f22b7227822e6d052b24e7fbc8ce09a3ec1c5274b626a7147913bba3bcf13d6fb1330609a608ed724b98806f3d3f715164d9c70d461cec1" ]; then
-    >&2 printf "ALERT - debootstrap is no longer producing 02ff894af506ddbc2f22b7227822e6d052b24e7fbc8ce09a3ec1c5274b626a7147913bba3bcf13d6fb1330609a608ed724b98806f3d3f715164d9c70d461cec1\n"
+  result="$(cat context/debootstrap/rootfs/linux/amd64/debootstrap.sha)"
+
+  # That is official buster-slim, circa 2020-08-25
+  export REBOOTSTRAP_IMAGE="debian@sha256:b2cade793f3558c90d018ed386cd61bf5e4ec06bf8ed6761bed3dd7e2c425ecc"
+
+  if ! ./hack/cue-bake rebootstrap --inject no_cache=true --inject progress=plain; then
+    >&2 printf "Failed building rebootstrap\n"
     exit 1
-  else
-    >&2 printf "debootstrap ok\n"
+  fi
+
+  result2="$(cat context/debootstrap/rootfs/linux/amd64/debootstrap.sha)"
+
+  if [ "${result%% *}" != "${result2%% *}" ]; then
+    >&2 printf "ALERT - rebootstrap is no longer producing consistent results: %s versus %s\n" "$result" "$result2"
+    exit 1
+  fi
+fi
+
+git checkout context/debootstrap/rootfs
+
+export DEBOOTSTRAP_PLATFORMS=arm64
+DEBOOTSTRAP_APT_OPTIONS="${DEBOOTSTRAP_APT_OPTIONS:-}"
+[ "$DEBOOTSTRAP_APT_OPTIONS" ] || DEBOOTSTRAP_APT_OPTIONS="$APT_OPTIONS"
+export DEBOOTSTRAP_APT_OPTIONS
+export APT_OPTIONS="$APT_OPTIONS Acquire::Check-Valid-Until=no"
+
+if [ ! "${TEST_DOES_NOT_BUILD:-}" ]; then
+  if ! ./hack/cue-bake debootstrap --inject no_cache=true --inject progress=plain; then
+    >&2 printf "Failed building rebootstrap\n"
+    exit 1
+  fi
+
+  result="$(sha512sum context/debian/cache/rootfs/linux/*/*.tar)"
+
+  if ! ./hack/cue-bake debootstrap --inject no_cache=true --inject progress=plain; then
+    >&2 printf "Failed building rebootstrap\n"
+    exit 1
+  fi
+
+  result2="$(sha512sum context/debian/cache/rootfs/linux/*/*.tar)"
+
+  if [ "${result%% *}" != "${result2%% *}" ]; then
+    >&2 printf "ALERT - debootstrap is no longer producing consistent results: %s versus %s\n" "$result" "$result2"
+    exit 1
   fi
 fi
