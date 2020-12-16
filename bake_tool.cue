@@ -30,11 +30,12 @@ command: {
       APT_NETRC: string | * ""
       APT_SOURCES: string | * ""
 
+      // Specific to the debians stages
       DEBOOTSTRAP_GPG_KEYRING: string | * ""
       DEBOOTSTRAP_SOURCES_COMMIT: string | * ""
       DEBOOTSTRAP_REPOSITORY: string | * ""
 
-      // Specific to this
+      // Specific to this stage
       REBOOTSTRAP_IMAGE: string | * "docker.io/dubodubonduponey/debian@sha256:cb25298b653310dd8b7e52b743053415452708912fe0e8d3d0d4ccf6c4003746"
     }
   }
@@ -62,6 +63,7 @@ command: {
       APT_NETRC: string | * ""
       APT_SOURCES: string | * ""
 
+      // Specific to the debians stages
       DEBOOTSTRAP_GPG_KEYRING: string | * ""
       DEBOOTSTRAP_SOURCES_COMMIT: string | * ""
       DEBOOTSTRAP_REPOSITORY: string | * ""
