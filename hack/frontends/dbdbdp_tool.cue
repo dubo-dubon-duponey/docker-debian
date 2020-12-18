@@ -5,7 +5,7 @@ import (
 )
 
 #Dubo: #Bake & {
-  args: os.Getenv & {
+  args: value: os.Getenv & {
     DEBOOTSTRAP_DATE: string | * "2020-12-14"
     DEBOOTSTRAP_SUITE: string | * "buster"
 
@@ -34,7 +34,7 @@ import (
     GO111MODULE: string | * "on"
 
     BASE_BASE: string | * "docker.io/dubodubonduponey/base"
-    BUILDER_BASE: string | * "\(BASE_BASE):builder-\(args.DEBOOTSTRAP_SUITE)-\(args.DEBOOTSTRAP_DATE)"
-    RUNTIME_BASE: string | * "\(BASE_BASE):runtime-\(args.DEBOOTSTRAP_SUITE)-\(args.DEBOOTSTRAP_DATE)"
+    BUILDER_BASE: string | * "\(BASE_BASE):builder-\(args.value.DEBOOTSTRAP_SUITE)-\(args.value.DEBOOTSTRAP_DATE)"
+    RUNTIME_BASE: string | * "\(BASE_BASE):runtime-\(args.value.DEBOOTSTRAP_SUITE)-\(args.value.DEBOOTSTRAP_DATE)"
   }
 }

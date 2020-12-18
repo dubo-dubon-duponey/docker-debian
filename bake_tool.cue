@@ -8,14 +8,14 @@ import (
 
 command: {
   rebootstrap: #Bake & {
-    target: "rebootstrap"
-    context: "context/debootstrap"
+    target: value: "rebootstrap"
+    context: value: "context/debootstrap"
 
-    platforms: [AMD64]
+    platforms: value: [#Platforms.AMD64]
 
     directory: "context/debootstrap"
 
-    args: os.Getenv & {
+    args: value: os.Getenv & {
       DEBOOTSTRAP_DATE: string | * "2020-01-01"
       DEBOOTSTRAP_SUITE: string | * "buster"
 
@@ -41,14 +41,14 @@ command: {
   }
 
   debootstrap: #Bake & {
-    target: "debootstrap"
-    context: "context/debootstrap"
+    target: value: "debootstrap"
+    context: value: "context/debootstrap"
 
-    platforms: [AMD64]
+    platforms: value: [#Platforms.AMD64]
 
     directory: "context/debian/cache"
 
-    args: os.Getenv & {
+    args: value: os.Getenv & {
       DEBOOTSTRAP_DATE: string | * "2020-01-01"
       DEBOOTSTRAP_SUITE: string | * "buster"
 
@@ -75,22 +75,26 @@ command: {
     }
   }
 
-  debian: #Dubo & {
-    target: "debian"
-    context: "context/debian"
-
-    platforms: [
-      AMD64,
-      ARM64,
-      V6,
-      V7,
-      I386,
-      S390X,
-      PPC64LE,
+    platforms: value: [
+      #Platforms.AMD64,
+      #Platforms.ARM64,
+      #Platforms.V6,
+      #Platforms.V7,
+      #Platforms.I386,
+      #Platforms.S390X,
+      #Platforms.PPC64LE,
     ]
 
-    args: {
-      BUILD_TITLE: "Debian \(args.DEBOOTSTRAP_SUITE) (\(args.DEBOOTSTRAP_DATE))"
+  debian: #Dubo & {
+    target: value: "debian"
+    context: value: "context/debian"
+
+    platforms: value: [
+      #Platforms.S390X,
+    ]
+
+    args: value: {
+      BUILD_TITLE: "Debian \(args.value.DEBOOTSTRAP_SUITE) (\(args.value.DEBOOTSTRAP_DATE))"
       BUILD_DESCRIPTION: "Dubo base, from scratch, Debian image"
     }
   }
