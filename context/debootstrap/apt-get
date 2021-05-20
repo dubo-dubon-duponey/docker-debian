@@ -8,7 +8,7 @@ args=("$@")
 # Examples:
 # - proxy: "Acquire::HTTP::proxy=http://proxy:1234/"
 # - ignore signature expiracy (typical with snapshot): "Acquire::Check-Valid-Until=no"
-# - user-agent: "Acquire::HTTP::User-Agent=DuboDubonDuponey/0.1"
+# - user-agent: "Acquire::HTTP::User-Agent=DuboDubonDuponey/1.0"
 APT_OPTIONS="${APT_OPTIONS:-}"
 if [ "$APT_OPTIONS" ]; then
   for i in ${APT_OPTIONS[*]}; do
@@ -40,7 +40,7 @@ if [ "${APT_NETRC:-}" ]; then
 fi
 
 # Call the real apt-get now
-# >&2 printf "Running deviation: apt-get %s\n" "${args[*]}"
+printf >&2 "Running deviation: apt-get %s\n" "${args[*]}"
 ret=
 /usr/bin/apt-get "${args[@]}" || ret="$?"
 
@@ -48,6 +48,7 @@ ret=
 rm -f /tmp/sources.list
 rm -f /tmp/ca.pem
 rm -f /tmp/auth.conf
+# XXX deprecated for secrets?
 rm -f /etc/apt/trusted.gpg.d/dbdbdp.gpg
 
 exit $ret
