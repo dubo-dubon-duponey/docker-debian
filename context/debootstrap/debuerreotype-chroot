@@ -1,59 +1,40 @@
 #!/usr/bin/env bash
-set -Eeuo pipefail
+set -o errexit -o errtrace -o functrace -o nounset -o pipefail
 
 # The purpose of this fork is to:
 # a. remove unshare which does require extra privileges
-# b. pass along some of the env down to our apt-get "smart" deviation
+# b. simplify and reduce the use-case of this as we surface more features into the Dockerfile and expose black magic
 
-thisDir="$(dirname "$(readlink -f "$BASH_SOURCE")")"
-# shellcheck source=/dev/null
-source "$thisDir/.constants.sh" \
-	'<target-dir> <command> [args...]' \
-	'rootfs apt-get update'
-
-eval "$dgetopt"
-while true; do
-	flag="$1"; shift
-	dgetopt-case "$flag"
-	case "$flag" in
-		--) break ;;
-		*) eusage "unknown flag '$flag'" ;;
-	esac
-done
-
-targetDir="${1:-}"
+targetDir="$1"
+cmd="$2"
 shift
-cmd="${1:-}"
 shift
+
+>&2 echo "-------------------------------"
+>&2 echo "Debu patched chroot"
+>&2 echo "-------------------------------"
+>&2 echo "Target: $targetDir"
+>&2 echo "Cmd: $cmd $*"
+>&2 echo "-------------------------------"
+
+if [ "$cmd" == "apt-mark" ] || [ "$cmd" == "apt-get" ]; then
+  >&2 echo "Voluntarily ignoring command invoked from spurious init phase"
+  exit
+fi
+
 epoch="$(< "$targetDir/debuerreotype-epoch")"
 
 export targetDir epoch
 
-# Carry forward resolv.conf
-cp /etc/resolv.conf "$targetDir"/etc/resolv.conf
-# And our smarter apt-get
-[ -e "$targetDir"/usr/local/sbin/apt-get ] || {
-  cp /usr/local/sbin/apt-get "$targetDir"/usr/local/sbin/apt-get
-  touch --no-dereference --date="@$epoch" "$targetDir"/usr/local/sbin/apt-get
-}
+# Should ensure the network is down
+# XXX this technically leaves the rootfs without a default here
+echo "" > "$targetDir"/etc/resolv.conf
 
-# Chroot, with the additional environment
 chroot "$targetDir" /usr/bin/env -i \
   DEBIAN_FRONTEND="$DEBIAN_FRONTEND" \
-  TZ="$TZ" \
-  LANG="$LANG" \
   TERM="$TERM" \
+  LANG="$LANG" \
   LC_ALL="$LC_ALL" \
-  http_proxy="${http_proxy:-}" \
-  https_proxy="${https_proxy:-}" \
-  APT_OPTIONS="${DEBOOTSTRAP_APT_OPTIONS:-}" \
-  APT_SOURCES="${DEBOOTSTRAP_APT_SOURCES:-}" \
-  APT_GPG_KEYRING="${DEBOOTSTRAP_GPG_KEYRING:-}" \
-  APT_NETRC="${SYSTEM_NETRC:-}" \
-  APT_TLS_CA="${SYSTEM_TLS_CA:-}" \
+  TZ="$TZ" \
   PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" \
   SOURCE_DATE_EPOCH="$epoch" "$cmd" "$@"
-
-rm "$targetDir"/etc/resolv.conf
-touch "$targetDir"/etc/resolv.conf
-touch --no-dereference --date="@$epoch" "$targetDir"/etc/resolv.conf
