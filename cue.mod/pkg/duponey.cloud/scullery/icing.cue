@@ -71,6 +71,11 @@ import (
 		key?: types.#Key
 	}
 
+	cache: {
+		to?: types.#CacheTo
+		from?: types.#CacheFrom
+	}
+
 	subsystems: [string]: #Subsystem
 	subsystems: apt: #AptSubsystem
 	subsystems: curl: #CurlSubsystem

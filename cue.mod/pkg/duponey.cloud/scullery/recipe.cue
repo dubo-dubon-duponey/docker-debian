@@ -19,7 +19,7 @@ import (
 		from: types.#Image
 		// XXX this should be an array
 		// XXX this should be injectable
-		cache?: types.#CacheFrom
+		// cache?: types.#CacheFrom
 	}
 
 	// Controls for which platform, and what target
@@ -39,7 +39,7 @@ import (
 		tarball?: types.#Tarball
 		// XXX this should be an array
 		// XXX this should be injectable
-		cache?: types.#CacheTo
+		// cache?: types.#CacheTo
 	}
 
 	// Standard metadata for the image - XXX this has nothing to do here

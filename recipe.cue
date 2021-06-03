@@ -10,7 +10,11 @@ import (
 // It's probably a better approach to hook it into the recipe, or the env to avoid massive re-use problems
 
 // Entry point if there are environmental definitions
-UserDefined: scullery.#Icing
+UserDefined: scullery.#Icing & {
+	// XXX add injectors here?
+//				cache: injector._cache_to
+//				cache: injector._cache_from
+}
 
 // XXX unfortunately, you cannot have tags in imported packages, so this has to be hard-copied here
 
@@ -37,14 +41,6 @@ defaults: {
 			tag: "latest"
 		}
 	],
-	cacheTo: types.#CacheTo & {
-		type: types.#CacheType.#LOCAL
-		location: "./cache/buildkit"
-	}
-	cacheFrom: types.#CacheFrom & {
-		type: types.#CacheType.#LOCAL
-		location: "./cache/buildkit"
-	}
 	platforms: [
 		types.#Platforms.#AMD64,
 		types.#Platforms.#ARM64,
@@ -65,9 +61,6 @@ injector: {
 	_tags: [for _k, _v in strings.Split(_i_tags, ",") {
 		types.#Image & {#fromString: _v}
 	}]
-
-	_cache_from: types.#CacheFrom & {#fromString: * defaults.cacheFrom.toString | string @tag(cache_from, type=string)}
-	_cache_to: types.#CacheTo & {#fromString: * defaults.cacheTo.toString | string @tag(cache_to, type=string)}
 
 	_i_platforms: * strings.Join(defaults.platforms, ",") | string @tag(platforms, type=string)
 
@@ -100,7 +93,6 @@ cakes: {
 		recipe: {
 			input: {
 				context: "context/debootstrap"
-				cache: injector._cache_from
 				root: "./"
 				from: injector._from_image
 			}
@@ -131,7 +123,6 @@ cakes: {
       }
 
 			output: {
-				cache: injector._cache_to
 				directory: injector._directory
 			}
 		}
@@ -140,9 +131,9 @@ cakes: {
 		// Here, this image also is a special kind where we want to force the repo to a specific point in time so that our pinned dependencies are available
 		icing: UserDefined & {
 			subsystems: apt: sources: #"""
-			deb http://snapshot.debian.org/archive/debian/20200101T000000Z \#(recipe.process.args.DEBOOTSTRAP_SUITE) main
-			deb http://snapshot.debian.org/archive/debian-security/20200101T000000Z \#(recipe.process.args.DEBOOTSTRAP_SUITE)/updates main
-			deb http://snapshot.debian.org/archive/debian/20200101T000000Z \#(recipe.process.args.DEBOOTSTRAP_SUITE)-updates main
+			deb http://snapshot.debian.org/archive/debian/20200101T000000Z buster main
+			deb http://snapshot.debian.org/archive/debian-security/20200101T000000Z buster/updates main
+			deb http://snapshot.debian.org/archive/debian/20200101T000000Z buster-updates main
 
 			"""#
 			// XXX interesting ripple effects...
@@ -154,7 +145,6 @@ cakes: {
 		recipe: scullery.#Recipe & {
 			input: {
 				context: "context/debian"
-				cache: injector._cache_from
 				root: "./"
 				from: injector._from_image
 			}
@@ -169,7 +159,6 @@ cakes: {
 			}
 
 			output: {
-				cache: injector._cache_to
 				tags: injector._tags
 			}
 

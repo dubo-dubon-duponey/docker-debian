@@ -43,7 +43,7 @@ RUN           --mount=type=secret,mode=0444,id=CA,dst=/etc/ssl/certs/ca-certific
               --mount=type=secret,id=CERTIFICATE \
               --mount=type=secret,id=KEY \
               --mount=type=secret,id=PASSPHRASE \
-              --mount=type=secret,id=GPG \
+              --mount=type=secret,mode=0444,id=GPG \
               --mount=type=secret,id=NETRC \
               --mount=type=secret,id=APT_SOURCES \
               --mount=type=secret,id=APT_OPTIONS,dst=/etc/apt/apt.conf.d/dbdbdp.conf \
@@ -132,7 +132,7 @@ RUN           set -eu; \
 RUN           --mount=type=secret,mode=0444,id=CA,dst=/bootstrapper/rootfs/etc/ssl/certs/ca-certificates.crt \
               --mount=type=secret,id=CERTIFICATE,dst=/bootstrapper/rootfs/run/secrets/CERTIFICATE \
               --mount=type=secret,id=KEY,dst=/bootstrapper/rootfs/run/secrets/KEY \
-              --mount=type=secret,id=GPG,dst=/bootstrapper/rootfs/run/secrets/GPG \
+              --mount=type=secret,mode=0444,id=GPG,dst=/bootstrapper/rootfs/run/secrets/GPG \
               --mount=type=secret,id=NETRC,dst=/bootstrapper/rootfs/run/secrets/NETRC \
               --mount=type=secret,id=APT_OPTIONS,dst=/bootstrapper/rootfs/etc/apt/apt.conf.d/dbdbdp.conf \
               set -eu; \
@@ -224,7 +224,7 @@ ONBUILD RUN   --mount=type=secret,mode=0444,id=CA,dst=/etc/ssl/certs/ca-certific
               --mount=type=secret,id=CERTIFICATE \
               --mount=type=secret,id=KEY \
               --mount=type=secret,id=PASSPHRASE \
-              --mount=type=secret,id=GPG \
+              --mount=type=secret,mode=0444,id=GPG \
               --mount=type=secret,id=NETRC \
               --mount=type=secret,id=APT_SOURCES \
               --mount=type=secret,id=APT_OPTIONS,dst=/etc/apt/apt.conf.d/dbdbdp.conf \
