@@ -52,13 +52,13 @@ make retool
 ### Building a debootstrapped Debian image
 
 ```bash
-DEBOOTSTRAP_DATE=2020-06-01 DEBOOTSTRAP_SUITE=buster make build
+TARGET_DATE=2020-06-01 TARGET_SUITE=buster make build
 ```
 
 If everything went fine, it will build, but then fail to push. Just tell it "where" you want it:
 
 ```
-EXTRAS="--inject tags=you/debian" DEBOOTSTRAP_DATE=2020-06-01 DEBOOTSTRAP_SUITE=buster make build
+EXTRAS="--inject tags=you/debian" TARGET_DATE=2020-06-01 TARGET_SUITE=buster make build
 ```
 
 ### Dependencies

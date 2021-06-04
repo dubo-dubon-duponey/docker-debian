@@ -19,7 +19,8 @@ if ! cue \
     --inject from_image=debian:buster-20200130-slim --inject from_tarball="nonexistent*" \
     --inject progress=plain \
 	  --inject directory="$root"/context/debootstrap \
-	  --inject debootstrap_date=2020-01-01 \
+	  --inject target_date=2020-01-01 \
+	  --inject target_suite=buster \
   	debootstrap "$root"/recipe.cue "$root"/cue_tool.cue; then
   printf >&2 "Failed building tooling rootfs from online debian\n"
   exit 1
@@ -30,7 +31,8 @@ result1="$(cat "$root"/context/debootstrap/rootfs/*.sha)"
 if ! cue \
     --inject progress=plain \
 	  --inject directory="$root"/context/debootstrap \
-	  --inject debootstrap_date=2020-01-01 \
+	  --inject target_date=2020-01-01 \
+	  --inject target_suite=buster \
   	debootstrap "$root"/recipe.cue "$root"/cue_tool.cue; then
   printf >&2 "Failed building tooling rootfs from existing rootfs\n"
   exit 1

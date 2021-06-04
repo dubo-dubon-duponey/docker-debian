@@ -98,7 +98,7 @@ UserDefined: scullery.#Icing & {
 Now, add it when building:
 
 ```bash
-ICING=env.cue DEBOOTSTRAP_DATE=2020-06-01 DEBOOTSTRAP_SUITE=buster make build
+ICING=env.cue TARGET_DATE=2020-06-01 TARGET_SUITE=buster make build
 ```
 
 The above `env` will instruct `apt` and `curl` to use an internal apt-proxy, with authentication and TLS (provided by CA),
@@ -110,11 +110,11 @@ The makefile merely calls cue. A typical `build` thus is just:
 
 ```
 # Generate the actual rootfs
-cue --inject debootstrap_date=2021-06-01 --inject debootstrap_suite=buster \
+cue --inject target_date=2021-06-01 --inject target_suite=buster \
 		debootstrap ./hack/recipe.cue ./hack/cue_tool.cue ./your_environment.cue
 
 # Assemble the final image and push it
-cue --inject debootstrap_date=2021-06-01 --inject debootstrap_suite=buster \
+cue --inject target_date=2021-06-01 --inject target_suite=buster \
     --inject tags=somewhere/to_push \
 		debian ./hack/recipe.cue ./hack/cue_tool.cue ./your_environment.cue
 ```
@@ -123,6 +123,12 @@ cue --inject debootstrap_date=2021-06-01 --inject debootstrap_suite=buster \
 
 And have a look at `hack/recipe.cue`, and hack away.
 
+## Stuff you never knew you wanted to ask
+
+ * local environment (internal hosts, authentication, certificates) are passed as build secrets and as such never ship to the final image
+ * final sources.list is pointing at `snapshot.debian.org`, for the specific date you asked for
+   * this is fine: containers should not be updated in place
+   * if you want a different behavior, look into the `recipe.cue` file and hack away
 
 ## Caveats
 

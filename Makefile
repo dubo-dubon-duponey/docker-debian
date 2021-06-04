@@ -5,8 +5,8 @@ DC_PREFIX ?= $(shell pwd)
 
 # Set to true to disable fancy / colored output
 DC_NO_FANCY ?=
-DEBOOTSTRAP_DATE ?= 2021-06-01
-DEBOOTSTRAP_SUITE ?= buster
+TARGET_DATE ?= 2021-06-01
+TARGET_SUITE ?= bullseye
 ICING ?=
 EXTRAS ?=
 
@@ -37,13 +37,14 @@ retool:
 	# Rebuilding local rootfs from online image
 	cue --inject from_image=debian:buster-20200130-slim --inject from_tarball="nonexistent*" \
 		--inject directory=$(DC_MAKEFILE_DIR)/context/debootstrap --inject platforms= \
-		--inject debootstrap_date=2020-01-01 \
+		--inject target_date=2020-01-01 \
 		${EXTRAS} \
 		debootstrap $(DC_MAKEFILE_DIR)/hack/recipe.cue $(DC_MAKEFILE_DIR)/hack/cue_tool.cue ${ICING}
 	# Rebuilding again but this time from local rootfs
 	cue \
 		--inject directory=$(DC_MAKEFILE_DIR)/context/debootstrap --inject platforms= \
-		--inject debootstrap_date=2020-01-01 \
+		--inject target_date=2020-01-01 \
+		--inject target_suite=buster \
 		${EXTRAS} \
 		debootstrap $(DC_MAKEFILE_DIR)/hack/recipe.cue $(DC_MAKEFILE_DIR)/hack/cue_tool.cue ${ICING}
 	$(call footer, $@)

@@ -62,7 +62,7 @@ jobs:
           export APT_OPTIONS="Acquire::HTTP::proxy=http://$(docker inspect aptcache | jq -rc .[0].NetworkSettings.Networks.bridge.IPAddress):3142 Acquire::HTTP::User-Agent=GH-DuboDubonDuponey/1.0 Acquire::Check-Valid-Until=no"
           export BASE_BASE="ghcr.io/dubo-dubon-duponey/base"
           # Pinning to this for now... since did not push our latest debians to ghcr.io...
-          export DEBOOTSTRAP_DATE="2020-11-10"
+          export TARGET_DATE="2020-11-10"
           # Hiding the read-only token base64 to avoid github disabling it...
           echo OWMyMGVhYzk4N2NhYWQxYmI3MzhmNTZkODNmOGMwOGJjZjlhNDc4YQo= | base64 -d | docker login ghcr.io -u dubo-dubon-duponey --password-stdin
           ./test.sh

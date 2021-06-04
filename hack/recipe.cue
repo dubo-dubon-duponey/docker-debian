@@ -23,7 +23,7 @@ defaults: {
 		types.#Image & {
 			registry: "push-registry.local"
  			image: "dubo-dubon-duponey/debian"
-			tag: cakes.debian.recipe.process.args.DEBOOTSTRAP_SUITE + "-" + cakes.debian.recipe.process.args.DEBOOTSTRAP_DATE
+			tag: cakes.debian.recipe.process.args.TARGET_SUITE + "-" + cakes.debian.recipe.process.args.TARGET_DATE
 		},
 		types.#Image & {
 			registry: "push-registry.local"
@@ -33,7 +33,7 @@ defaults: {
 		types.#Image & {
    		registry: "ghcr.io"
    		image: "dubo-dubon-duponey/debian"
-   		tag: cakes.debian.recipe.process.args.DEBOOTSTRAP_SUITE + "-" + cakes.debian.recipe.process.args.DEBOOTSTRAP_DATE
+   		tag: cakes.debian.recipe.process.args.TARGET_SUITE + "-" + cakes.debian.recipe.process.args.TARGET_DATE
    	},
 		types.#Image & {
 			registry: "ghcr.io"
@@ -52,7 +52,7 @@ defaults: {
 	]
 	suite: "buster"
 	date: "2020-01-01"
-	tarball: "buster-2020-01-01.tar"
+	tarball: "\(suite)-\(date).tar"
 }
 
 injector: {
@@ -73,8 +73,8 @@ injector: {
 		_platforms: [for _k, _v in strings.Split(_i_platforms, ",") {_v}]
 	}
 
-	_debootstrap_suite: * defaults.suite | =~ "^(?:buster|bullseye)$" @tag(debootstrap_suite, type=string)
-	_debootstrap_date: * defaults.date | =~ "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" @tag(debootstrap_date, type=string)
+	_target_suite: * defaults.suite | =~ "^(?:buster|bullseye)$" @tag(target_suite, type=string)
+	_target_date: * defaults.date | =~ "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" @tag(target_date, type=string)
 
 	_directory: * "context/debian/cache" | string @tag(directory, type=string)
 
@@ -84,13 +84,14 @@ injector: {
 
 			// XXX this is really environment instead righty?
 			// This to specify if a offband repo is available
-			//DEBOOTSTRAP_REPOSITORY: #Secret & {
-			//	content: "https://apt-cache.local/archive/debian/" + strings.Replace(args.DEBOOTSTRAP_DATE, "-", "", -1)
+			//TARGET_REPOSITORY: #Secret & {
+			//	content: "https://apt-cache.local/archive/debian/" + strings.Replace(args.TARGET_DATE, "-", "", -1)
 			//}
 
 cakes: {
 	debootstrap: scullery.#Cake & {
 		recipe: {
+			// XXX could be smarter in alternating from image and from tarball
 			input: {
 				context: "context/debootstrap"
 				root: "./"
@@ -102,8 +103,8 @@ cakes: {
 			process: platforms: injector._platforms
 
       process: args: {
-	      DEBOOTSTRAP_DATE: injector._debootstrap_date
-  	    DEBOOTSTRAP_SUITE: injector._debootstrap_suite
+	      TARGET_DATE: injector._target_date
+  	    TARGET_SUITE: injector._target_suite
 
       	FROM_TARBALL: injector._from_tarball
       	// Extra packages we want in
@@ -114,12 +115,25 @@ cakes: {
       	UNLOAD_PACKAGES: string | *""// apt-transport-https openssl ca-certificates libssl1.1
 				// Regardless of where we sourced from, we need a full-blown version with security and updates
       	// XXX make that injectable?
-				DEBOOTSTRAP_SOURCES_COMMIT: #"""
-					deb http://snapshot.debian.org/archive/debian/\#(strings.Replace(args.DEBOOTSTRAP_DATE, "-", "", -1) + "T000000Z") \#(args.DEBOOTSTRAP_SUITE) main
-					deb http://snapshot.debian.org/archive/debian-security/\#(strings.Replace(args.DEBOOTSTRAP_DATE, "-", "", -1) + "T000000Z") \#(args.DEBOOTSTRAP_SUITE)/updates main
-					deb http://snapshot.debian.org/archive/debian/\#(strings.Replace(args.DEBOOTSTRAP_DATE, "-", "", -1) + "T000000Z") \#(args.DEBOOTSTRAP_SUITE)-updates main
+      	TARGET_SOURCES_COMMIT: string
+      	if TARGET_SUITE == "buster" {
+					TARGET_SOURCES_COMMIT: #"""
+						deb http://snapshot.debian.org/archive/debian/\#(strings.Replace(args.TARGET_DATE, "-", "", -1) + "T000000Z") \#(args.TARGET_SUITE) main
+						deb http://snapshot.debian.org/archive/debian-security/\#(strings.Replace(args.TARGET_DATE, "-", "", -1) + "T000000Z") \#(args.TARGET_SUITE)/updates main
+						deb http://snapshot.debian.org/archive/debian/\#(strings.Replace(args.TARGET_DATE, "-", "", -1) + "T000000Z") \#(args.TARGET_SUITE)-updates main
 
-					"""#
+						"""#
+      	}
+      	// Bullseye made security repo urls more sensical
+      	if TARGET_SUITE == "bullseye" {
+					TARGET_SOURCES_COMMIT: #"""
+						deb http://snapshot.debian.org/archive/debian/\#(strings.Replace(args.TARGET_DATE, "-", "", -1) + "T000000Z") \#(args.TARGET_SUITE) main
+						deb http://snapshot.debian.org/archive/debian-security/\#(strings.Replace(args.TARGET_DATE, "-", "", -1) + "T000000Z") \#(args.TARGET_SUITE)-security main
+						deb http://snapshot.debian.org/archive/debian/\#(strings.Replace(args.TARGET_DATE, "-", "", -1) + "T000000Z") \#(args.TARGET_SUITE)-updates main
+
+						"""#
+
+      	}
       }
 
 			output: {
@@ -154,8 +168,8 @@ cakes: {
 			process: platforms: injector._platforms
 
 			process: args: {
-	      DEBOOTSTRAP_DATE: injector._debootstrap_date
-  	    DEBOOTSTRAP_SUITE: injector._debootstrap_suite
+	      TARGET_DATE: injector._target_date
+  	    TARGET_SUITE: injector._target_suite
 			}
 
 			output: {
@@ -165,9 +179,9 @@ cakes: {
 			// Standard metadata for the image
 			metadata: {
 				// XXX plug in the ref_name here
-				ref_name: process.args.DEBOOTSTRAP_SUITE + "-" + process.args.DEBOOTSTRAP_DATE,
-				title: "Dubo Debian \(process.args.DEBOOTSTRAP_SUITE)",
-				description: "Lovingly debootstrapped from \(process.args.DEBOOTSTRAP_SUITE) (at \(process.args.DEBOOTSTRAP_DATE))",
+				ref_name: process.args.TARGET_SUITE + "-" + process.args.TARGET_DATE,
+				title: "Dubo Debian \(process.args.TARGET_SUITE)",
+				description: "Lovingly debootstrapped from \(process.args.TARGET_SUITE) (at \(process.args.TARGET_DATE))",
 			}
 		}
 
