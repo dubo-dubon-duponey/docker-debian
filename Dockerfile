@@ -34,6 +34,7 @@ ARG           UNLOAD_PACKAGES="apt-transport-https openssl ca-certificates libss
 
 # Adding our rootfs if any
 # XXX unfortunately, this might fail if the corresponding parent directory (rootfs/$BUILDPLATFORM) does not exist
+# hadolint ignore=DL3020
 ADD           ./rootfs/$BUILDPLATFORM/$FROM_TARBALL /
 
 # > STEP 1: install debootstrap
@@ -220,6 +221,7 @@ ONBUILD ARG   UNLOAD_PACKAGES=""
 
 ONBUILD ARG   L3=""
 
+# hadolint ignore=DL3008
 ONBUILD RUN   --mount=type=secret,mode=0444,id=CA,dst=/etc/ssl/certs/ca-certificates.crt \
               --mount=type=secret,id=CERTIFICATE \
               --mount=type=secret,id=KEY \
@@ -231,7 +233,7 @@ ONBUILD RUN   --mount=type=secret,mode=0444,id=CA,dst=/etc/ssl/certs/ca-certific
               set -eu; \
               if [ "$PRELOAD_PACKAGES" ]; then \
                 apt-get update -qq; \
-                apt show $PRELOAD_PACKAGES; \
+                apt-cache show $PRELOAD_PACKAGES; \
                 apt-get install -qq --no-install-recommends $PRELOAD_PACKAGES; \
                 rm -rf /var/lib/apt/lists/*; \
                 rm -rf /tmp/*; \

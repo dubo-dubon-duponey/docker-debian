@@ -1,7 +1,13 @@
+DC_MAKEFILE_DIR := $(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
+
+# Output directory
+DC_PREFIX ?= $(shell pwd)
+
 # Set to true to disable fancy / colored output
 DC_NO_FANCY ?=
 DEBOOTSTRAP_DATE ?= 2021-06-01
 DEBOOTSTRAP_SUITE ?= buster
+ICING ?=
 EXTRAS ?=
 
 # Fancy output if interactive
@@ -30,16 +36,16 @@ retool:
 	$(shell command -v cue > /dev/null || { echo "You need cue installed"; exit 1; })
 	# Rebuilding local rootfs from online image
 	cue --inject from_image=debian:buster-20200130-slim --inject from_tarball="nonexistent*" \
-		--inject directory=./context/debootstrap --inject platforms= \
+		--inject directory=$(DC_MAKEFILE_DIR)/context/debootstrap --inject platforms= \
 		--inject debootstrap_date=2020-01-01 \
 		${EXTRAS} \
-		debootstrap ./recipe.cue ./cue_tool.cue ${CAKE_ICING}
+		debootstrap $(DC_MAKEFILE_DIR)/hack/recipe.cue $(DC_MAKEFILE_DIR)/hack/cue_tool.cue ${ICING}
 	# Rebuilding again but this time from local rootfs
 	cue \
-		--inject directory=./context/debootstrap --inject platforms= \
+		--inject directory=$(DC_MAKEFILE_DIR)/context/debootstrap --inject platforms= \
 		--inject debootstrap_date=2020-01-01 \
 		${EXTRAS} \
-		debootstrap ./recipe.cue ./cue_tool.cue ${CAKE_ICING}
+		debootstrap $(DC_MAKEFILE_DIR)/hack/recipe.cue $(DC_MAKEFILE_DIR)/hack/cue_tool.cue ${ICING}
 	$(call footer, $@)
 
 build:
@@ -48,21 +54,18 @@ build:
 	# Generate the actual rootfs for our debian image
 	cue --inject debootstrap_date=${DEBOOTSTRAP_DATE} --inject debootstrap_suite=${DEBOOTSTRAP_SUITE} \
 		${EXTRAS} \
-		debootstrap ./recipe.cue ./cue_tool.cue ${ICING}
+		debootstrap $(DC_MAKEFILE_DIR)/hack/recipe.cue $(DC_MAKEFILE_DIR)/hack/cue_tool.cue ${ICING}
 	cue --inject debootstrap_date=${DEBOOTSTRAP_DATE} --inject debootstrap_suite=${DEBOOTSTRAP_SUITE} \
 		${EXTRAS} \
-		debian ./recipe.cue ./cue_tool.cue ${ICING}
+		debian $(DC_MAKEFILE_DIR)/hack/recipe.cue $(DC_MAKEFILE_DIR)/hack/cue_tool.cue ${ICING}
 	$(call footer, $@)
 
 lint:
 	$(call title, $@)
-	hack/lint.sh
+	$(DC_MAKEFILE_DIR)/hack/lint.sh
 	$(call footer, $@)
 
 test:
 	$(call title, $@)
-	hack/test.sh
+	$(DC_MAKEFILE_DIR)/hack/test.sh
 	$(call footer, $@)
-
-
-# CAKE_ICING=../../config/nou/environment.cue BUILDKIT_HOST=tcp://buildkit.local:443 ./hack/cue-bake debian --inject platforms=linux/s390x

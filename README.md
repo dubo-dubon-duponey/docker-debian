@@ -2,15 +2,15 @@
 
 Build your own Debian image from scratch.
 
-This project heavily relies on [debuerreotype](https://github.com/debuerreotype/debuerreotype), debootstrap and qemu.
+This project relies on [debuerreotype](https://github.com/debuerreotype/debuerreotype), [debootstrap](https://wiki.debian.org/Debootstrap), [qemu](https://www.qemu.org/), [cue](https://cuelang.org/), and [buildkit](https://github.com/moby/buildkit).
 
 Features:
  * reproducible builds
-     * a given date and Debian version always gives you the exact same resulting rootfs
+     * a given date and Debian suite always gives you the exact same resulting rootfs
  * no third-party image dependency
-     * the provided builder rootfs is all you need to get started (*), and you do not need ANY Docker image from anywhere
- * support for fully air-gaped build
- * depends only on the availability of `snapshot.debian.org` (**)
+     * the provided tarball is all you need to get started, and you do not need ANY Docker image from anywhere
+ * support for fully air-gaped build (granted you have a local debian repository mirror)
+ * depends only on the availability of `snapshot.debian.org` (or that of your proxy / mirror)
  * slim
      * resulting images are in the range of 25MB
  * multi-architecture
@@ -22,63 +22,93 @@ Features:
      * s390x
      * ppc64le
 
-(*) if your build host is linux/amd64, otherwise, you first have to build your own initial rootfs from an existing Debian image
+Notes:
 
-(**) or alternatively your own Debian packages repository mirror (like aptly) / proxy (like aptutil)
+ * if your build host is not `linux/amd64` and is not multi-arch enabled, you will first have to build your own initial rootfs from an existing Debian image.
+ * be nice to the Debian people infrastructure: have yourself a Debian packages repository mirror (like aptly), or a proxy (like aptutil), and use that
 
 ## TL;DR
 
-If your build host is linux/amd64, you can skip this first step. Otherwise (or if paranoid), run this once:
+You need:
+
+ * a working buildkit daemon, and `BUILDKIT_HOST` pointing to it
+ * `cue`
+ * `buildctl`
+
+Check the dependencies section if unsure.
+
+### Building your own local tooling rootfs
+
+If your build host is `linux/amd64`, and you are not paranoid, skip this step.
+
+Otherwise, run this once to rebuild your own local, base rootfs, starting from an official Debian image:
 
 ```bash
-./build.sh rebootstrap
+# Be sure to point this to your buildkit daemon
+# 
+make retool
 ```
 
-Generate rootfs from Debian Buster at a specific date, for all platforms:
+### Building a debootstrapped Debian image
 
 ```bash
-# What you want
-export DEBOOTSTRAP_DATE=2020-06-01
-
-# Build the rootfs for all requested architectures and store them locally
-./build.sh debootstrap
+DEBOOTSTRAP_DATE=2020-06-01 DEBOOTSTRAP_SUITE=buster make build
 ```
 
-Build and push a multi-architecture docker image from these rootfs:
+If everything went fine, it will build, but then fail to push. Just tell it "where" you want it:
+
+```
+EXTRAS="--inject tags=you/debian" DEBOOTSTRAP_DATE=2020-06-01 DEBOOTSTRAP_SUITE=buster make build
+```
+
+### Dependencies
+
+Run this to check your system:
 
 ```bash
-# What you want
-export DEBOOTSTRAP_DATE=2020-06-01
-# Your name
-export VENDOR="YOU"
-# On what platforms you want it (default to all supported platforms if left unspecified):
-export PLATFORMS="linux/amd64,linux/arm64"
+command -v cue > /dev/null || {
+  echo >&2 "You need to install cue"
+  exit 1
+}
 
-# Assemble and push Docker images from the locally stored rootfs
-./build.sh debian --push
+command -v buildctl > /dev/null || {
+  echo >&2 "You need to install buildctl"
+  exit 1
+}
+
+command -v buildctl > /dev/null || {
+  echo >&2 "You need to install buildctl"
+  exit 1
+}
+
+buildctl debug workers || {
+  echo >&2 "Cannot contact the buildkit daemon. Is it running? If so, did you point BUILDKIT_HOST to it?"
+  exit 1
+}
 ```
 
-## Advanced flags
-
-You may want to further customize the build by using any of the following:
+If you need to start a buildkit daemon, you can:
 
 ```bash
-# Registry to push your final Debian image to - defaults to Docker Hub if left unspecified
-REGISTRY="docker.io"
+docker run --rm -d \
+      -p 4242:4242 \
+      --network host \
+      --name dbdbdp-buildkit \
+      --user root \
+      --privileged \
+      ghcr.io/dubo-dubon-duponey/buildkit
 
-# Additionally, any argument passed to build.sh is fed to docker buildx bake.
-# Specifically you may want to use:
-#  --no-cache           Do not use cache when building the image
-#  --print              Print the options without building
-#  --progress string    Set type of progress output (auto, plain, tty). Use plain to show container output (default "auto")
-#  --set stringArray    Override a specific target value (eg: targetpattern.key=value)
+export BUILDKIT_HOST=tcp://127.0.0.1:4242
 ```
 
-An advanced example:
-```
-DEBOOTSTRAP_DATE=2020-06-01 ./build.sh --no-cache --set "debian.tags=dubodubonduponey/debian:buster-2020-06-01" --set "debian.tags=registry.dev.REDACTED/dubodubonduponey/debian:buster-2020-06-01" --push --progress plain
+If you need to install `cue` and `buildctl` (on mac):
+
+```bash
+brew install cuelang/tap/cue
+brew install buildkit
 ```
 
-You may also (of course) entirely bypass the provided build script and use the bake files directly for further control.
+## Advanced stuff
 
-For more details and advanced options, see [advanced](ADVANCED.md).
+See [advanced](ADVANCED.md).
+

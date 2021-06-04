@@ -41,8 +41,12 @@ import (
     if recipe.output.tags != _|_ {
 	    tags: recipe.output.tags
     }
-		cache_from: icing.cache.from
-		cache_to: icing.cache.to
+		if icing.cache.from != _|_ {
+			cache_from: icing.cache.from
+		}
+		if icing.cache.to != _|_ {
+			cache_to: icing.cache.to
+		}
 		args: recipe.process.args
 
 		// Making these standard for now
