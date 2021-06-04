@@ -23,20 +23,20 @@ jobs:
       - name: Install hadolint
         # XXX move to container tooling
         run: |
-          curl --proto '=https' --tlsv1.2 -sSfL -o hadolint "https://github.com/hadolint/hadolint/releases/download/v1.22.1/hadolint-$(uname -s)-$(uname -m)"
+          curl --proto '=https' --tlsv1.3 -sSfL -o hadolint "https://github.com/hadolint/hadolint/releases/download/v2.4.1/hadolint-$(uname -s)-$(uname -m)"
           chmod 700 ./hadolint
 
       - name: Install cuelang
         # XXX move to beta4
         run: |
-          curl --proto '=https' --tlsv1.2 -sSfL -o cue.tar.gz "https://github.com/cuelang/cue/releases/download/v0.3.0-alpha6/cue_0.3.0-alpha6_$(uname -s)_$(uname -m).tar.gz"
+          curl --proto '=https' --tlsv1.3 -sSfL -o cue.tar.gz "https://github.com/cuelang/cue/releases/download/v0.4.0/cue_v0.4.0_$(uname -s)_$(uname -m).tar.gz"
           tar -xf cue.tar.gz
           rm cue.tar.gz
 
       - name: Install buildctl
         # XXX move to the one inside our buildkit container
         run: |
-          curl --proto '=https' --tlsv1.2 -sSfL -o buildctl.tar.gz "https://github.com/moby/buildkit/releases/download/v0.8.1/buildkit-v0.8.1.linux-amd64.tar.gz"
+          curl --proto '=https' --tlsv1.3 -sSfL -o buildctl.tar.gz "https://github.com/moby/buildkit/releases/download/v0.8.1/buildkit-v0.8.1.linux-amd64.tar.gz"
           tar -xf buildctl.tar.gz
           rm buildctl.tar.gz
           mv bin/buildctl .

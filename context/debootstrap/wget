@@ -2,7 +2,7 @@
 
 echo >&2 "Wget deviation: $*"
 
-args=(curl --tlsv1.2 -sSfL)
+args=(curl --tlsv1.3 -sSfL)
 
 for url in "$@"; do :; done
 

@@ -83,6 +83,8 @@ import (
 	subsystems: git?: #Subsystem
 	subsystems: system?: #Subsystem
 
+	secrets: [types.#Identifier]: types.#Secret
+
 	// Assemble our secrets
 	secrets: CERTIFICATE: types.#Secret
 	secrets: KEY: types.#Secret
@@ -96,9 +98,9 @@ import (
 		subsystems: curl: _configurator: input: authority: secrets.CA.path | * "/run/secrets/CA"
 	}
 	if trust.gpg != _|_ {
-		// secrets: GPG: types.#Secret
 		secrets: GPG: file: trust.gpg
-		subsystems: apt: _configurator: input: trusted: secrets.GPG.path | * "/run/secrets/GPG"
+		// XXX for some reason, it does not inherit properly from properly defined secrets.GPG.path
+		subsystems: apt: _configurator: input: trusted: secrets.GPG.path | * "/run/secrets/GPG.gpg"
 	}
 
 	let _netrc=strings.Join([

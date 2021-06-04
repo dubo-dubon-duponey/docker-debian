@@ -38,6 +38,7 @@ retool:
 	cue --inject from_image=debian:buster-20200130-slim --inject from_tarball="nonexistent*" \
 		--inject directory=$(DC_MAKEFILE_DIR)/context/debootstrap --inject platforms= \
 		--inject target_date=2020-01-01 \
+		--inject target_suite=buster \
 		${EXTRAS} \
 		debootstrap $(DC_MAKEFILE_DIR)/hack/recipe.cue $(DC_MAKEFILE_DIR)/hack/cue_tool.cue ${ICING}
 	# Rebuilding again but this time from local rootfs
@@ -53,10 +54,14 @@ build:
 	$(call title, $@)
 	$(shell command -v cue > /dev/null || { echo "You need cue installed"; exit 1; })
 	# Generate the actual rootfs for our debian image
-	cue --inject debootstrap_date=${DEBOOTSTRAP_DATE} --inject debootstrap_suite=${DEBOOTSTRAP_SUITE} \
+	cue --inject from_image=scratch --inject from_tarball=bullseye-2021-06-01.tar \
+		--inject target_date=${TARGET_DATE} \
+		--inject target_suite=${TARGET_SUITE} \
 		${EXTRAS} \
 		debootstrap $(DC_MAKEFILE_DIR)/hack/recipe.cue $(DC_MAKEFILE_DIR)/hack/cue_tool.cue ${ICING}
-	cue --inject debootstrap_date=${DEBOOTSTRAP_DATE} --inject debootstrap_suite=${DEBOOTSTRAP_SUITE} \
+	cue --inject from_image=scratch \
+		--inject target_date=${TARGET_DATE} \
+		--inject target_suite=${TARGET_SUITE} \
 		${EXTRAS} \
 		debian $(DC_MAKEFILE_DIR)/hack/recipe.cue $(DC_MAKEFILE_DIR)/hack/cue_tool.cue ${ICING}
 	$(call footer, $@)

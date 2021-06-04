@@ -20,16 +20,16 @@ ARG           LANG="C.UTF-8"
 ARG           LC_ALL="C.UTF-8"
 ARG           TZ="America/Los_Angeles"
 
-# > If the image is built from snapshot.debian.org (eg: the DEBOOTSTRAP_REPOSITORY secret has NOT been set), this will fetch from that date
-ARG           DEBOOTSTRAP_DATE="2020-01-01"
+# > If the image is built from snapshot.debian.org (eg: the TARGET_REPOSITORY secret has NOT been set), this will fetch from that date
+ARG           TARGET_DATE="2020-01-01"
 # > Which Debian suite to fetch
-ARG           DEBOOTSTRAP_SUITE="buster"
+ARG           TARGET_SUITE="buster"
 # > Optionally, the final content to commit to etc/apt/sources.list in the debootstrap. This is likely useful in all cases.
-ARG           DEBOOTSTRAP_SOURCES_COMMIT=""
+ARG           TARGET_SOURCES_COMMIT=""
 
 # > Optionally, packages to pre-install in the debootstrap (will honor the SOURCES_COMMIT list)
 ARG           PRELOAD_PACKAGES=""
-# > These packages are / not depending on whether https scheme in DEBOOTSTRAP_SOURCES_COMMIT or DEBOOTSTRAP_REPOSITORY
+# > These packages are / not depending on whether https scheme in TARGET_SOURCES_COMMIT or TARGET_REPOSITORY
 ARG           UNLOAD_PACKAGES="apt-transport-https openssl ca-certificates libssl1.1"
 
 # Adding our rootfs if any
@@ -44,7 +44,7 @@ RUN           --mount=type=secret,mode=0444,id=CA,dst=/etc/ssl/certs/ca-certific
               --mount=type=secret,id=CERTIFICATE \
               --mount=type=secret,id=KEY \
               --mount=type=secret,id=PASSPHRASE \
-              --mount=type=secret,mode=0444,id=GPG \
+              --mount=type=secret,mode=0444,id=GPG.gpg \
               --mount=type=secret,id=NETRC \
               --mount=type=secret,id=APT_SOURCES \
               --mount=type=secret,id=APT_OPTIONS,dst=/etc/apt/apt.conf.d/dbdbdp.conf \
@@ -79,7 +79,7 @@ RUN           --mount=type=secret,id=CA \
               --mount=type=secret,id=PASSPHRASE \
               --mount=type=secret,id=GPG \
               --mount=type=secret,id=NETRC \
-              --mount=type=secret,id=DEBOOTSTRAP_REPOSITORY \
+              --mount=type=secret,id=TARGET_REPOSITORY \
               --mount=type=secret,id=CURL_OPTIONS,dst=/root/.curlrc \
               set -eu; \
               targetarch="$TARGETARCH"; \
@@ -99,8 +99,10 @@ RUN           --mount=type=secret,id=CA \
                 debuerreotype-init --arch "$targetarch" --debootstrap="qemu-debootstrap" --no-merged-usr --debian rootfs "$DEBOOTSTRAP_SUITE" "${DEBOOTSTRAP_DATE}T00:00:00Z"; \
               fi
 
+# XXX qemu-debootstrap is deprecated. Please use regular debootstrap directly
+
 # XXX cannot ditch init yet - there is still some stuff happening besides calling debootstrap
-# qemu-debootstrap --arch "$targetarch" --force-check-gpg --variant=minbase --no-merged-usr "$DEBOOTSTRAP_SUITE" rootfs http://snapshot.debian.org/archive/debian/"$(printf "%s" "${DEBOOTSTRAP_DATE}T000000Z" | tr -d "-")"; \
+# qemu-debootstrap --arch "$targetarch" --force-check-gpg --variant=minbase --no-merged-usr "$TARGET_SUITE" rootfs http://snapshot.debian.org/archive/debian/"$(printf "%s" "${TARGET_DATE}T000000Z" | tr -d "-")"; \
 
 # Adopt overlay (configuration and other fixes specifically targeted at Debian in docker)
 # DANGER permissions not being right means there WILL be train wreck
@@ -108,7 +110,7 @@ COPY          ./overlay rootfs
 
 # If we want to spoof in sources.list, do it
 RUN           set -eu; \
-              [ ! "${DEBOOTSTRAP_SOURCES_COMMIT:-}" ] || printf "%s\n" "$DEBOOTSTRAP_SOURCES_COMMIT" > rootfs/etc/apt/sources.list
+              [ ! "${TARGET_SOURCES_COMMIT:-}" ] || printf "%s\n" "$TARGET_SOURCES_COMMIT" > rootfs/etc/apt/sources.list
 
 # Certain packages may be removed. By default, we remove TLS related packages for apt, which will cause issues evidently if one expect to stick with https mirrors.
 RUN           set -eu; \
@@ -126,14 +128,14 @@ RUN           set -eu; \
 # - sources commit changes that to Y
 # - one wants PRELOAD_PACKAGES from X, or at least from a different party than what was committed
 # This overall is very unlikely, and also can be done by the implementer in a later stage / different image
-# PRELOAD_PACKAGES is a mere convenience that assumes you want to pull from the final DEBOOTSTRAP_SOURCES_COMMIT or the original REPO (or snapshot)
+# PRELOAD_PACKAGES is a mere convenience that assumes you want to pull from the final TARGET_SOURCES_COMMIT or the original REPO (or snapshot)
 # Furthermore, if APT_SOURCES was passed along, APT_OPTIONS reflects it... so, we have to mute it out on the command-line here.
 # XXX Another one: mounting ca-certificates in the destination (which is required because of us using a proxy, means we cannot install ca-certificates (or curl)
 # Ideally, it should be possible to instruct whatever http proxy subsystem apt is using to point to a different keystore
 RUN           --mount=type=secret,mode=0444,id=CA,dst=/bootstrapper/rootfs/etc/ssl/certs/ca-certificates.crt \
               --mount=type=secret,id=CERTIFICATE,dst=/bootstrapper/rootfs/run/secrets/CERTIFICATE \
               --mount=type=secret,id=KEY,dst=/bootstrapper/rootfs/run/secrets/KEY \
-              --mount=type=secret,mode=0444,id=GPG,dst=/bootstrapper/rootfs/run/secrets/GPG \
+              --mount=type=secret,mode=0444,id=GPG,dst=/bootstrapper/rootfs/run/secrets/GPG.gpg \
               --mount=type=secret,id=NETRC,dst=/bootstrapper/rootfs/run/secrets/NETRC \
               --mount=type=secret,id=APT_OPTIONS,dst=/bootstrapper/rootfs/etc/apt/apt.conf.d/dbdbdp.conf \
               set -eu; \
@@ -156,7 +158,7 @@ RUN           set -eu; \
 # Pack it
 RUN           set -eu; \
               mkdir -p "/rootfs/$TARGETPLATFORM"; \
-              debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs "/rootfs/$TARGETPLATFORM/${DEBOOTSTRAP_SUITE}-${DEBOOTSTRAP_DATE}".tar
+              debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs "/rootfs/$TARGETPLATFORM/${TARGET_SUITE}-${TARGET_DATE}".tar
 
 # Hash it
 # Tricky! Every arch will do that, and the last one will have the proper shas...
@@ -178,12 +180,12 @@ COPY          --from=debootstrap-builder /rootfs /rootfs
 ########################################################################################################################
 FROM          scratch                                                                                                   AS debian
 
-ARG           DEBOOTSTRAP_SUITE="buster"
-ARG           DEBOOTSTRAP_DATE="2020-01-01"
+ARG           TARGET_SUITE="buster"
+ARG           TARGET_DATE="2020-01-01"
 ARG           TARGETPLATFORM
 
 # Trix! Without hands!
-ADD           ./cache/*/rootfs/$TARGETPLATFORM/"${DEBOOTSTRAP_SUITE}-${DEBOOTSTRAP_DATE}".tar /
+ADD           ./cache/*/rootfs/$TARGETPLATFORM/"${TARGET_SUITE}-${TARGET_DATE}".tar /
 
 ARG           BUILD_CREATED="1976-04-14T17:00:00-07:00"
 ARG           BUILD_URL="https://github.com/dubo-dubon-duponey/docker-debian"
