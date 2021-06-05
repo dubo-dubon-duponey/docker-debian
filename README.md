@@ -37,28 +37,34 @@ You need:
 
 Check the dependencies section if unsure.
 
-### Building your own local tooling rootfs
-
-If your build host is `linux/amd64`, and you are not paranoid, skip this step.
-
-Otherwise, run this once to rebuild your own local, base rootfs, starting from an official Debian image:
-
-```bash
-# Be sure to point this to your buildkit daemon
-# 
-make retool
-```
-
-### Building a debootstrapped Debian image
-
-```bash
-TARGET_DATE=2020-06-01 TARGET_SUITE=buster make build
-```
-
-If everything went fine, it will build, but then fail to push. Just tell it "where" you want it:
+Build
 
 ```
-EXTRAS="--inject tags=you/debian" TARGET_DATE=2020-06-01 TARGET_SUITE=buster make build
+BUILDKIT_HOST=docker-container://buildkitd make debootstrap
+```
+
+Assemble and push
+
+```
+export TARGET_TAGS=yourname/yourimage:tag,else/thing:tag
+BUILDKIT_HOST=docker-container://buildkitd make debian
+```
+
+## Configuration
+
+You can control aspects of the build using the following environment variables
+
+```
+export BUILDKIT_HOST=docker-container://buildkitd
+
+# What Debian suite to fetch
+export TARGET_SUITE=buster
+# At what date
+export TARGET_DATE=2020-06-01
+# For what platforms
+export TARGET_PLATFORM=linux/amd64,linux/arm/v6,linux/arm/v7,linux/s390x,linux/arm64
+
+make build
 ```
 
 ### Dependencies
@@ -101,7 +107,7 @@ docker run --rm -d \
 export BUILDKIT_HOST=tcp://127.0.0.1:4242
 ```
 
-If you need to install `cue` and `buildctl` (on mac):
+If you need to install `cue`, or `buildctl` (on mac):
 
 ```bash
 brew install cuelang/tap/cue

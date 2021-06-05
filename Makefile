@@ -5,10 +5,14 @@ DC_PREFIX ?= $(shell pwd)
 
 # Set to true to disable fancy / colored output
 DC_NO_FANCY ?=
+
+FROM_IMAGE ?= scratch
+FROM_TARBALL ?= "bullseye-2021-06-01.tar"
 TARGET_DATE ?= 2021-06-01
 TARGET_SUITE ?= bullseye
-ICING ?=
-EXTRAS ?=
+TARGET_PLATFORM ?= linux/amd64,linux/arm/v6,linux/arm/v7,linux/s390x,linux/arm64
+TARGET_DIRECTORY ?= context/debian/cache
+TARGET_TAGS ?=
 
 # Fancy output if interactive
 ifndef DC_NO_FANCY
@@ -31,38 +35,24 @@ define footer
 	@printf "$(GREEN)____________________________________________________________________________________________________\n$(NC)"
 endef
 
-retool:
-	$(call title, $@)
-	$(shell command -v cue > /dev/null || { echo "You need cue installed"; exit 1; })
-	# Rebuilding local rootfs from online image
-	cue --inject from_image=debian:buster-20200130-slim --inject from_tarball="nonexistent*" \
-		--inject directory=$(DC_MAKEFILE_DIR)/context/debootstrap --inject platforms= \
-		--inject target_date=2020-01-01 \
-		--inject target_suite=buster \
-		${EXTRAS} \
-		debootstrap $(DC_MAKEFILE_DIR)/hack/recipe.cue $(DC_MAKEFILE_DIR)/hack/cue_tool.cue ${ICING}
-	# Rebuilding again but this time from local rootfs
-	cue \
-		--inject directory=$(DC_MAKEFILE_DIR)/context/debootstrap --inject platforms= \
-		--inject target_date=2020-01-01 \
-		--inject target_suite=buster \
-		${EXTRAS} \
-		debootstrap $(DC_MAKEFILE_DIR)/hack/recipe.cue $(DC_MAKEFILE_DIR)/hack/cue_tool.cue ${ICING}
-	$(call footer, $@)
 
-build:
+debootstrap:
 	$(call title, $@)
 	$(shell command -v cue > /dev/null || { echo "You need cue installed"; exit 1; })
-	# Generate the actual rootfs for our debian image
-	cue --inject from_image=scratch --inject from_tarball=bullseye-2021-06-01.tar \
-		--inject target_date=${TARGET_DATE} \
-		--inject target_suite=${TARGET_SUITE} \
+	cue --inject from_image=$(FROM_IMAGE) --inject from_tarball=$(FROM_TARBALL) \
+		--inject directory=$(DC_MAKEFILE_DIR)/$(TARGET_DIRECTORY) --inject platforms=$(TARGET_PLATFORM) \
+		--inject target_date=$(TARGET_DATE) \
+		--inject target_suite=$(TARGET_SUITE) \
 		${EXTRAS} \
 		debootstrap $(DC_MAKEFILE_DIR)/hack/recipe.cue $(DC_MAKEFILE_DIR)/hack/cue_tool.cue ${ICING}
+
+debian:
+	$(call title, $@)
+	$(shell command -v cue > /dev/null || { echo "You need cue installed"; exit 1; })
 	cue --inject from_image=scratch \
 		--inject target_date=${TARGET_DATE} \
 		--inject target_suite=${TARGET_SUITE} \
-		${EXTRAS} \
+		--inject tags=${TARGET_TAGS} \
 		debian $(DC_MAKEFILE_DIR)/hack/recipe.cue $(DC_MAKEFILE_DIR)/hack/cue_tool.cue ${ICING}
 	$(call footer, $@)
 

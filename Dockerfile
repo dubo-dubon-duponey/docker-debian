@@ -50,10 +50,18 @@ RUN           --mount=type=secret,mode=0444,id=CA,dst=/etc/ssl/certs/ca-certific
               --mount=type=secret,id=APT_OPTIONS,dst=/etc/apt/apt.conf.d/dbdbdp.conf \
               set -eu; \
               apt-get update -qq && apt-get install -qq --no-install-recommends \
-                debootstrap=1.0.114 \
-                qemu-user-static=1:3.1+dfsg-8+deb10u2 \
-                curl=7.64.0-4 \
-                xz-utils=5.2.4-1
+                debootstrap=1.0.123 \
+                qemu-user-static=1:5.2+dfsg-10 \
+                curl=7.74.0-1.2 \
+                xz-utils=5.2.5-2
+
+#                debootstrap curl xz-utils qemu-user-static
+
+# Buster with overrides
+#                debootstrap=1.0.114 \
+#                qemu-user-static=1:3.1+dfsg-8+deb10u2 \
+#                curl=7.64.0-4 \
+#                xz-utils=5.2.4-1
 
 # > STEP 2: add debuerreotype
 COPY          ./debuerreotype/scripts /usr/sbin/
@@ -89,14 +97,15 @@ RUN           --mount=type=secret,id=CA \
                 "linux/ppc64le") targetarch="ppc64el"; ;; \
                 "linux/386") targetarch="i386"; ;; \
               esac; \
-              if [ -e /run/secrets/DEBOOTSTRAP_REPOSITORY ]; then \
-                if [ -e /run/secrets/GPG_KEYRING ]; then \
-                  debuerreotype-init --arch "$targetarch" --debootstrap="qemu-debootstrap" --no-merged-usr --non-debian --keyring /run/secrets/GPG_KEYRING rootfs "$DEBOOTSTRAP_SUITE" "$(cat /run/secrets/DEBOOTSTRAP_REPOSITORY)"; \
+              ulimit -c unlimited; \
+              if [ -e /run/secrets/TARGET_REPOSITORY ]; then \
+                if [ -e /run/secrets/GPG ]; then \
+                  debuerreotype-init --arch "$targetarch" --no-merged-usr --non-debian --keyring /run/secrets/GPG rootfs "$TARGET_SUITE" "$(cat /run/secrets/TARGET_REPOSITORY)"; \
                 else \
-                  debuerreotype-init --arch "$targetarch" --debootstrap="qemu-debootstrap" --no-merged-usr --non-debian rootfs "$DEBOOTSTRAP_SUITE" "$(cat /run/secrets/DEBOOTSTRAP_REPOSITORY)"; \
+                  debuerreotype-init --arch "$targetarch" --no-merged-usr --non-debian rootfs "$TARGET_SUITE" "$(cat /run/secrets/TARGET_REPOSITORY)"; \
                 fi; \
               else \
-                debuerreotype-init --arch "$targetarch" --debootstrap="qemu-debootstrap" --no-merged-usr --debian rootfs "$DEBOOTSTRAP_SUITE" "${DEBOOTSTRAP_DATE}T00:00:00Z"; \
+                debuerreotype-init --arch "$targetarch" --no-merged-usr --debian rootfs "$TARGET_SUITE" "${TARGET_DATE}T00:00:00Z"; \
               fi
 
 # XXX qemu-debootstrap is deprecated. Please use regular debootstrap directly
