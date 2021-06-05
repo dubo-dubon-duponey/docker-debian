@@ -43,24 +43,29 @@ defaults: {
 	],
 	platforms: [
 		types.#Platforms.#AMD64,
-		types.#Platforms.#ARM64,
+		types.#Platforms.#I386,
 		types.#Platforms.#V7,
 		types.#Platforms.#V6,
-		types.#Platforms.#PPC64LE,
 		types.#Platforms.#S390X,
-		types.#Platforms.#I386,
+		types.#Platforms.#ARM64,
+		// qemue / bullseye busted
+		// types.#Platforms.#PPC64LE,
 	]
-	suite: "buster"
-	date: "2020-01-01"
+
+	suite: "bullseye"
+	date: "2021-06-01"
 	tarball: "\(suite)-\(date).tar"
 }
 
 injector: {
 	_i_tags: * strings.Join([for _v in defaults.tags {_v.toString}], ",") | string @tag(tags, type=string)
 
-	_tags: [for _k, _v in strings.Split(_i_tags, ",") {
-		types.#Image & {#fromString: _v}
-	}]
+	_tags: [..._]
+	if _i_tags != "" {
+		_tags: [for _k, _v in strings.Split(_i_tags, ",") {
+			types.#Image & {#fromString: _v}
+		}]
+	}
 
 	_i_platforms: * strings.Join(defaults.platforms, ",") | string @tag(platforms, type=string)
 
@@ -141,13 +146,19 @@ cakes: {
 			}
 		}
 
-		// Icing are decided by the operator
-		// Here, this image also is a special kind where we want to force the repo to a specific point in time so that our pinned dependencies are available
+		// This image is a special kind where we want to force the repo to a specific point in time so that our pinned dependencies are available.
+		// This unfortunately is tied to the name of the base image (in case we fully retool)
 		icing: UserDefined & {
 			subsystems: apt: sources: #"""
-			deb http://snapshot.debian.org/archive/debian/20200101T000000Z buster main
-			deb http://snapshot.debian.org/archive/debian-security/20200101T000000Z buster/updates main
-			deb http://snapshot.debian.org/archive/debian/20200101T000000Z buster-updates main
+			# Buster circa Jan 1st 2020
+			# deb http://snapshot.debian.org/archive/debian/20200101T000000Z buster main
+			# deb http://snapshot.debian.org/archive/debian-security/20200101T000000Z buster/updates main
+			# deb http://snapshot.debian.org/archive/debian/20200101T000000Z buster-updates main
+
+			# Bullseye circa June 1st 2021
+			deb http://snapshot.debian.org/archive/debian/20210601T000000Z bullseye main
+			deb http://snapshot.debian.org/archive/debian-security/20210601T000000Z bullseye-security main
+			deb http://snapshot.debian.org/archive/debian/20210601T000000Z bullseye-updates main
 
 			"""#
 			// XXX interesting ripple effects...
@@ -178,7 +189,6 @@ cakes: {
 
 			// Standard metadata for the image
 			metadata: {
-				// XXX plug in the ref_name here
 				ref_name: process.args.TARGET_SUITE + "-" + process.args.TARGET_DATE,
 				title: "Dubo Debian \(process.args.TARGET_SUITE)",
 				description: "Lovingly debootstrapped from \(process.args.TARGET_SUITE) (at \(process.args.TARGET_DATE))",
