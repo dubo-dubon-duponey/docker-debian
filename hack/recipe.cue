@@ -60,12 +60,15 @@ defaults: {
 injector: {
 	_i_tags: * strings.Join([for _v in defaults.tags {_v.toString}], ",") | string @tag(tags, type=string)
 
-	_tags: [..._]
-	if _i_tags != "" {
-		_tags: [for _k, _v in strings.Split(_i_tags, ",") {
-			types.#Image & {#fromString: _v}
-		}]
-	}
+	_tags: [for _k, _v in strings.Split(_i_tags, ",") {
+		types.#Image & {#fromString: _v}
+	}]
+	// _tags: [...types.#Image]
+	//if _i_tags != "" {
+	//}
+	//_tags: [for _k, _v in strings.Split(_i_tags, ",") {
+	//	types.#Image & {#fromString: _v}
+	//}]
 
 	_i_platforms: * strings.Join(defaults.platforms, ",") | string @tag(platforms, type=string)
 
