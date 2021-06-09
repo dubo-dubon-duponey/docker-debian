@@ -31,13 +31,19 @@ import (
 	// Connect the image definitions into buildkit (XXX and inject overrides?)
 	_buildkit: {
     context: recipe.input.context
+    if recipe.input.dockerfile != _|_ {
+			filename: recipe.input.dockerfile
+		}
+
     if recipe.output.directory != _|_ {
     	directory: recipe.output.directory
     }
     if recipe.process.platforms != _|_ {
 	    platforms: recipe.process.platforms
     }
-    target: recipe.process.target
+    if recipe.process.target != _|_ {
+    	target: recipe.process.target
+    }
     if recipe.output.tags != _|_ {
 	    tags: recipe.output.tags
     }

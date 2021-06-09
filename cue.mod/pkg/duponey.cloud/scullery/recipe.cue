@@ -17,6 +17,7 @@ import (
 		root: types.#Path
 		context: types.#Path
 		from: types.#Image
+		dockerfile?: types.#FilePath
 		// XXX this should be an array
 		// XXX this should be injectable
 		// cache?: types.#CacheFrom

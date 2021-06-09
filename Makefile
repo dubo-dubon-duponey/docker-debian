@@ -40,7 +40,8 @@ debootstrap:
 	$(call title, $@)
 	$(shell command -v cue > /dev/null || { echo "You need cue installed"; exit 1; })
 	cue --inject from_image=$(FROM_IMAGE) --inject from_tarball=$(FROM_TARBALL) \
-		--inject directory=$(DC_MAKEFILE_DIR)/$(TARGET_DIRECTORY) --inject platforms=$(TARGET_PLATFORM) \
+		--inject directory=$(DC_MAKEFILE_DIR)/$(TARGET_DIRECTORY) \
+		--inject platforms=$(TARGET_PLATFORM) \
 		--inject target_date=$(TARGET_DATE) \
 		--inject target_suite=$(TARGET_SUITE) \
 		${EXTRAS} \
@@ -50,8 +51,9 @@ debian:
 	$(call title, $@)
 	$(shell command -v cue > /dev/null || { echo "You need cue installed"; exit 1; })
 	cue --inject from_image=scratch \
-		--inject target_date=${TARGET_DATE} \
-		--inject target_suite=${TARGET_SUITE} \
+		--inject platforms=$(TARGET_PLATFORM) \
+		--inject target_date=$(TARGET_DATE) \
+		--inject target_suite=$(TARGET_SUITE) \
 		--inject tags=${TARGET_TAGS} \
 		debian $(DC_MAKEFILE_DIR)/hack/recipe.cue $(DC_MAKEFILE_DIR)/hack/cue_tool.cue ${ICING}
 	$(call footer, $@)
