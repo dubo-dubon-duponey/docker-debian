@@ -10,7 +10,7 @@ export EXTRAS="--inject no_cache=true"
 # change the display to "plain" progress (see other buildkit progress options: plain, tty, auto)
 export EXTRAS="--inject progress=plain"
 # control cache
-export EXTRAS="--inject cache_to=... cache_from=..."
+export EXTRAS="--inject cache_base=..."
 
 make build
 ```
@@ -25,7 +25,7 @@ export FROM_IMAGE=debian:bullseye-20210511-slim
 export FROM_TARBALL="nonexistent*"
 export TARGET_DATE=2021-06-01
 export TARGET_SUITE=bullseye
-export TARGET_PLATFORM=""
+export TARGET_PLATFORMS=""
 export TARGET_DIRECTORY=context/debootstrap
 
 make debootstrap
@@ -38,7 +38,7 @@ export FROM_IMAGE=scratch
 export FROM_TARBALL="bullseye-2021-06-01.tar"
 export TARGET_DATE=2021-06-01
 export TARGET_SUITE=bullseye
-export TARGET_PLATFORM=""
+export TARGET_PLATFORMS=""
 export TARGET_DIRECTORY=context/debootstrap
 
 make debootstrap

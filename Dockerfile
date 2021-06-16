@@ -3,8 +3,10 @@ ARG           FROM_IMAGE=docker.io/dubodubonduponey/debian@sha256:cb25298b653310
 # This first "debootstrap" target is meant to prepare a rootfs.
 # Its starting point may be either an online Debian image, or an already existing local debian rootfs.
 ########################################################################################################################
-# hadolint ignore=DL3006,DL3029
-FROM          --platform=$BUILDPLATFORM $FROM_IMAGE                                                                     AS debootstrap-builder
+FROM          $FROM_IMAGE                                                                     AS debootstrap-builder
+# XXXqemu --platform=$BUILDPLATFORM
+
+SHELL         ["/bin/bash", "-o", "errexit", "-o", "errtrace", "-o", "functrace", "-o", "nounset", "-o", "pipefail", "-c"]
 
 ARG           BUILDPLATFORM
 ARG           TARGETPLATFORM
@@ -35,7 +37,7 @@ ARG           UNLOAD_PACKAGES="apt-transport-https openssl ca-certificates libss
 # Adding our rootfs if any
 # XXX unfortunately, this might fail if the corresponding parent directory (rootfs/$BUILDPLATFORM) does not exist
 # hadolint ignore=DL3020
-ADD           ./rootfs/$BUILDPLATFORM/$FROM_TARBALL /
+ADD           ./rootfs/*/$BUILDPLATFORM/$FROM_TARBALL /
 
 # > STEP 1: install debootstrap
 # Note that apt is downgrading privs somehow somewhere and need the CA and gpg trust to have permissions for user _apt
@@ -48,20 +50,20 @@ RUN           --mount=type=secret,mode=0444,id=CA,dst=/etc/ssl/certs/ca-certific
               --mount=type=secret,id=NETRC \
               --mount=type=secret,id=APT_SOURCES \
               --mount=type=secret,id=APT_OPTIONS,dst=/etc/apt/apt.conf.d/dbdbdp.conf \
-              set -eu; \
               apt-get update -qq && apt-get install -qq --no-install-recommends \
                 debootstrap=1.0.123 \
-                qemu-user-static=1:5.2+dfsg-10 \
                 curl=7.74.0-1.2 \
                 xz-utils=5.2.5-2
 
+#                qemu-user-static=1:5.2+dfsg-10 \
 #                debootstrap curl xz-utils qemu-user-static
 
 # Buster with overrides
 #                debootstrap=1.0.114 \
-#                qemu-user-static=1:3.1+dfsg-8+deb10u2 \
 #                curl=7.64.0-4 \
 #                xz-utils=5.2.4-1
+
+#                qemu-user-static=1:3.1+dfsg-8+deb10u2 \
 
 # > STEP 2: add debuerreotype
 COPY          ./debuerreotype/scripts /usr/sbin/
@@ -81,6 +83,7 @@ WORKDIR       /bootstrapper
 
 # > STEP 3: init
 # XXX the repo was probably a secret for it used to embed credentials - it possibly no longer, so...
+# XXX replace with: DEB_TARGET_ARCH="$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/armv6/armel/" -e "s/armv7/armhf/" -e "s/ppc64le/ppc64el/" -e "s/386/i686/")"; \
 RUN           --mount=type=secret,id=CA \
               --mount=type=secret,id=CERTIFICATE \
               --mount=type=secret,id=KEY \
@@ -89,26 +92,20 @@ RUN           --mount=type=secret,id=CA \
               --mount=type=secret,id=NETRC \
               --mount=type=secret,id=TARGET_REPOSITORY \
               --mount=type=secret,id=CURL_OPTIONS,dst=/root/.curlrc \
-              set -eu; \
-              targetarch="$TARGETARCH"; \
-              case "$TARGETPLATFORM" in \
-                "linux/arm/v6") targetarch="armel"; ;; \
-                "linux/arm/v7") targetarch="armhf"; ;; \
-                "linux/ppc64le") targetarch="ppc64el"; ;; \
-                "linux/386") targetarch="i386"; ;; \
-              esac; \
               ulimit -c unlimited; \
               if [ -e /run/secrets/TARGET_REPOSITORY ]; then \
                 if [ -e /run/secrets/GPG ]; then \
-                  debuerreotype-init --arch "$targetarch" --no-merged-usr --non-debian --keyring /run/secrets/GPG rootfs "$TARGET_SUITE" "$(cat /run/secrets/TARGET_REPOSITORY)"; \
+                  debuerreotype-init --no-merged-usr --non-debian --keyring /run/secrets/GPG rootfs "$TARGET_SUITE" "$(cat /run/secrets/TARGET_REPOSITORY)"; \
                 else \
-                  debuerreotype-init --arch "$targetarch" --no-merged-usr --non-debian rootfs "$TARGET_SUITE" "$(cat /run/secrets/TARGET_REPOSITORY)"; \
+                  debuerreotype-init --no-merged-usr --non-debian rootfs "$TARGET_SUITE" "$(cat /run/secrets/TARGET_REPOSITORY)"; \
                 fi; \
               else \
-                debuerreotype-init --arch "$targetarch" --no-merged-usr --debian rootfs "$TARGET_SUITE" "${TARGET_DATE}T00:00:00Z"; \
+                debuerreotype-init --no-merged-usr --debian rootfs "$TARGET_SUITE" "${TARGET_DATE}T00:00:00Z"; \
               fi
 
-# XXX qemu-debootstrap is deprecated. Please use regular debootstrap directly
+#              targetarch="$TARGETARCH"; \
+#              DEB_TARGET_ARCH="$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/armv6/armel/" -e "s/armv7/armhf/" -e "s/ppc64le/ppc64el/" -e "s/386/i686/")"; \
+# XXXqemu --arch "$targetarch"
 
 # XXX cannot ditch init yet - there is still some stuff happening besides calling debootstrap
 # qemu-debootstrap --arch "$targetarch" --force-check-gpg --variant=minbase --no-merged-usr "$TARGET_SUITE" rootfs http://snapshot.debian.org/archive/debian/"$(printf "%s" "${TARGET_DATE}T000000Z" | tr -d "-")"; \
@@ -118,16 +115,13 @@ RUN           --mount=type=secret,id=CA \
 COPY          ./overlay rootfs
 
 # If we want to spoof in sources.list, do it
-RUN           set -eu; \
-              [ ! "${TARGET_SOURCES_COMMIT:-}" ] || printf "%s\n" "$TARGET_SOURCES_COMMIT" > rootfs/etc/apt/sources.list
+RUN           [ ! "${TARGET_SOURCES_COMMIT:-}" ] || printf "%s\n" "$TARGET_SOURCES_COMMIT" > rootfs/etc/apt/sources.list
 
 # Certain packages may be removed. By default, we remove TLS related packages for apt, which will cause issues evidently if one expect to stick with https mirrors.
-RUN           set -eu; \
-              [ ! "$UNLOAD_PACKAGES" ] || dubo-chroot rootfs apt-get -qq purge --auto-remove $UNLOAD_PACKAGES || true
+RUN           [ ! "$UNLOAD_PACKAGES" ] || dubo-chroot rootfs apt-get -qq purge --auto-remove $UNLOAD_PACKAGES || true
 
 # Mark all packages as automatically installed
-RUN           set -eu; \
-              dubo-chroot rootfs apt-mark auto ".*" >/dev/null
+RUN           dubo-chroot rootfs apt-mark auto ".*" >/dev/null
 
 # WATCHOUT
 # Using APT_SOURCES here is not possible unfortunately, as this is also used above to retrieve qemu & debootstrap (pinned) in the initial stage
@@ -147,7 +141,6 @@ RUN           --mount=type=secret,mode=0444,id=CA,dst=/bootstrapper/rootfs/etc/s
               --mount=type=secret,mode=0444,id=GPG,dst=/bootstrapper/rootfs/run/secrets/GPG.gpg \
               --mount=type=secret,id=NETRC,dst=/bootstrapper/rootfs/run/secrets/NETRC \
               --mount=type=secret,id=APT_OPTIONS,dst=/bootstrapper/rootfs/etc/apt/apt.conf.d/dbdbdp.conf \
-              set -eu; \
               dubo-chroot rootfs apt-get -qq -o Dir::Etc::SourceList=/etc/apt/sources.list update; \
               dubo-chroot rootfs apt-get -qq -o Dir::Etc::SourceList=/etc/apt/sources.list dist-upgrade; \
               [ ! "$PRELOAD_PACKAGES" ] || { \
@@ -161,19 +154,17 @@ RUN           --mount=type=secret,mode=0444,id=CA,dst=/bootstrapper/rootfs/etc/s
               rm -rf rootfs/var/tmp/*
 
 # Then slimify it
-RUN           set -eu; \
-              debuerreotype-slimify rootfs
+RUN           debuerreotype-slimify rootfs
 
 # Pack it
-RUN           set -eu; \
-              mkdir -p "/rootfs/$TARGETPLATFORM"; \
-              debuerreotype-tar --exclude="./usr/bin/qemu-*-static" rootfs "/rootfs/$TARGETPLATFORM/${TARGET_SUITE}-${TARGET_DATE}".tar
+RUN           mkdir -p "/rootfs/$TARGETPLATFORM"; \
+              debuerreotype-tar rootfs "/rootfs/$TARGETPLATFORM/${TARGET_SUITE}-${TARGET_DATE}".tar
+# XXXqemu --exclude="./usr/bin/qemu-*-static"
 
 # Hash it
 # Tricky! Every arch will do that, and the last one will have the proper shas...
 # Double tricky! actually, no, because buildkit shard output directory under a plartform subdir... :/
-RUN           set -eu; \
-              rm -f /rootfs/debian.sha; \
+RUN           rm -f /rootfs/debian.sha; \
               sha512sum /rootfs/*/*/*/*.tar >> /rootfs/debian.sha 2>/dev/null || true; \
               sha512sum /rootfs/*/*/*.tar >> /rootfs/debian.sha 2>/dev/null || true
 
@@ -182,7 +173,7 @@ RUN           set -eu; \
 ########################################################################################################################
 FROM          scratch                                                                                                   AS debootstrap
 
-COPY          --from=debootstrap-builder /rootfs /rootfs
+COPY          --from=debootstrap-builder /rootfs /
 
 ########################################################################################################################
 # Our final, multi-arch, Debian Buster image, using the rootfs generated in the step above
@@ -194,7 +185,7 @@ ARG           TARGET_DATE="2020-01-01"
 ARG           TARGETPLATFORM
 
 # Trix! Without hands!
-ADD           ./cache/*/rootfs/$TARGETPLATFORM/"${TARGET_SUITE}-${TARGET_DATE}".tar /
+ADD           ./rootfs/*/$TARGETPLATFORM/"${TARGET_SUITE}-${TARGET_DATE}".tar /
 
 ARG           BUILD_CREATED="1976-04-14T17:00:00-07:00"
 ARG           BUILD_URL="https://github.com/dubo-dubon-duponey/docker-debian"
@@ -227,6 +218,7 @@ ONBUILD ARG   LANG="C.UTF-8"
 ONBUILD ARG   LC_ALL="C.UTF-8"
 ONBUILD ARG   TZ="America/Los_Angeles"
 
+# Does not work as expected unfortunately - this cannot be overloaded in a dockerfile
 ONBUILD ARG   PRELOAD_PACKAGES=""
 ONBUILD ARG   UNLOAD_PACKAGES=""
 
@@ -241,7 +233,6 @@ ONBUILD RUN   --mount=type=secret,mode=0444,id=CA,dst=/etc/ssl/certs/ca-certific
               --mount=type=secret,id=NETRC \
               --mount=type=secret,id=APT_SOURCES \
               --mount=type=secret,id=APT_OPTIONS,dst=/etc/apt/apt.conf.d/dbdbdp.conf \
-              set -eu; \
               if [ "$PRELOAD_PACKAGES" ]; then \
                 apt-get update -qq; \
                 apt-cache show $PRELOAD_PACKAGES; \

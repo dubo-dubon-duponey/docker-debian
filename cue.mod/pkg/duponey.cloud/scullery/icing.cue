@@ -72,8 +72,7 @@ import (
 	}
 
 	cache: {
-		to?: types.#CacheTo
-		from?: types.#CacheFrom
+		base?: types.#CacheFrom
 	}
 
 	subsystems: [string]: #Subsystem

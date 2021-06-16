@@ -80,7 +80,7 @@ import (
 			set -o errexit -o errtrace -o functrace -o nounset -o pipefail
 
 			root="$1"
-			git -C "$root" describe --match 'v[0-9]*' --dirty='.m' --always
+			git -C "$root" describe --match 'v[0-9]*' --dirty='.m' --always --tags
 
 			"""#, "--", cake.recipe.input.root]
 			stdout: string
@@ -102,9 +102,7 @@ import (
 			set -o errexit -o errtrace -o functrace -o nounset -o pipefail
 
 			root="$1"
-			URL="$(git -C "$root" remote show -n origin | grep "Fetch URL")"
-			URL="${URL#*Fetch URL: }"
-			printf "%s" "$URL" | sed -E 's,.git$,,' | sed -E 's,^[a-z-]+:([^/]),https://github.com/\1,'
+			git -C "$root" remote get-url origin | sed -E 's,.git$,,' | sed -E 's,^[a-z-]+:([^/]),https://github.com/\1,'
 
 			"""#, "--", cake.recipe.input.root]
 			stdout: string

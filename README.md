@@ -2,13 +2,11 @@
 
 Build your own Debian image from scratch.
 
-This project relies on [debuerreotype](https://github.com/debuerreotype/debuerreotype), [debootstrap](https://wiki.debian.org/Debootstrap), [qemu](https://www.qemu.org/), [cue](https://cuelang.org/), and [buildkit](https://github.com/moby/buildkit).
-
 Features:
  * reproducible builds
      * a given date and Debian suite always gives you the exact same resulting rootfs
  * no third-party image dependency
-     * the provided tarball is all you need to get started, and you do not need ANY Docker image from anywhere
+     * once you have a local rootfs tarball, you do not need ANY Docker image from anywhere to debootstrap any supported Debian (buster, bullseye, sid)
  * support for fully air-gaped build (granted you have a local debian repository mirror)
  * depends only on the availability of `snapshot.debian.org` (or that of your proxy / mirror)
  * slim
@@ -22,89 +20,71 @@ Features:
      * s390x
      * ppc64le
 
-Notes:
+## Important
 
- * if your build host is not `linux/amd64` and is not multi-arch enabled, you will first have to build your own initial rootfs from an existing Debian image.
- * be nice to the Debian people infrastructure: have yourself a Debian packages repository mirror (like aptly), or a proxy (like aptutil), and use that
+Be nice to the Debian infrastructure: run your own Debian packages repository mirror (like aptly), or a proxy (like aptutil)
 
 ## TL;DR
-
-You need:
-
- * a working buildkit daemon, and `BUILDKIT_HOST` pointing to it
- * `cue`
- * `buildctl`
-
-Check the dependencies section if unsure.
 
 Build
 
 ```
-BUILDKIT_HOST=docker-container://buildkitd make debootstrap
+./hack/build.sh debootstrap --inject target_date=2021-06-01 --inject target_suite=bullseye
 ```
 
 Assemble and push
 
 ```
-export TARGET_TAGS=yourname/yourimage:tag,else/thing:tag
-BUILDKIT_HOST=docker-container://buildkitd make debian
+./hack/build.sh debian --inject tags=registry.com/name/image:tag
 ```
 
 ## Configuration
 
-You can control aspects of the build using the following environment variables
+You can control additional aspects of the build injecting more parameters
 
 ```
-export BUILDKIT_HOST=docker-container://buildkitd
+# Online, from a bullseye image, with caching into a registry, building only armv6
+./hack/build.sh debootstrap \
+  --inject target_date="2021-06-01" \
+  --inject target_suite="bullseye" \
+  --inject from_image="ghcr.io/dubo-dubon-duponey/debian:bullseye-2021-06-01" \
+  --inject from_tarball="nonexistent*" \
+  --inject platforms="linux/arm/v6" \
+  --inject directory=./context/rootfs \
+  --inject cache_base=type=registry,ref=somewhere.com/cache/debian:debian
 
-# What Debian suite to fetch
-export TARGET_SUITE=buster
-# At what date
-export TARGET_DATE=2020-06-01
-# For what platforms
-export TARGET_PLATFORM=linux/amd64,linux/arm/v6,linux/arm/v7,linux/s390x,linux/arm64
+# Offline, from a previously built rootfs, building only armv6
+./hack/build.sh debootstrap \
+  --inject target_date="2021-06-01" \
+  --inject target_suite="bullseye" \
+  --inject from_image="scratch" \
+  --inject from_tarball="bullseye-2021-06-01.tar" \
+  --inject platforms="linux/arm/v6" \
+  --inject directory=./context/rootfs
 
-make build
 ```
 
 ### Dependencies
 
-Run this to check your system:
+The hack scripts should take care of installing what you need.
 
-```bash
-command -v cue > /dev/null || {
-  echo >&2 "You need to install cue"
-  exit 1
-}
+That said, or in case that would fail, you do need:
 
-command -v buildctl > /dev/null || {
-  echo >&2 "You need to install buildctl"
-  exit 1
-}
+ * a working buildkit daemon
+ * cue
+ * buildctl
 
-command -v buildctl > /dev/null || {
-  echo >&2 "You need to install buildctl"
-  exit 1
-}
-
-buildctl debug workers || {
-  echo >&2 "Cannot contact the buildkit daemon. Is it running? If so, did you point BUILDKIT_HOST to it?"
-  exit 1
-}
-```
-
-If you need to start a buildkit daemon, you can:
+If you need to manually start a buildkit daemon:
 
 ```bash
 docker run --rm -d \
-      -p 4242:4242 \
-      --network host \
-      --name dbdbdp-buildkit \
+      --name bldkt \
       --user root \
       --privileged \
+      --entrypoint buildkitd \
       ghcr.io/dubo-dubon-duponey/buildkit
 
-export BUILDKIT_HOST=tcp://127.0.0.1:4242
+export BUILDKIT_HOST=docker-container://bldkt
 ```
 
 If you need to install `cue`, or `buildctl` (on mac):
@@ -116,5 +96,8 @@ brew install buildkit
 
 ## Advanced stuff
 
-See [advanced](ADVANCED.md).
+This project relies largely on [debuerreotype](https://github.com/debuerreotype/debuerreotype),
+[debootstrap](https://wiki.debian.org/Debootstrap), [qemu](https://www.qemu.org/),
+[cue](https://cuelang.org/), and [buildkit](https://github.com/moby/buildkit).
 
+See [advanced](ADVANCED.md).

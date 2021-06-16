@@ -23,13 +23,14 @@ import (
 	//}
 	// XXX
 
-	// Populate secrets
-
 	// Instanciate subsystems and populate them
 	_buildkit: buildctl.#Commander
 
 	// Connect the image definitions into buildkit (XXX and inject overrides?)
 	_buildkit: {
+		// XXX this does not work as expected, and is one of the most aggravating things about cue - the inability to have cascading defaults resolve to something (especially with @tags)
+		// If no context was provided at all, default to ./context for buildkit - this means that none of the scullery tooling can operate safely on the value of the context - fine
+    context: string | * "./context"
     context: recipe.input.context
     if recipe.input.dockerfile != _|_ {
 			filename: recipe.input.dockerfile
@@ -47,11 +48,18 @@ import (
     if recipe.output.tags != _|_ {
 	    tags: recipe.output.tags
     }
-		if icing.cache.from != _|_ {
-			cache_from: icing.cache.from
-		}
-		if icing.cache.to != _|_ {
-			cache_to: icing.cache.to
+		//if icing.cache.from != _|_ {
+		//	cache_from: icing.cache.from
+		//}
+		//if icing.cache.to != _|_ {
+		//	cache_to: icing.cache.to
+		//}
+		if icing.cache.base != _|_ {
+			cache_from: icing.cache.base
+			cache_to: types.#CacheTo & {
+				type: icing.cache.base.type
+				location: icing.cache.base.location
+			}
 		}
 		args: recipe.process.args
 

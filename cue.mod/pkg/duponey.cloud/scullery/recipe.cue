@@ -14,7 +14,7 @@ import (
 #Recipe: {
 	// Controls from what we are building, with what context - isn't this environment instead?
 	input: {
-		root: types.#Path
+		root: types.#Path | * "./"
 		context: types.#Path
 		from: types.#Image
 		dockerfile?: types.#FilePath

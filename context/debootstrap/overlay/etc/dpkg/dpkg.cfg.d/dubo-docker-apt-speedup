@@ -1,8 +1,0 @@
-# NOTE: this is derived from the work in https://github.com/debuerreotype/debuerreotype/
-
-# For most Docker users, package installs happen during "docker build", which
-# doesn't survive power loss and gets restarted clean afterwards anyhow, so
-# this minor tweak gives us a nice speedup (much nicer on spinning disks,
-# obviously).
-
-force-unsafe-io
