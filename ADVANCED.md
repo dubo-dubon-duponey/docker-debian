@@ -1,48 +1,15 @@
 # Moar
 
-## Extra flags
+## Acknowledgements
 
-Using the makefile, you can further control buildkit behavior using the `EXTRAS` environment variable:
+The Dockerfile of this project relies heavily on
+ * [debuerreotype](https://github.com/debuerreotype/debuerreotype),
+ * [debootstrap](https://wiki.debian.org/Debootstrap)
 
-```bash
-# force a build without any cache
-export EXTRAS="--inject no_cache=true"
-# change the display to "plain" progress (see other buildkit progress options: plain, tty, auto)
-export EXTRAS="--inject progress=plain"
-# control cache
-export EXTRAS="--inject cache_base=..."
-
-make build
-```
-
-### (Re-)Building your own local tooling rootfs
-
-If your build host is not `linux/amd64`, if you are paranoid, or if you have other good reasons,
-you can rebuild a local tooling rootfs.
-
-```bash
-export FROM_IMAGE=debian:bullseye-20210511-slim
-export FROM_TARBALL="nonexistent*"
-export TARGET_DATE=2021-06-01
-export TARGET_SUITE=bullseye
-export TARGET_PLATFORMS=""
-export TARGET_DIRECTORY=context/debootstrap
-
-make debootstrap
-```
-
-Similarly, you can build alternative tooling rootfs from an existing local rootfs:
-
-```bash
-export FROM_IMAGE=scratch
-export FROM_TARBALL="bullseye-2021-06-01.tar"
-export TARGET_DATE=2021-06-01
-export TARGET_SUITE=bullseye
-export TARGET_PLATFORMS=""
-export TARGET_DIRECTORY=context/debootstrap
-
-make debootstrap
-```
+The build toolchain relies on:
+ * [qemu](https://www.qemu.org/),
+ * [cue](https://cuelang.org/)
+ * [buildkit](https://github.com/moby/buildkit).
 
 ## Cue environment
 
@@ -79,7 +46,6 @@ UserDefined: scullery.#Icing & {
 			check_valid: false
 		}
 		curl: {
-			proxy: "https://this-is-an-internal-apt-proxy.local"
 			user_agent: "DuboDubonDuponey/1.0 (curl)"
 		}
 	}
@@ -122,31 +88,14 @@ UserDefined: scullery.#Icing & {
 }
 ```
 
-Now, add it when building:
+Now, add your environment when building:
 
 ```bash
-ICING=env.cue TARGET_DATE=2020-06-01 TARGET_SUITE=buster make debootstrap
+./hack/build.sh env.cue
 ```
 
-The above `env` will instruct `apt` and `curl` to use an internal apt-proxy, with authentication and TLS (provided by CA),
+The above `env.cue` will instruct `apt` and `curl` to use an internal apt-proxy, with authentication and TLS (provided by CA),
 and also to use registry caching.
-
-### Super-advanced cue configuration
-
-The makefile is just a very thin wrapper around cue.
-
-Typically, debootstrapping and assembling an image is just:
-
-```
-cue --inject target_date=2021-06-01 --inject target_suite=buster \
-		debootstrap ./hack/recipe.cue ./hack/cue_tool.cue ./your_environment.cue
-
-cue --inject target_date=2021-06-01 --inject target_suite=buster \
-    --inject tags=somewhere/to_push \
-		debian ./hack/recipe.cue ./hack/cue_tool.cue ./your_environment.cue
-```
-
-... which you can tweak directly to fit your advanced needs ^^
 
 And have a look at `hack/recipe.cue` while you are there, and hack away.
 
@@ -154,29 +103,31 @@ And have a look at `hack/recipe.cue` while you are there, and hack away.
 
  * local environment (internal hosts, authentication, certificates) are passed as build secrets and as such never ship with the final image
  * `/etc/apt/sources.list` in your final image is pointing at `snapshot.debian.org`, for the specific date you asked for
-   * this is fine: containers should be immutable and you should rebuild and redeploy if/when there is an update
+   * this is fine: containers should be immutable, and you should rebuild and redeploy if/when there is an update
    * if you want a different behavior, look into the `recipe.cue` file and hack away
 
 ## Caveats
 
 ### qemu is sensitive
 
-With older (4.9) kernels, qemu will coredump trying to debootstrap bullseye on arm64 and ppc64.
+With older (4.9) kernels, qemu may coredump.
 
 More generally, ppc64 support in qemu seems iffy.
 
 Among other reports: 
  * https://bugs.launchpad.net/ubuntu/+source/qemu/+bug/1928075
 
-If you experience any coredump, please share configuration details.
+If you experience any issue, please share configuration details.
 
 ### About cache and build context
 
-The `context/debian/cache/rootfs` folder is part of the build context for the debian stage.
+The `context/cache` folder is part of the build context.
 
 As such, if it grows really big (with many different versions), assembling the final image will become slooooooow.
 
 It is recommended to clean-up this folder from older / useless versions from time to time to avoid such adverse side-effects.
+
+You may also override the cue `input: context:` and `output: directory` to better control where these artifacts are going.
 
 ### Support
 

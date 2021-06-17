@@ -22,11 +22,13 @@ setup::tools(){
   fi
 
   mkdir -p "$location"
-  docker rm -f dubo-tools 2>/dev/null
-  docker run --name dubo-tools "$IMAGE_TOOLS" /boot/bin/cue >/dev/null 2>&1 || true
+  docker rm -f dubo-tools 2>/dev/null || true
+  docker run --pull always --name dubo-tools "$IMAGE_TOOLS" /boot/bin/cue || true
+  # >/dev/null 2>&1 || true
+  docker ps -a
   docker cp dubo-tools:/boot/bin/cue "$location"
   docker cp dubo-tools:/boot/bin/buildctl "$location"
-  docker rm -f dubo-tools 2>/dev/null
+  docker rm -f dubo-tools 2>/dev/null || true
 }
 
 # XXX implement proper hado & shellcheck setup
@@ -42,7 +44,7 @@ command -v shellcheck >/dev/null || {
 
 setup::buildkit(){
   docker inspect dbdbdp-buildkit 1>/dev/null 2>&1 || \
-    docker run --rm -d \
+    docker run --pull always --rm -d \
       -p 4242:4242 \
       --network host \
       --name dbdbdp-buildkit \
