@@ -26,19 +26,6 @@ jobs:
           curl --proto '=https' --tlsv1.3 -sSfL -o hadolint "https://github.com/hadolint/hadolint/releases/download/v2.5.0/hadolint-$(uname -s)-$(uname -m)"
           chmod 700 ./hadolint
 
-        # XXX move to container tooling
-      - name: Install cuelang
-        run: |
-          curl --proto '=https' --tlsv1.3 -sSfL -o cue.tar.gz "https://github.com/cuelang/cue/releases/download/v0.4.0/cue_v0.4.0_$(uname -s)_$(uname -m).tar.gz"
-          tar -xf cue.tar.gz
-          rm cue.tar.gz
-
-      #- name: Install buildctl & cue
-          #  run: |
-          #docker run --name dubo-tools "ghcr.io/dubo-dubon-duponey/tools:linux-2021-06-01" /boot/bin/cue >/dev/null 2>&1 || true
-          #docker cp dubo-tools:/boot/bin/cue .
-        #docker cp dubo-tools:/boot/bin/buildctl .
-
       # XXX update this to a more recent apt proxy
       - name: Start apt proxy
         run: |
@@ -54,11 +41,13 @@ jobs:
 
       - name: test
         run: |
+          # Hiding the read-only token base64 to avoid github disabling it...
+          echo OWMyMGVhYzk4N2NhYWQxYmI3MzhmNTZkODNmOGMwOGJjZjlhNDc4YQo= | base64 -d | docker login ghcr.io -u dubo-dubon-duponey --password-stdin
+          # Set the path
           export BIN_LOCATION="."
           PATH="$BIN_LOCATION:$PATH"
           cd "$GITHUB_WORKSPACE"
+          # Lint
           ./hack/lint.sh
-          # Hiding the read-only token base64 to avoid github disabling it...
-          echo OWMyMGVhYzk4N2NhYWQxYmI3MzhmNTZkODNmOGMwOGJjZjlhNDc4YQo= | base64 -d | docker login ghcr.io -u dubo-dubon-duponey --password-stdin
-          # Inject our proxy and environment in the test
+          # Test, with our injected proxy and environment
           ./test.sh --inject apt_proxy="http://$(docker inspect aptcache | jq -rc .[0].NetworkSettings.Networks.bridge.IPAddress):3142" ".github/workflows/environment.cue"
