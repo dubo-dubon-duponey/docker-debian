@@ -23,9 +23,7 @@ setup::tools(){
 
   mkdir -p "$location"
   docker rm -f dubo-tools 2>/dev/null || true
-  docker run --pull always --name dubo-tools "$IMAGE_TOOLS" /boot/bin/cue || true
-  # >/dev/null 2>&1 || true
-  docker ps -a
+  docker run --pull always --name dubo-tools "$IMAGE_TOOLS" /boot/bin/cue >/dev/null 2>&1 || true
   docker cp dubo-tools:/boot/bin/cue "$location"
   docker cp dubo-tools:/boot/bin/buildctl "$location"
   docker rm -f dubo-tools 2>/dev/null || true
