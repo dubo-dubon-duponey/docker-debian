@@ -7,7 +7,7 @@ export SUITE=bullseye
 export DATE=2021-06-01
 
 readonly PATH="$BIN_LOCATION:$PATH"
-readonly IMAGE_TOOLS="${IMAGE_TOOLS:-ghcr.io/dubo-dubon-duponey/tools:$(uname | grep -q Darwin && printf "macos" || printf "linux")-2021-06-01}"
+readonly IMAGE_TOOLS="${IMAGE_TOOLS:-ghcr.io/dubo-dubon-duponey/tools:$(uname | grep -q Darwin && printf "macos" || printf "linux")-$SUITE-$DATE}"
 readonly IMAGE_BLDKT="${IMAGE_BLDKT:-ghcr.io/dubo-dubon-duponey/buildkit:$SUITE-$DATE}"
 
 setup::tools(){
@@ -22,8 +22,9 @@ setup::tools(){
   fi
 
   mkdir -p "$location"
-  docker rm -f dubo-tools 2>/dev/null || true
-  docker run --pull always --name dubo-tools "$IMAGE_TOOLS" /boot/bin/cue >/dev/null 2>&1 || true
+  docker rm -f dubo-tools || true
+  docker run --pull always --name dubo-tools "$IMAGE_TOOLS" /boot/bin/cue || true
+  docker ps -a
   docker cp dubo-tools:/boot/bin/cue "$location"
   docker cp dubo-tools:/boot/bin/buildctl "$location"
   docker rm -f dubo-tools 2>/dev/null || true
