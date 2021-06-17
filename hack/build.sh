@@ -7,6 +7,7 @@ root="$(cd "$(dirname "${BASH_SOURCE[0]:-$PWD}")" 2>/dev/null 1>&2 && pwd)/../"
 # shellcheck source=/dev/null
 . "$root"/hack/setup.sh
 
+params=(cue)
 case "${1:-}" in
   "--version")
     exit
@@ -18,7 +19,6 @@ case "${1:-}" in
     cd "$root"
     target=image
     files=("$root/hack/recipe.cue" "$root/hack/cue_tool.cue")
-    params=()
     isparam=
     for i in "$@"; do
       if [ "${i:0:2}" == "--" ]; then
@@ -33,8 +33,7 @@ case "${1:-}" in
         target="$i"
       fi
     done
-    com=(cue)
-    com+=("${params[@]}")
+    com=("${params[@]}")
     com+=("$target")
     com+=("${files[@]}")
 

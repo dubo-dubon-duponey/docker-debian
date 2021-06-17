@@ -4,7 +4,6 @@ ARG           FROM_IMAGE=docker.io/dubodubonduponey/debian@sha256:cb25298b653310
 # Its starting point may be either an online Debian image, or an already existing local debian rootfs.
 ########################################################################################################################
 FROM          $FROM_IMAGE                                                                     AS debootstrap-builder
-# XXXqemu --platform=$BUILDPLATFORM
 
 SHELL         ["/bin/bash", "-o", "errexit", "-o", "errtrace", "-o", "functrace", "-o", "nounset", "-o", "pipefail", "-c"]
 
@@ -12,7 +11,7 @@ ARG           BUILDPLATFORM
 ARG           TARGETPLATFORM
 ARG           TARGETARCH
 
-# If our from is `scratch`, pass here an actual tarball (like: buster-2020-01-01.tar), that exists under context/rootfs/$BUILDPLATFORM/
+# If our from is `scratch`, pass here an actual tarball (like: buster-2020-01-01.tar), that exists under context/cache/*/$BUILDPLATFORM/
 ARG           FROM_TARBALL=nonexistent*
 
 # > Boilerplate Debian options. You very likely do not need to pass these along
@@ -37,7 +36,7 @@ ARG           UNLOAD_PACKAGES="apt-transport-https openssl ca-certificates libss
 # Adding our rootfs if any
 # XXX unfortunately, this might fail if the corresponding parent directory (rootfs/$BUILDPLATFORM) does not exist
 # hadolint ignore=DL3020
-ADD           ./rootfs/*/$BUILDPLATFORM/$FROM_TARBALL /
+ADD           ./cache/*/$BUILDPLATFORM/$FROM_TARBALL /
 
 # > STEP 1: install debootstrap
 # Note that apt is downgrading privs somehow somewhere and need the CA and gpg trust to have permissions for user _apt
@@ -83,7 +82,6 @@ WORKDIR       /bootstrapper
 
 # > STEP 3: init
 # XXX the repo was probably a secret for it used to embed credentials - it possibly no longer, so...
-# XXX replace with: DEB_TARGET_ARCH="$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/armv6/armel/" -e "s/armv7/armhf/" -e "s/ppc64le/ppc64el/" -e "s/386/i686/")"; \
 RUN           --mount=type=secret,id=CA \
               --mount=type=secret,id=CERTIFICATE \
               --mount=type=secret,id=KEY \
@@ -102,13 +100,6 @@ RUN           --mount=type=secret,id=CA \
               else \
                 debuerreotype-init --no-merged-usr --debian rootfs "$TARGET_SUITE" "${TARGET_DATE}T00:00:00Z"; \
               fi
-
-#              targetarch="$TARGETARCH"; \
-#              DEB_TARGET_ARCH="$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/armv6/armel/" -e "s/armv7/armhf/" -e "s/ppc64le/ppc64el/" -e "s/386/i686/")"; \
-# XXXqemu --arch "$targetarch"
-
-# XXX cannot ditch init yet - there is still some stuff happening besides calling debootstrap
-# qemu-debootstrap --arch "$targetarch" --force-check-gpg --variant=minbase --no-merged-usr "$TARGET_SUITE" rootfs http://snapshot.debian.org/archive/debian/"$(printf "%s" "${TARGET_DATE}T000000Z" | tr -d "-")"; \
 
 # Adopt overlay (configuration and other fixes specifically targeted at Debian in docker)
 # DANGER permissions not being right means there WILL be train wreck
@@ -159,7 +150,6 @@ RUN           debuerreotype-slimify rootfs
 # Pack it
 RUN           mkdir -p "/rootfs/$TARGETPLATFORM"; \
               debuerreotype-tar rootfs "/rootfs/$TARGETPLATFORM/${TARGET_SUITE}-${TARGET_DATE}".tar
-# XXXqemu --exclude="./usr/bin/qemu-*-static"
 
 # Hash it
 # Tricky! Every arch will do that, and the last one will have the proper shas...
@@ -180,12 +170,14 @@ COPY          --from=debootstrap-builder /rootfs /
 ########################################################################################################################
 FROM          scratch                                                                                                   AS debian
 
+SHELL         ["/bin/bash", "-o", "errexit", "-o", "errtrace", "-o", "functrace", "-o", "nounset", "-o", "pipefail", "-c"]
+
 ARG           TARGET_SUITE="buster"
 ARG           TARGET_DATE="2020-01-01"
 ARG           TARGETPLATFORM
 
 # Trix! Without hands!
-ADD           ./rootfs/*/$TARGETPLATFORM/"${TARGET_SUITE}-${TARGET_DATE}".tar /
+ADD           ./cache/*/$TARGETPLATFORM/"${TARGET_SUITE}-${TARGET_DATE}".tar /
 
 ARG           BUILD_CREATED="1976-04-14T17:00:00-07:00"
 ARG           BUILD_URL="https://github.com/dubo-dubon-duponey/docker-debian"

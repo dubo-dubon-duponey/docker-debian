@@ -84,7 +84,7 @@ injector: {
 	_target_suite: * defaults.suite | =~ "^(?:buster|bullseye|sid)$" @tag(target_suite, type=string)
 	_target_date: * defaults.date | =~ "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" @tag(target_date, type=string)
 
-	_directory: * "./context" | string @tag(directory, type=string)
+	_directory: * "./context/cache" | string @tag(directory, type=string)
 
 	_from_image: types.#Image & {#fromString: *"scratch" | string @tag(from_image, type=string)}
 	_from_tarball: *defaults.tarball | string @tag(from_tarball, type=string)
