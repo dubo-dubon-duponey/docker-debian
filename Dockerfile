@@ -101,6 +101,9 @@ RUN           --mount=type=secret,id=CA \
                 debuerreotype-init --no-merged-usr --debian rootfs "$TARGET_SUITE" "${TARGET_DATE}T00:00:00Z"; \
               fi
 
+# --arch "$DEB_TARGET_ARCH"
+#              DEB_TARGET_ARCH="$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/armv6/armel/" -e "s/armv7/armhf/" -e "s/ppc64le/ppc64el/" -e "s/386/i386/")"; \
+
 # Adopt overlay (configuration and other fixes specifically targeted at Debian in docker)
 # DANGER permissions not being right means there WILL be train wreck
 COPY          ./overlay rootfs
