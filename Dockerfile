@@ -36,7 +36,7 @@ ARG           UNLOAD_PACKAGES="apt-transport-https openssl ca-certificates libss
 # Adding our rootfs if any
 # XXX unfortunately, this might fail if the corresponding parent directory (rootfs/$BUILDPLATFORM) does not exist
 # hadolint ignore=DL3020
-ADD           ./cache/*/$BUILDPLATFORM/$FROM_TARBALL /
+ADD           ./cache/*/$TARGETPLATFORM/$FROM_TARBALL /
 
 # > STEP 1: install debootstrap
 # Note that apt is downgrading privs somehow somewhere and need the CA and gpg trust to have permissions for user _apt
