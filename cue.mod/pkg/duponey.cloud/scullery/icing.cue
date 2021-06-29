@@ -61,6 +61,9 @@ import (
 }
 
 #Icing: {
+	// XXX make this type more specific
+	buildkit?: string | * "docker-container://buildkitd"
+
 	hosts: [types.#Domain]: #Host
 
 	trust: {

@@ -2,7 +2,6 @@
 set -o errexit -o errtrace -o functrace -o nounset -o pipefail
 
 export BIN_LOCATION="${BIN_LOCATION:-$HOME/Dubo/bin}"
-export BUILDKIT_HOST="${BUILDKIT_HOST:-docker-container://dbdbdp-buildkit}"
 export SUITE=bullseye
 export DATE=2021-06-01
 
@@ -57,4 +56,5 @@ setup::buildkit(){
 
 setup::tools "$BIN_LOCATION"
 
-[ "${BUILDKIT_HOST:-}" != "docker-container://dbdbdp-buildkit" ] || setup::buildkit
+# XXX deprecating for now since we moved to addr and injects
+# [ "${BUILDKIT_HOST:-}" != "docker-container://dbdbdp-buildkit" ] || setup::buildkit

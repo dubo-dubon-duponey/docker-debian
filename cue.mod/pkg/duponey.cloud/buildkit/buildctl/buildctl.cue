@@ -7,6 +7,9 @@ import (
 )
 
 #Commander: {
+	debug: bool | *false
+	// XXX Make this more specific
+	addr?: string
   // Injectable with good defaults
   no_cache: bool | *false
   progress: types.#Progress | *types.#Progress.#AUTO
@@ -43,7 +46,16 @@ import (
 
   secret_path: types.#Path | *"/tmp/"
 
-	run: ["buildctl", "build"] +
+	run: ["buildctl"] +
+		[if addr != _|_ {"--addr"}] + [if addr != _|_ {addr}] +
+		[if debug == true {"--debug"}] +
+		// [if tlsservername != _|_ {"--tlsservername"}] + [if tlsservername != _|_ {tlsservername}] +
+		// [if tlscacert != _|_ {"--tlscacert"}] + [if tlscacert != _|_ {tlscacert}] +
+		// [if tlscert != _|_ {"--tlscert"}] + [if tlscert != _|_ {tlscert}] +
+		// [if tlskey != _|_ {"--tlskey"}] + [if tlskey != _|_ {tlskey}] +
+		// [if tlsdir != _|_ {"--tlsdir"}] + [if tlsdir != _|_ {tlsdir}] +
+
+		["build"] +
 		[if no_cache == true {"--no-cache"}] +
 		["--progress", progress] +
 		["--opt", "hostname=\(hostname)"] +

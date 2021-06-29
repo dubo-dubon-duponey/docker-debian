@@ -38,7 +38,6 @@ case "${1:-}" in
     com+=("${files[@]}")
 
     echo "------------------------------------------------------------------"
-    echo "Buildkit: $BUILDKIT_HOST"
     for i in "${com[@]}"; do
       if [ "${i:0:2}" == -- ]; then
         >&2 printf " %s" "$i"
