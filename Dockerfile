@@ -42,6 +42,7 @@ ENV           CURL_HOME=/run/secrets
 # NOTE: for calls where we do NOT need our overrides (purge, etc), hence where we do not mount the corresponding secrets,
 # apt will issue a warning about not finding the file
 ENV           APT_CONFIG=/run/secrets/APT_CONFIG
+RUN           touch "$APT_CONFIG"
 
 # > STEP 1: install debootstrap
 # Apt downgrades to _apt (uid 100) when doing the actual request
@@ -206,6 +207,7 @@ ENV           TZ="America/Los_Angeles"
 
 # Little helper for our secrets
 ENV           APT_CONFIG=/run/secrets/APT_CONFIG
+RUN           touch "$APT_CONFIG"
 
 # NOTE: this does not quite work as expected unfortunately - this cannot be overloaded in a dockerfile, but can be --build-arg-ed at build time
 ONBUILD ARG   PRELOAD_PACKAGES=""
