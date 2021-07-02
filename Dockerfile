@@ -39,6 +39,8 @@ ADD           ./cache/*/$TARGETPLATFORM/$FROM_TARBALL /
 
 # Specifying these two allows to not mind about the secret paths
 ENV           CURL_HOME=/run/secrets
+# NOTE: for calls where we do NOT need our overrides (purge, etc), hence where we do not mount the corresponding secrets,
+# apt will issue a warning about not finding the file
 ENV           APT_CONFIG=/run/secrets/APT_CONFIG
 
 # > STEP 1: install debootstrap
@@ -61,7 +63,7 @@ COPY          ./debuerreotype/scripts /usr/sbin/
 
 # Copy over our deviation script
 # See comments inline for reason to have this
-# Note: other scripts insist in calling a script in the SAME dir, so /usr/sbin it is
+# NOTE: other scripts insist in calling a script in the SAME dir, so /usr/sbin it is
 COPY          ./debuerreotype-chroot  /usr/sbin/
 
 # This is our simplified chroot for use-cases we do control
@@ -74,6 +76,7 @@ COPY          ./wget  /usr/sbin/
 WORKDIR       /bootstrapper
 
 # > STEP 3: init
+# FIXME this is horrific to debug, as the curl deviation may fail silently in a number of cases
 RUN           --mount=type=secret,id=CA \
               --mount=type=secret,id=CERTIFICATE \
               --mount=type=secret,id=KEY \
@@ -84,13 +87,7 @@ RUN           --mount=type=secret,id=CA \
               ulimit -c unlimited; \
               if [ -e /run/secrets/TARGET_REPOSITORY ] && [ "$(cat /run/secrets/TARGET_REPOSITORY)" ]; then \
                 if [ -e /run/secrets/GPG.gpg ]; then \
-                  cat /run/secrets/GPG.gpg; \
-                  echo debuerreotype-init --no-merged-usr --non-debian --keyring /run/secrets/GPG.gpg rootfs "$TARGET_SUITE" "$(cat /run/secrets/TARGET_REPOSITORY)"; \
-                  echo FINAUD; \
-                  debuerreotype-init --no-merged-usr --non-debian --keyring /run/secrets/GPG.gpg rootfs "$TARGET_SUITE" "$(cat /run/secrets/TARGET_REPOSITORY)" || { \
-                    echo FAIL; \
-                    exit 32; \
-                  }; \
+                  debuerreotype-init --no-merged-usr --non-debian --keyring /run/secrets/GPG.gpg rootfs "$TARGET_SUITE" "$(cat /run/secrets/TARGET_REPOSITORY)"; \
                 else \
                   debuerreotype-init --no-merged-usr --non-debian rootfs "$TARGET_SUITE" "$(cat /run/secrets/TARGET_REPOSITORY)"; \
                 fi; \
@@ -112,7 +109,7 @@ RUN           [ ! "$UNLOAD_PACKAGES" ] || dubo-chroot rootfs apt-get -qq purge -
 RUN           dubo-chroot rootfs apt-mark auto ".*" >/dev/null
 
 # NOTE
-# APT_SOURCES is forcefully set by the recipe to something we can rely on for our pinned dependencies (debootstrap, curl, xz-utils), regardless of the base image being used.
+# Early on, APT_SOURCES is forcefully set by the recipe to something we can rely on for our pinned dependencies (debootstrap, curl, xz-utils), regardless of the base image being used.
 # This may be old, or clearly not the right distro for the rootfs itself.
 # Furthermore, since this is pointed at by apt options, we MUST override it here on the command (-o) to make sure it points to whatever was used as SOURCES_COMMIT
 # The one scenario where this would be annoying is:
@@ -120,14 +117,16 @@ RUN           dubo-chroot rootfs apt-mark auto ".*" >/dev/null
 # - one wants PRELOAD_PACKAGES from X, different from Y (possibly the target_repository for example)
 # This overall is very unlikely, and also can be done by the implementer in a later stage / different image
 # PRELOAD_PACKAGES is a mere convenience that assumes you want to pull from the final TARGET_SOURCES_COMMIT or the original REPO (or snapshot)
+# Also, we cannot use our normal /run/secrets/APT_CONFIG location, as the env var APT_CONFIG is NOT passed into the chroot
+# Finally, we tolerate faults on apt-get update here as the commited source may not be available / working
 RUN           --mount=type=secret,uid=100,id=CA,dst=/bootstrapper/rootfs/run/secrets/CA \
               --mount=type=secret,uid=100,id=CERTIFICATE,dst=/bootstrapper/rootfs/run/secrets/CERTIFICATE \
               --mount=type=secret,uid=100,id=KEY,dst=/bootstrapper/rootfs/run/secrets/KEY \
               --mount=type=secret,uid=100,id=GPG.gpg,dst=/bootstrapper/rootfs/run/secrets/GPG.gpg \
               --mount=type=secret,id=NETRC,dst=/bootstrapper/rootfs/run/secrets/NETRC \
               --mount=type=secret,id=APT_CONFIG,dst=/bootstrapper/rootfs/etc/apt/apt.conf.d/dbdbdp.conf \
-              dubo-chroot rootfs apt-get -qq -o Dir::Etc::SourceList=/etc/apt/sources.list update; \
-              dubo-chroot rootfs apt-get -qq dist-upgrade; \
+              dubo-chroot rootfs apt-get -qq -o Dir::Etc::SourceList=/etc/apt/sources.list update && \
+              dubo-chroot rootfs apt-get -qq -o Dir::Etc::SourceList=/etc/apt/sources.list dist-upgrade || true; \
               [ ! "$PRELOAD_PACKAGES" ] || { \
                 dubo-chroot rootfs apt-get -qq -o Dir::Etc::SourceList=/etc/apt/sources.list install $PRELOAD_PACKAGES; \
                 dubo-chroot rootfs apt-mark manual $PRELOAD_PACKAGES; \
@@ -204,20 +203,23 @@ ENV           LANG="C.UTF-8"
 ENV           LC_ALL="C.UTF-8"
 ENV           TZ="America/Los_Angeles"
 
-# XXX
-# Does not work as expected unfortunately - this cannot be overloaded in a dockerfile, but can be spoofed at build time
+# Little helpers for our secrets
+ENV           CURL_HOME=/run/secrets
+ENV           APT_CONFIG=/run/secrets/APT_CONFIG
+
+# NOTE: this does not quite work as expected unfortunately - this cannot be overloaded in a dockerfile, but can be --build-arg-ed at build time
 ONBUILD ARG   PRELOAD_PACKAGES=""
 ONBUILD ARG   UNLOAD_PACKAGES=""
 ONBUILD ARG   L3=""
 
 # hadolint ignore=DL3008
 ONBUILD RUN   --mount=type=secret,uid=100,id=CA \
-              --mount=type=secret,id=CERTIFICATE \
-              --mount=type=secret,id=KEY \
+              --mount=type=secret,uid=100,id=CERTIFICATE \
+              --mount=type=secret,uid=100,id=KEY \
               --mount=type=secret,uid=100,id=GPG.gpg \
               --mount=type=secret,id=NETRC \
               --mount=type=secret,id=APT_SOURCES \
-              --mount=type=secret,id=APT_CONFIG,dst=/etc/apt/apt.conf.d/dbdbdp.conf \
+              --mount=type=secret,id=APT_CONFIG \
               if [ "$PRELOAD_PACKAGES" ]; then \
                 apt-get update -qq; \
                 apt-cache show $PRELOAD_PACKAGES; \

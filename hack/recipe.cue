@@ -168,16 +168,14 @@ cakes: {
       			// deb http://apt.local/archive/bullseye/20210701T000000Z/ bullseye main
 			// if recipe.process.args.TARGET_REPOSITORY == "" {
 					subsystems: apt: sources: #"""
-					# Buster circa Jan 1st 2020
-					# deb http://snapshot.debian.org/archive/debian/20200101T000000Z buster main
-					# deb http://snapshot.debian.org/archive/debian-security/20200101T000000Z buster/updates main
-					# deb http://snapshot.debian.org/archive/debian/20200101T000000Z buster-updates main
-
 					# Bullseye circa June 1st 2021
-					deb http://snapshot.debian.org/archive/debian/20210601T000000Z bullseye main
-					deb http://snapshot.debian.org/archive/debian-security/20210601T000000Z bullseye-security main
-					deb http://snapshot.debian.org/archive/debian/20210601T000000Z bullseye-updates main
+					#deb http://snapshot.debian.org/archive/debian/20210601T000000Z bullseye main
+					#deb http://snapshot.debian.org/archive/debian-security/20210601T000000Z bullseye-security main
+					#deb http://snapshot.debian.org/archive/debian/20210601T000000Z bullseye-updates main
 
+					deb https://apt-mirror.local/archive/bullseye/20210701T000000Z bullseye main
+					deb https://apt-mirror.local/archive/bullseye-updates/20210701T000000Z bullseye-updates main
+					deb https://apt-mirror.local/archive/bullseye-security/20210701T000000Z bullseye-security main
 					"""#
 					// XXX interesting ripple effects...
 					subsystems: apt: check_valid: false
