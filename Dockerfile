@@ -119,6 +119,7 @@ RUN           dubo-chroot rootfs apt-mark auto ".*" >/dev/null
 # PRELOAD_PACKAGES is a mere convenience that assumes you want to pull from the final TARGET_SOURCES_COMMIT or the original REPO (or snapshot)
 # Also, we cannot use our normal /run/secrets/APT_CONFIG location, as the env var APT_CONFIG is NOT passed into the chroot
 # Finally, we tolerate faults on apt-get update here as the commited source may not be available / working
+# hadolint ignore=SC2015
 RUN           --mount=type=secret,uid=100,id=CA,dst=/bootstrapper/rootfs/run/secrets/CA \
               --mount=type=secret,uid=100,id=CERTIFICATE,dst=/bootstrapper/rootfs/run/secrets/CERTIFICATE \
               --mount=type=secret,uid=100,id=KEY,dst=/bootstrapper/rootfs/run/secrets/KEY \
@@ -203,8 +204,7 @@ ENV           LANG="C.UTF-8"
 ENV           LC_ALL="C.UTF-8"
 ENV           TZ="America/Los_Angeles"
 
-# Little helpers for our secrets
-ENV           CURL_HOME=/run/secrets
+# Little helper for our secrets
 ENV           APT_CONFIG=/run/secrets/APT_CONFIG
 
 # NOTE: this does not quite work as expected unfortunately - this cannot be overloaded in a dockerfile, but can be --build-arg-ed at build time

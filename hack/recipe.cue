@@ -159,7 +159,8 @@ cakes: {
 		}
 
 		// This image is a special kind where we want to force the repo to a specific point in time so that our pinned dependencies are available.
-		// This unfortunately is tied to the name of the base image (in case we fully retool)
+		// This setting unfortunately has to be infered from the name of the base image (in case we fully retool)
+		// XXX this should just go - we can't kill it right now because of snapshot blacklisting
 		icing: UserDefined & {
 
 						//	"https://apt.local/archive/bullseye"
