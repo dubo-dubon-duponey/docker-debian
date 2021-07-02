@@ -6,7 +6,8 @@ set -o errexit -o errtrace -o functrace -o nounset -o pipefail
 # DL3029 complains about unpinned images (which is not true, we are just using ARGs for that)
 # DL4006 is about setting pipefail (which we do, in our base SHELL)
 # DL3059 is about not having multiple successive RUN statements, and this is moronic
-hadolint_ignore=(--ignore DL3006 --ignore DL3029 --ignore DL4006 --ignore DL3059)
+# SC2039 is about array ref in POSIX shells (we are using bash, so)
+hadolint_ignore=(--ignore DL3006 --ignore DL3029 --ignore DL4006 --ignore DL3059 --ignore SC2039)
 
 # shellcheck source=/dev/null
 root="$(cd "$(dirname "${BASH_SOURCE[0]:-$PWD}")" 2>/dev/null 1>&2 && pwd)/../"

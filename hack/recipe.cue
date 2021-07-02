@@ -83,6 +83,7 @@ injector: {
 
 	_target_suite: * defaults.suite | =~ "^(?:buster|bullseye|sid)$" @tag(target_suite, type=string)
 	_target_date: * defaults.date | =~ "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" @tag(target_date, type=string)
+	_target_repository: * "" | string @tag(target_repository, type=string)
 
 	_directory: * "./context/cache" | string @tag(directory, type=string)
 
@@ -105,6 +106,8 @@ cakes: {
 				root: "./"
 				from: injector._from_image
 			}
+
+  		process: secrets: TARGET_REPOSITORY: content: injector._target_repository
 
 			process: target: "debootstrap"
 
@@ -158,23 +161,30 @@ cakes: {
 		// This image is a special kind where we want to force the repo to a specific point in time so that our pinned dependencies are available.
 		// This unfortunately is tied to the name of the base image (in case we fully retool)
 		icing: UserDefined & {
-			subsystems: apt: sources: #"""
-			# Buster circa Jan 1st 2020
-			# deb http://snapshot.debian.org/archive/debian/20200101T000000Z buster main
-			# deb http://snapshot.debian.org/archive/debian-security/20200101T000000Z buster/updates main
-			# deb http://snapshot.debian.org/archive/debian/20200101T000000Z buster-updates main
 
-			# Bullseye circa June 1st 2021
-			deb http://snapshot.debian.org/archive/debian/20210601T000000Z bullseye main
-			deb http://snapshot.debian.org/archive/debian-security/20210601T000000Z bullseye-security main
-			deb http://snapshot.debian.org/archive/debian/20210601T000000Z bullseye-updates main
+						//	"https://apt.local/archive/bullseye"
+      			// deb http://apt.local/archive/bullseye-updates/20210701T000000Z/ bullseye-updates main
+      			// deb http://apt.local/archive/bullseye-security/20210701T000000Z/ bullseye-security main
+      			// deb http://apt.local/archive/bullseye/20210701T000000Z/ bullseye main
+			// if recipe.process.args.TARGET_REPOSITORY == "" {
+					subsystems: apt: sources: #"""
+					# Buster circa Jan 1st 2020
+					# deb http://snapshot.debian.org/archive/debian/20200101T000000Z buster main
+					# deb http://snapshot.debian.org/archive/debian-security/20200101T000000Z buster/updates main
+					# deb http://snapshot.debian.org/archive/debian/20200101T000000Z buster-updates main
 
-			"""#
-			// XXX interesting ripple effects...
-			subsystems: apt: check_valid: false
+					# Bullseye circa June 1st 2021
+					deb http://snapshot.debian.org/archive/debian/20210601T000000Z bullseye main
+					deb http://snapshot.debian.org/archive/debian-security/20210601T000000Z bullseye-security main
+					deb http://snapshot.debian.org/archive/debian/20210601T000000Z bullseye-updates main
+
+					"""#
+					// XXX interesting ripple effects...
+					subsystems: apt: check_valid: false
+			// }
 		}
 		if icing.subsystems.apt.proxy != _|_ {
-			icing: subsystems: curl: proxy: "https://apt-cache.local"
+			icing: subsystems: curl: proxy: icing.subsystems.apt.proxy
 		}
 	}
 

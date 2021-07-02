@@ -83,6 +83,12 @@ import (
 			BUILD_REF_NAME: recipe.metadata.ref_name
     }
 
+		// XXX not really the right location for that - also suppose that an arg named GOPROXY exist, which is a problem - maybe secret instead?
+		// and/or maybe a proper subsystem that would control go env overall?
+		if icing.subsystems.go.proxy != _|_ {
+			args: GOPROXY: icing.subsystems.go.proxy
+		}
+
 		for _k, _v in icing.hosts {
 			if _v.ip != _|_ {
 				hosts: "\(_k)": _v.ip

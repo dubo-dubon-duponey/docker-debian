@@ -99,7 +99,7 @@ import (
 
 		// XXX careful with that, as defaults will not be used
 		list.Concat([
-			for key, item in secrets if item.content != _|_ || item.file != _|_ {
-				["--secret", "id=\(key),src=\(secret_path)\(key)"]
+			for _k, _v in secrets if _v.content != _|_ || _v.file != _|_ {
+				["--secret", "id=\(_k),src=\(secret_path)\(_k)"]
 			}])
 }

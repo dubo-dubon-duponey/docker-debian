@@ -1,77 +1,70 @@
 ARG           FROM_IMAGE=docker.io/dubodubonduponey/debian@sha256:cb25298b653310dd8b7e52b743053415452708912fe0e8d3d0d4ccf6c4003746
 ########################################################################################################################
-# This first "debootstrap" target is meant to prepare a rootfs.
-# Its starting point may be either an online Debian image, or an already existing local debian rootfs.
+# This stage is meant to prepare a Debian rootfs in the form of a tarball.
+# The starting point may be either an online Debian image (FROM_IMAGE),
+# or an already existing local debian rootfs (FROM_TARBALL) - in that case, you need to set FROM_IMAGE=scratch
 ########################################################################################################################
 FROM          $FROM_IMAGE                                                                     AS debootstrap-builder
 
+# > Set a reasonable shell that fails on ALL errors
 SHELL         ["/bin/bash", "-o", "errexit", "-o", "errtrace", "-o", "functrace", "-o", "nounset", "-o", "pipefail", "-c"]
 
-ARG           BUILDPLATFORM
-ARG           TARGETPLATFORM
-ARG           TARGETARCH
-
-# If our from is `scratch`, pass here an actual tarball (like: buster-2020-01-01.tar), that exists under context/cache/*/$BUILDPLATFORM/
+# > If our from is `scratch`, pass here an actual tarball (like: buster-2020-01-01.tar), that exists under context/cache/*/$TARGETPLATFORM/
+# NOTE: The point of the glob here is to avoid a Docker hard error
 ARG           FROM_TARBALL=nonexistent*
-
-# > Boilerplate Debian options. You very likely do not need to pass these along
+# > If the image is built from snapshot.debian.org (eg: if the TARGET_REPOSITORY secret has NOT been set), this will fetch from that date
+ARG           TARGET_DATE="2020-01-01"
+# > Which Debian suite to fetch (same as above)
+ARG           TARGET_SUITE="buster"
+# > Optionally, the final content to commit to etc/apt/sources.list in the debootstrap
+# If this is not set, /etc/apt/sources.list will point to either snapshot.debian.org or YOURREPO if you were using TARGET_REPOSITORY=TARGET_REPOSITORY/foo
+ARG           TARGET_SOURCES_COMMIT=""
+# > Optionally, packages to pre-install in the debootstrap (will be resolve using the end content of sources.list)
+ARG           PRELOAD_PACKAGES=""
+# > These packages are / not depending on whether https scheme in TARGET_SOURCES_COMMIT or TARGET_REPOSITORY
+ARG           UNLOAD_PACKAGES="apt-transport-https openssl ca-certificates libssl1.1"
+# > Boilerplate Debian options. You very likely do not need to change these
 ARG           DEBIAN_FRONTEND="noninteractive"
 ARG           TERM="xterm"
 ARG           LANG="C.UTF-8"
 ARG           LC_ALL="C.UTF-8"
 ARG           TZ="America/Los_Angeles"
 
-# > If the image is built from snapshot.debian.org (eg: the TARGET_REPOSITORY secret has NOT been set), this will fetch from that date
-ARG           TARGET_DATE="2020-01-01"
-# > Which Debian suite to fetch
-ARG           TARGET_SUITE="buster"
-# > Optionally, the final content to commit to etc/apt/sources.list in the debootstrap. This is likely useful in all cases.
-ARG           TARGET_SOURCES_COMMIT=""
-
-# > Optionally, packages to pre-install in the debootstrap (will honor the SOURCES_COMMIT list)
-ARG           PRELOAD_PACKAGES=""
-# > These packages are / not depending on whether https scheme in TARGET_SOURCES_COMMIT or TARGET_REPOSITORY
-ARG           UNLOAD_PACKAGES="apt-transport-https openssl ca-certificates libssl1.1"
+# > We use this to export our rootfs to the right filesystem location
+ARG           TARGETPLATFORM
 
 # Adding our rootfs if any
-# XXX unfortunately, this might fail if the corresponding parent directory (rootfs/$BUILDPLATFORM) does not exist
 # hadolint ignore=DL3020
 ADD           ./cache/*/$TARGETPLATFORM/$FROM_TARBALL /
 
+# Specifying these two allows to not mind about the secret paths
+ENV           CURL_HOME=/run/secrets
+ENV           APT_CONFIG=/run/secrets/APT_CONFIG
+
 # > STEP 1: install debootstrap
-# Note that apt is downgrading privs somehow somewhere and need the CA and gpg trust to have permissions for user _apt
-# Also, unfortunately, when using an https proxy for http, the CA has to be system-wide (unlike when accessing directly a TLS repository)
-RUN           --mount=type=secret,mode=0444,id=CA,dst=/etc/ssl/certs/ca-certificates.crt \
-              --mount=type=secret,id=CERTIFICATE \
-              --mount=type=secret,id=KEY \
-              --mount=type=secret,id=PASSPHRASE \
-              --mount=type=secret,mode=0444,id=GPG.gpg \
+# Apt downgrades to _apt (uid 100) when doing the actual request
+# NOTE: Using the extension .gpg is required for apt to consider it :s
+RUN           --mount=type=secret,uid=100,id=CA \
+              --mount=type=secret,uid=100,id=CERTIFICATE \
+              --mount=type=secret,uid=100,id=KEY \
+              --mount=type=secret,uid=100,id=GPG.gpg \
               --mount=type=secret,id=NETRC \
               --mount=type=secret,id=APT_SOURCES \
-              --mount=type=secret,id=APT_OPTIONS,dst=/etc/apt/apt.conf.d/dbdbdp.conf \
+              --mount=type=secret,id=APT_CONFIG \
               apt-get update -qq && apt-get install -qq --no-install-recommends \
                 debootstrap=1.0.123 \
                 curl=7.74.0-1.2 \
                 xz-utils=5.2.5-2
 
-#                qemu-user-static=1:5.2+dfsg-10 \
-#                debootstrap curl xz-utils qemu-user-static
-
-# Buster with overrides
-#                debootstrap=1.0.114 \
-#                curl=7.64.0-4 \
-#                xz-utils=5.2.4-1
-
-#                qemu-user-static=1:3.1+dfsg-8+deb10u2 \
-
 # > STEP 2: add debuerreotype
 COPY          ./debuerreotype/scripts /usr/sbin/
+
 # Copy over our deviation script
 # See comments inline for reason to have this
 # Note: other scripts insist in calling a script in the SAME dir, so /usr/sbin it is
 COPY          ./debuerreotype-chroot  /usr/sbin/
 
-# This is our simplified chroot for uses we control
+# This is our simplified chroot for use-cases we do control
 COPY          ./dubo-chroot  /usr/sbin/
 
 # This deviation is necessary to bypass debootstrap reliance on wget and replace with curl calls
@@ -81,28 +74,29 @@ COPY          ./wget  /usr/sbin/
 WORKDIR       /bootstrapper
 
 # > STEP 3: init
-# XXX the repo was probably a secret for it used to embed credentials - it possibly no longer, so...
 RUN           --mount=type=secret,id=CA \
               --mount=type=secret,id=CERTIFICATE \
               --mount=type=secret,id=KEY \
-              --mount=type=secret,id=PASSPHRASE \
-              --mount=type=secret,id=GPG \
+              --mount=type=secret,id=GPG.gpg \
               --mount=type=secret,id=NETRC \
               --mount=type=secret,id=TARGET_REPOSITORY \
-              --mount=type=secret,id=CURL_OPTIONS,dst=/root/.curlrc \
+              --mount=type=secret,id=.curlrc \
               ulimit -c unlimited; \
-              if [ -e /run/secrets/TARGET_REPOSITORY ]; then \
-                if [ -e /run/secrets/GPG ]; then \
-                  debuerreotype-init --no-merged-usr --non-debian --keyring /run/secrets/GPG rootfs "$TARGET_SUITE" "$(cat /run/secrets/TARGET_REPOSITORY)"; \
+              if [ -e /run/secrets/TARGET_REPOSITORY ] && [ "$(cat /run/secrets/TARGET_REPOSITORY)" ]; then \
+                if [ -e /run/secrets/GPG.gpg ]; then \
+                  cat /run/secrets/GPG.gpg; \
+                  echo debuerreotype-init --no-merged-usr --non-debian --keyring /run/secrets/GPG.gpg rootfs "$TARGET_SUITE" "$(cat /run/secrets/TARGET_REPOSITORY)"; \
+                  echo FINAUD; \
+                  debuerreotype-init --no-merged-usr --non-debian --keyring /run/secrets/GPG.gpg rootfs "$TARGET_SUITE" "$(cat /run/secrets/TARGET_REPOSITORY)" || { \
+                    echo FAIL; \
+                    exit 32; \
+                  }; \
                 else \
                   debuerreotype-init --no-merged-usr --non-debian rootfs "$TARGET_SUITE" "$(cat /run/secrets/TARGET_REPOSITORY)"; \
                 fi; \
               else \
                 debuerreotype-init --no-merged-usr --debian rootfs "$TARGET_SUITE" "${TARGET_DATE}T00:00:00Z"; \
-              fi
-
-# --arch "$DEB_TARGET_ARCH"
-#              DEB_TARGET_ARCH="$(echo "$TARGETARCH$TARGETVARIANT" | sed -e "s/armv6/armel/" -e "s/armv7/armhf/" -e "s/ppc64le/ppc64el/" -e "s/386/i386/")"; \
+              fi;
 
 # Adopt overlay (configuration and other fixes specifically targeted at Debian in docker)
 # DANGER permissions not being right means there WILL be train wreck
@@ -117,26 +111,23 @@ RUN           [ ! "$UNLOAD_PACKAGES" ] || dubo-chroot rootfs apt-get -qq purge -
 # Mark all packages as automatically installed
 RUN           dubo-chroot rootfs apt-mark auto ".*" >/dev/null
 
-# WATCHOUT
-# Using APT_SOURCES here is not possible unfortunately, as this is also used above to retrieve qemu & debootstrap (pinned) in the initial stage
-#   --mount=type=secret,id=APT_SOURCES,dst=/bootstrapper/rootfs/run/secrets/APT_SOURCES \
+# NOTE
+# APT_SOURCES is forcefully set by the recipe to something we can rely on for our pinned dependencies (debootstrap, curl, xz-utils), regardless of the base image being used.
+# This may be old, or clearly not the right distro for the rootfs itself.
+# Furthermore, since this is pointed at by apt options, we MUST override it here on the command (-o) to make sure it points to whatever was used as SOURCES_COMMIT
 # The one scenario where this would be annoying is:
-# - repo points to X
-# - sources commit changes that to Y
-# - one wants PRELOAD_PACKAGES from X, or at least from a different party than what was committed
+# - sources_commit points to Y
+# - one wants PRELOAD_PACKAGES from X, different from Y (possibly the target_repository for example)
 # This overall is very unlikely, and also can be done by the implementer in a later stage / different image
 # PRELOAD_PACKAGES is a mere convenience that assumes you want to pull from the final TARGET_SOURCES_COMMIT or the original REPO (or snapshot)
-# Furthermore, if APT_SOURCES was passed along, APT_OPTIONS reflects it... so, we have to mute it out on the command-line here.
-# XXX Another one: mounting ca-certificates in the destination (which is required because of us using a proxy, means we cannot install ca-certificates (or curl)
-# Ideally, it should be possible to instruct whatever http proxy subsystem apt is using to point to a different keystore
-RUN           --mount=type=secret,mode=0444,id=CA,dst=/bootstrapper/rootfs/etc/ssl/certs/ca-certificates.crt \
-              --mount=type=secret,id=CERTIFICATE,dst=/bootstrapper/rootfs/run/secrets/CERTIFICATE \
-              --mount=type=secret,id=KEY,dst=/bootstrapper/rootfs/run/secrets/KEY \
-              --mount=type=secret,mode=0444,id=GPG,dst=/bootstrapper/rootfs/run/secrets/GPG.gpg \
+RUN           --mount=type=secret,uid=100,id=CA,dst=/bootstrapper/rootfs/run/secrets/CA \
+              --mount=type=secret,uid=100,id=CERTIFICATE,dst=/bootstrapper/rootfs/run/secrets/CERTIFICATE \
+              --mount=type=secret,uid=100,id=KEY,dst=/bootstrapper/rootfs/run/secrets/KEY \
+              --mount=type=secret,uid=100,id=GPG.gpg,dst=/bootstrapper/rootfs/run/secrets/GPG.gpg \
               --mount=type=secret,id=NETRC,dst=/bootstrapper/rootfs/run/secrets/NETRC \
-              --mount=type=secret,id=APT_OPTIONS,dst=/bootstrapper/rootfs/etc/apt/apt.conf.d/dbdbdp.conf \
+              --mount=type=secret,id=APT_CONFIG,dst=/bootstrapper/rootfs/etc/apt/apt.conf.d/dbdbdp.conf \
               dubo-chroot rootfs apt-get -qq -o Dir::Etc::SourceList=/etc/apt/sources.list update; \
-              dubo-chroot rootfs apt-get -qq -o Dir::Etc::SourceList=/etc/apt/sources.list dist-upgrade; \
+              dubo-chroot rootfs apt-get -qq dist-upgrade; \
               [ ! "$PRELOAD_PACKAGES" ] || { \
                 dubo-chroot rootfs apt-get -qq -o Dir::Etc::SourceList=/etc/apt/sources.list install $PRELOAD_PACKAGES; \
                 dubo-chroot rootfs apt-mark manual $PRELOAD_PACKAGES; \
@@ -155,8 +146,6 @@ RUN           mkdir -p "/rootfs/$TARGETPLATFORM"; \
               debuerreotype-tar rootfs "/rootfs/$TARGETPLATFORM/${TARGET_SUITE}-${TARGET_DATE}".tar
 
 # Hash it
-# Tricky! Every arch will do that, and the last one will have the proper shas...
-# Double tricky! actually, no, because buildkit shard output directory under a plartform subdir... :/
 RUN           rm -f /rootfs/debian.sha; \
               sha512sum /rootfs/*/*/*/*.tar >> /rootfs/debian.sha 2>/dev/null || true; \
               sha512sum /rootfs/*/*/*.tar >> /rootfs/debian.sha 2>/dev/null || true
@@ -173,13 +162,15 @@ COPY          --from=debootstrap-builder /rootfs /
 ########################################################################################################################
 FROM          scratch                                                                                                   AS debian
 
+# Our decent shell
 SHELL         ["/bin/bash", "-o", "errexit", "-o", "errtrace", "-o", "functrace", "-o", "nounset", "-o", "pipefail", "-c"]
 
+# What we want
 ARG           TARGET_SUITE="buster"
 ARG           TARGET_DATE="2020-01-01"
 ARG           TARGETPLATFORM
 
-# Trix! Without hands!
+# Load it!
 ADD           ./cache/*/$TARGETPLATFORM/"${TARGET_SUITE}-${TARGET_DATE}".tar /
 
 ARG           BUILD_CREATED="1976-04-14T17:00:00-07:00"
@@ -207,38 +198,39 @@ LABEL         org.opencontainers.image.ref.name="$BUILD_REF_NAME"
 LABEL         org.opencontainers.image.title="$BUILD_TITLE"
 LABEL         org.opencontainers.image.description="$BUILD_DESCRIPTION"
 
-ONBUILD ARG   DEBIAN_FRONTEND="noninteractive"
-ONBUILD ARG   TERM="xterm"
-ONBUILD ARG   LANG="C.UTF-8"
-ONBUILD ARG   LC_ALL="C.UTF-8"
-ONBUILD ARG   TZ="America/Los_Angeles"
+ENV           DEBIAN_FRONTEND="noninteractive"
+ENV           TERM="xterm"
+ENV           LANG="C.UTF-8"
+ENV           LC_ALL="C.UTF-8"
+ENV           TZ="America/Los_Angeles"
 
-# Does not work as expected unfortunately - this cannot be overloaded in a dockerfile
+# XXX
+# Does not work as expected unfortunately - this cannot be overloaded in a dockerfile, but can be spoofed at build time
 ONBUILD ARG   PRELOAD_PACKAGES=""
 ONBUILD ARG   UNLOAD_PACKAGES=""
-
 ONBUILD ARG   L3=""
 
 # hadolint ignore=DL3008
-ONBUILD RUN   --mount=type=secret,mode=0444,id=CA,dst=/etc/ssl/certs/ca-certificates.crt \
+ONBUILD RUN   --mount=type=secret,uid=100,id=CA \
               --mount=type=secret,id=CERTIFICATE \
               --mount=type=secret,id=KEY \
-              --mount=type=secret,id=PASSPHRASE \
-              --mount=type=secret,mode=0444,id=GPG \
+              --mount=type=secret,uid=100,id=GPG.gpg \
               --mount=type=secret,id=NETRC \
               --mount=type=secret,id=APT_SOURCES \
-              --mount=type=secret,id=APT_OPTIONS,dst=/etc/apt/apt.conf.d/dbdbdp.conf \
+              --mount=type=secret,id=APT_CONFIG,dst=/etc/apt/apt.conf.d/dbdbdp.conf \
               if [ "$PRELOAD_PACKAGES" ]; then \
                 apt-get update -qq; \
                 apt-cache show $PRELOAD_PACKAGES; \
                 apt-get install -qq --no-install-recommends $PRELOAD_PACKAGES; \
-                rm -rf /var/lib/apt/lists/*; \
-                rm -rf /tmp/*; \
-                rm -rf /var/tmp/*; \
               fi; \
               [ ! "$UNLOAD_PACKAGES" ] || { \
                 for i in $UNLOAD_PACKAGES; do \
                   apt-get -qq purge --auto-remove $i || true; \
                 done; \
               }; \
+              apt-get -qq autoremove; \
+              apt-get -qq clean; \
+              rm -rf /var/lib/apt/lists/*; \
+              rm -rf /tmp/*; \
+              rm -rf /var/tmp/*; \
               [ ! "$L3" ] || $L3
