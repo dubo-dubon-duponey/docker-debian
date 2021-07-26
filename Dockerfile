@@ -1,10 +1,11 @@
-ARG           FROM_IMAGE=docker.io/dubodubonduponey/debian@sha256:cb25298b653310dd8b7e52b743053415452708912fe0e8d3d0d4ccf6c4003746
+ARG           FROM_IMAGE_BUILDER=ghcr.io/dubodubonduponey/debian@sha256:cb25298b653310dd8b7e52b743053415452708912fe0e8d3d0d4ccf6c4003746
+ARG           FROM_IMAGE_RUNTIME=scratch
 ########################################################################################################################
 # This stage is meant to prepare a Debian rootfs in the form of a tarball.
 # The starting point may be either an online Debian image (FROM_IMAGE),
 # or an already existing local debian rootfs (FROM_TARBALL) - in that case, you need to set FROM_IMAGE=scratch
 ########################################################################################################################
-FROM          $FROM_IMAGE                                                                     AS debootstrap-builder
+FROM          $FROM_IMAGE_BUILDER                                                                                       AS debootstrap-builder
 
 # > Set a reasonable shell that fails on ALL errors
 SHELL         ["/bin/bash", "-o", "errexit", "-o", "errtrace", "-o", "functrace", "-o", "nounset", "-o", "pipefail", "-c"]
@@ -161,7 +162,7 @@ COPY          --from=debootstrap-builder /rootfs /
 ########################################################################################################################
 # Our final, multi-arch, Debian Buster image, using the rootfs generated in the step above
 ########################################################################################################################
-FROM          scratch                                                                                                   AS debian
+FROM          $FROM_IMAGE_RUNTIME                                                                                       AS debian
 
 # Our decent shell
 SHELL         ["/bin/bash", "-o", "errexit", "-o", "errtrace", "-o", "functrace", "-o", "nounset", "-o", "pipefail", "-c"]
@@ -238,3 +239,5 @@ ONBUILD RUN   --mount=type=secret,uid=100,id=CA \
               rm -rf /tmp/*; \
               rm -rf /var/tmp/*; \
               [ ! "$L3" ] || $L3
+
+CMD           "bash"

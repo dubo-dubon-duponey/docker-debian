@@ -16,7 +16,12 @@ import (
 	input: {
 		root: types.#Path | * "./"
 		context: types.#Path
-		from: types.#Image
+		from: {
+			runtime?: types.#Image
+			builder?: types.#Image
+			auditor?: types.#Image
+			tools?: types.#Image
+		}
 		dockerfile?: types.#FilePath
 		// XXX this should be an array
 		// XXX this should be injectable

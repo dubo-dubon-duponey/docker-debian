@@ -67,7 +67,18 @@ import (
 		// Making these standard for now
     args: {
     	// This is sui generis
-    	FROM_IMAGE: recipe.input.from.toString,
+    	if recipe.input.from.runtime.toString != _|_ {
+    		FROM_IMAGE_RUNTIME: recipe.input.from.runtime.toString,
+    	}
+    	if recipe.input.from.builder.toString != _|_ {
+	    	FROM_IMAGE_BUILDER: recipe.input.from.builder.toString,
+    	}
+    	if recipe.input.from.tools.toString != _|_ {
+	    	FROM_IMAGE_TOOLS: recipe.input.from.tools.toString,
+    	}
+    	if recipe.input.from.auditor.toString != _|_ {
+	    	FROM_IMAGE_AUDITOR: recipe.input.from.auditor.toString,
+    	}
 
 			BUILD_TITLE: recipe.metadata.title
 			BUILD_DESCRIPTION: recipe.metadata.description

@@ -48,12 +48,12 @@ defaults: {
 		types.#Platforms.#V6,
 		types.#Platforms.#S390X,
 		types.#Platforms.#ARM64,
-		// qemue / bullseye busted
-		// types.#Platforms.#PPC64LE,
+		// XXX is this still qemu busted?
+		types.#Platforms.#PPC64LE,
 	]
 
 	suite: "bullseye"
-	date: "2021-06-01"
+	date: "2021-07-01"
 	tarball: "\(suite)-\(date).tar"
 }
 
@@ -87,7 +87,7 @@ injector: {
 
 	_directory: * "./context/cache" | string @tag(directory, type=string)
 
-	_from_image: types.#Image & {#fromString: *"scratch" | string @tag(from_image, type=string)}
+	_from_image_builder: types.#Image & {#fromString: *"scratch" | string @tag(from_image_builder, type=string)}
 	_from_tarball: *defaults.tarball | string @tag(from_tarball, type=string)
 }
 
@@ -104,7 +104,7 @@ cakes: {
 			input: {
 				context: "./context"
 				root: "./"
-				from: injector._from_image
+				from: builder: injector._from_image_builder
 			}
 
   		process: secrets: TARGET_REPOSITORY: content: injector._target_repository
@@ -158,29 +158,9 @@ cakes: {
 			}
 		}
 
-		// This image is a special kind where we want to force the repo to a specific point in time so that our pinned dependencies are available.
-		// This setting unfortunately has to be infered from the name of the base image (in case we fully retool)
-		// XXX this should just go - we can't kill it right now because of snapshot blacklisting
 		icing: UserDefined & {
-
-						//	"https://apt.local/archive/bullseye"
-      			// deb http://apt.local/archive/bullseye-updates/20210701T000000Z/ bullseye-updates main
-      			// deb http://apt.local/archive/bullseye-security/20210701T000000Z/ bullseye-security main
-      			// deb http://apt.local/archive/bullseye/20210701T000000Z/ bullseye main
-			// if recipe.process.args.TARGET_REPOSITORY == "" {
-					subsystems: apt: sources: #"""
-					# Bullseye circa June 1st 2021
-					#deb http://snapshot.debian.org/archive/debian/20210601T000000Z bullseye main
-					#deb http://snapshot.debian.org/archive/debian-security/20210601T000000Z bullseye-security main
-					#deb http://snapshot.debian.org/archive/debian/20210601T000000Z bullseye-updates main
-
-					deb https://apt-mirror.local/archive/bullseye/20210701T000000Z bullseye main
-					deb https://apt-mirror.local/archive/bullseye-updates/20210701T000000Z bullseye-updates main
-					deb https://apt-mirror.local/archive/bullseye-security/20210701T000000Z bullseye-security main
-					"""#
-					// XXX interesting ripple effects...
-					subsystems: apt: check_valid: false
-			// }
+			// XXX this is required unless using a different origin repo than snapshot, and overriden sources.list so...
+			subsystems: apt: check_valid: false
 		}
 		if icing.subsystems.apt.proxy != _|_ {
 			icing: subsystems: curl: proxy: icing.subsystems.apt.proxy
@@ -192,7 +172,6 @@ cakes: {
 			input: {
 				context: "./context"
 				root: "./"
-				from: injector._from_image
 			}
 
 			process: target: "debian"
