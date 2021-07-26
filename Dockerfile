@@ -240,4 +240,4 @@ ONBUILD RUN   --mount=type=secret,uid=100,id=CA \
               rm -rf /var/tmp/*; \
               [ ! "$L3" ] || $L3
 
-CMD           "bash"
+CMD           ["bash"]
