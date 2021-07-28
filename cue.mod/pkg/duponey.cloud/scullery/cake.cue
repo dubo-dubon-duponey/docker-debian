@@ -5,11 +5,6 @@ import (
 	"duponey.cloud/buildkit/types"
 )
 
-// XXX you cannot have @tag in modules it seems...
-//#Injector: {
-//	...
-//}
-
 #Cake: {
 	// Takes image definition and user defined inputs
 	recipe: #Recipe
@@ -67,6 +62,11 @@ import (
 		// Making these standard for now
     args: {
     	// This is sui generis
+    	if recipe.input.from.registry != _|_ {
+	    	FROM_REGISTRY: recipe.input.from.registry,
+    	}
+
+			// XXXstart remove this when done migrating
     	if recipe.input.from.runtime.toString != _|_ {
     		FROM_IMAGE_RUNTIME: recipe.input.from.runtime.toString,
     	}
@@ -79,6 +79,7 @@ import (
     	if recipe.input.from.auditor.toString != _|_ {
 	    	FROM_IMAGE_AUDITOR: recipe.input.from.auditor.toString,
     	}
+			// XXXend remove this when done migrating
 
 			BUILD_TITLE: recipe.metadata.title
 			BUILD_DESCRIPTION: recipe.metadata.description

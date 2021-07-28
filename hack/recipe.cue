@@ -6,18 +6,6 @@ import (
 	"strings"
 )
 
-// XXX WIP: clearly the injector is defective at this point and has to be rethought
-// It's probably a better approach to hook it into the recipe, or the env to avoid massive re-use problems
-
-// Entry point if there are environmental definitions
-UserDefined: scullery.#Icing & {
-	// XXX add injectors here?
-//				cache: injector._cache_to
-//				cache: injector._cache_from
-}
-
-// XXX unfortunately, you cannot have tags in imported packages, so this has to be hard-copied here
-
 defaults: {
 	tags: [
 		types.#Image & {
@@ -90,12 +78,6 @@ injector: {
 	_from_image_builder: types.#Image & {#fromString: *"scratch" | string @tag(from_image_builder, type=string)}
 	_from_tarball: *defaults.tarball | string @tag(from_tarball, type=string)
 }
-
-			// XXX this is really environment instead righty?
-			// This to specify if a offband repo is available
-			//TARGET_REPOSITORY: #Secret & {
-			//	content: "https://apt-cache.local/archive/debian/" + strings.Replace(args.TARGET_DATE, "-", "", -1)
-			//}
 
 cakes: {
 	debootstrap: scullery.#Cake & {
@@ -198,3 +180,7 @@ cakes: {
 		icing: UserDefined
 	}
 }
+
+UserDefined: scullery.#Icing & {
+}
+
