@@ -1,22 +1,40 @@
-ARG           FROM_IMAGE_BUILDER=ghcr.io/dubodubonduponey/debian@sha256:cb25298b653310dd8b7e52b743053415452708912fe0e8d3d0d4ccf6c4003746
+# FROM_REGISTRY controls the base location for the starting image for the debootstrap stage
+# If set to "", the starting image will be scratch instead, and an already built local tarball will be used
+ARG           FROM_REGISTRY=ghcr.io/dubo-dubon-duponey
+# FROM_IMAGE_BUILDER further allow changing the image name, tag and digest for the debootstrap stage
+ARG           FROM_IMAGE_BUILDER="debian@sha256:d17b322f1920dd310d30913dd492cbbd6b800b62598f5b6a12d12684aad82296"
+# FROM_IMAGE_RUNTIME allows specifying a starting image for the final debian image (defaults to scratch)
 ARG           FROM_IMAGE_RUNTIME=scratch
+
+# Private helper
+ARG           _private_df="${FROM_REGISTRY:+$FROM_REGISTRY/$FROM_IMAGE_BUILDER}"
+
 ########################################################################################################################
-# This stage is meant to prepare a Debian rootfs in the form of a tarball.
-# The starting point may be either an online Debian image (FROM_IMAGE),
-# or an already existing local debian rootfs (FROM_TARBALL) - in that case, you need to set FROM_IMAGE=scratch
+# The debootstrap stage is meant to prepare a Debian rootfs in the form of a tarball.
+# The starting point may be either an online Debian image (as defined by FROM_REGISTRY/FROM_IMAGE_BUILDER),
+# or an already existing local debian rootfs (in case FROM_REGISTRY == "")
+# By default, snapshot.debian.org is being used as a source to debootstrap, for TARGET_SUITE and TARGET_DATE
+# Alternatively, you can build from a private / specific Debian repository by specifying the TARGET_REPOSITORY secret
+# In that case, TARGET_SUITE and TARGET_DATE are no-ops
 ########################################################################################################################
-FROM          $FROM_IMAGE_BUILDER                                                                                       AS debootstrap-builder
+FROM          ${_private_df:-scratch}                                                                                   AS debootstrap-builder
 
 # > Set a reasonable shell that fails on ALL errors
 SHELL         ["/bin/bash", "-o", "errexit", "-o", "errtrace", "-o", "functrace", "-o", "nounset", "-o", "pipefail", "-c"]
 
-# > If our from is `scratch`, pass here an actual tarball (like: buster-2020-01-01.tar), that exists under context/cache/*/$TARGETPLATFORM/
-# NOTE: The point of the glob here is to avoid a Docker hard error
-ARG           FROM_TARBALL=nonexistent*
 # > If the image is built from snapshot.debian.org (eg: if the TARGET_REPOSITORY secret has NOT been set), this will fetch from that date
-ARG           TARGET_DATE="2020-01-01"
+ARG           TARGET_DATE="2021-07-01"
 # > Which Debian suite to fetch (same as above)
-ARG           TARGET_SUITE="buster"
+ARG           TARGET_SUITE="bullseye"
+
+# > This is tricky: repeat ARG, so that we can access the value of FROM_IMAGE_BUILDER below
+ARG           _private_df
+# If _DEBOOTSTRAP_FROM is set, then set the tarball to nonexistent* (glob is here to prevent a hard error with Docker)
+# Now, if there is no _DEBOOTSTRAP_FROM (which happens if FROM_REGISTRY is neutered), then use a bullseye tarball from 2021-06-01
+# (that is expected to have been built)
+ENV           FROM_TARBALL="${_private_df:+nonexistent*}"
+ENV           FROM_TARBALL="${FROM_TARBALL:-bullseye-2021-07-01.tar}"
+
 # > Optionally, the final content to commit to etc/apt/sources.list in the debootstrap
 # If this is not set, /etc/apt/sources.list will point to either snapshot.debian.org or YOURREPO if you were using TARGET_REPOSITORY=TARGET_REPOSITORY/foo
 ARG           TARGET_SOURCES_COMMIT=""
@@ -98,7 +116,7 @@ RUN           --mount=type=secret,id=CA \
               fi;
 
 # Adopt overlay (configuration and other fixes specifically targeted at Debian in docker)
-# DANGER permissions not being right means there WILL be train wreck
+# DANGER if permissions are not right in the source context, there WILL be train wreck
 COPY          ./overlay rootfs
 
 # If we want to spoof in sources.list, do it
