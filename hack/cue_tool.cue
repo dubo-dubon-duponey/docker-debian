@@ -9,6 +9,7 @@ import (
 _no_cache: *false | bool @tag(no_cache,type=bool)
 _progress: *types.#Progress.#AUTO | string @tag(progress,type=string)
 
+// Declare existing cakes as commands so that cue can exec them
 for _k, _v in cakes {
 	command: "\(_k)": scullery.#Oven & {
 		cake: _v

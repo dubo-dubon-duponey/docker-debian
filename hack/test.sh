@@ -11,7 +11,7 @@ if ! "$root/hack/build.sh" \
     --inject from_image=debian:buster-20200130-slim \
     --inject from_tarball="nonexistent*" \
     --inject progress=plain \
-	  --inject target_date=2021-06-01 \
+	  --inject target_date=2021-07-01 \
 	  --inject target_suite=buster \
     --inject platforms=linux/amd64,linux/arm/v7 \
   	debootstrap "$@"; then
@@ -23,7 +23,7 @@ result1="$(cat "$root"/context/cache/**/*.sha)"
 
 if ! "$root/hack/build.sh" \
     --inject from_image=scratch \
-    --inject from_tarball="buster-2021-06-01.tar" \
+    --inject from_tarball="buster-2021-07-01.tar" \
     --inject progress=plain \
 	  --inject target_date=2020-01-01 \
 	  --inject target_suite=buster \

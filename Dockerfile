@@ -2,7 +2,7 @@
 # If set to "", the starting image will be scratch instead, and an already built local tarball will be used
 ARG           FROM_REGISTRY=ghcr.io/dubo-dubon-duponey
 # FROM_IMAGE_BUILDER further allow changing the image name, tag and digest for the debootstrap stage
-ARG           FROM_IMAGE_BUILDER="debian@sha256:d17b322f1920dd310d30913dd492cbbd6b800b62598f5b6a12d12684aad82296"
+ARG           FROM_IMAGE_BUILDER=debian@sha256:d17b322f1920dd310d30913dd492cbbd6b800b62598f5b6a12d12684aad82296
 # FROM_IMAGE_RUNTIME allows specifying a starting image for the final debian image (defaults to scratch)
 ARG           FROM_IMAGE_RUNTIME=scratch
 
@@ -30,7 +30,7 @@ ARG           TARGET_SUITE="bullseye"
 # > This is tricky: repeat ARG, so that we can access the value of FROM_IMAGE_BUILDER below
 ARG           _private_df
 # If _DEBOOTSTRAP_FROM is set, then set the tarball to nonexistent* (glob is here to prevent a hard error with Docker)
-# Now, if there is no _DEBOOTSTRAP_FROM (which happens if FROM_REGISTRY is neutered), then use a bullseye tarball from 2021-06-01
+# Now, if there is no _DEBOOTSTRAP_FROM (which happens if FROM_REGISTRY is neutered), then use a bullseye tarball from 2021-07-01
 # (that is expected to have been built)
 ENV           FROM_TARBALL="${_private_df:+nonexistent*}"
 ENV           FROM_TARBALL="${FROM_TARBALL:-bullseye-2021-07-01.tar}"
