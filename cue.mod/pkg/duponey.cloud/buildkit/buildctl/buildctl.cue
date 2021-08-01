@@ -8,6 +8,14 @@ import (
 
 #Commander: {
 	debug: bool | *false
+
+	tls: {
+		name?: string
+		ca?: types.#Path
+		cert?: types.#Path
+		key?: types.#Path
+	}
+
 	// XXX Make this more specific
 	addr?: string
   // Injectable with good defaults
@@ -48,12 +56,11 @@ import (
 
 	run: ["buildctl"] +
 		[if addr != _|_ {"--addr"}] + [if addr != _|_ {addr}] +
+		[if tls.name != _|_ {"--tlsservername"}] + [if tls.name != _|_ {tls.name}] +
+		[if tls.ca != _|_ {"--tlscacert"}] + [if tls.ca != _|_ {tls.ca}] +
+		[if tls.cert != _|_ {"--tlscert"}] + [if tls.cert != _|_ {tls.cert}] +
+		[if tls.key != _|_ {"--tlskey"}] + [if tls.key != _|_ {tls.key}] +
 		[if debug == true {"--debug"}] +
-		// [if tlsservername != _|_ {"--tlsservername"}] + [if tlsservername != _|_ {tlsservername}] +
-		// [if tlscacert != _|_ {"--tlscacert"}] + [if tlscacert != _|_ {tlscacert}] +
-		// [if tlscert != _|_ {"--tlscert"}] + [if tlscert != _|_ {tlscert}] +
-		// [if tlskey != _|_ {"--tlskey"}] + [if tlskey != _|_ {tlskey}] +
-		// [if tlsdir != _|_ {"--tlsdir"}] + [if tlsdir != _|_ {tlsdir}] +
 
 		["build"] +
 		[if no_cache == true {"--no-cache"}] +
