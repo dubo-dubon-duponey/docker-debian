@@ -187,7 +187,7 @@ SHELL         ["/bin/bash", "-o", "errexit", "-o", "errtrace", "-o", "functrace"
 
 # What we want
 ARG           TARGET_SUITE="buster"
-ARG           TARGET_DATE="2020-01-01"
+ARG           TARGET_DATE="2020-07-01"
 ARG           TARGETPLATFORM
 
 # Load it!
