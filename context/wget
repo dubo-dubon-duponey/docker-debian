@@ -2,7 +2,7 @@
 
 echo >&2 "Wget deviation: $*"
 
-args=(curl --tlsv1.3 -sSfL)
+args=(curl --tlsv1.3 -sSfL --proto "=https,http")
 
 for url in "$@"; do :; done
 

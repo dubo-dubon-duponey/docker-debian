@@ -113,7 +113,7 @@ RUN           --mount=type=secret,id=CA \
                 fi; \
               else \
                 debuerreotype-init --no-merged-usr --debian rootfs "$TARGET_SUITE" "${TARGET_DATE}T00:00:00Z"; \
-              fi;
+              fi
 
 # Adopt overlay (configuration and other fixes specifically targeted at Debian in docker)
 # DANGER if permissions are not right in the source context, there WILL be train wreck

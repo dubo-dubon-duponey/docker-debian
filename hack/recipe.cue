@@ -23,8 +23,6 @@ cakes: {
 				]
 			}
 
-			process: secrets: TARGET_REPOSITORY: types.#Secret
-
       process: args: {
 	      TARGET_DATE: string
   	    TARGET_SUITE: string
@@ -130,7 +128,7 @@ injectors: {
 	platforms: string @tag(platforms, type=string)
 	registry: string @tag(registry, type=string)
 
-	repository: * "" | string @tag(repository, type=string)
+	repository: string @tag(repository, type=string)
 }
 
 cakes: debootstrap: recipe: {
@@ -143,8 +141,12 @@ cakes: debootstrap: recipe: {
 	process: args: TARGET_DATE: injectors.date
 	process: args: TARGET_SUITE: injectors.suite
 
-	process: secrets: TARGET_REPOSITORY: content: injectors.repository
+	if injectors.repository != _|_ {
+		process: secrets: TARGET_REPOSITORY: content: injectors.repository
+	}
 }
+
+//			process: secrets: TARGET_REPOSITORY: types.#Secret
 
 cakes: debian: recipe: {
 	if injectors.platforms != _|_ {
