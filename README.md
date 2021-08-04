@@ -29,14 +29,14 @@ Be nice to the Debian infrastructure: run your own Debian packages repository mi
 Build
 
 ```
-./hack/build.sh debootstrap --inject target_date=2021-07-01 --inject target_suite=bullseye
+./hack/build.sh debootstrap --inject target_date=2021-08-01 --inject target_suite=bullseye
 ```
 
 Assemble and push
 
 ```
 ./hack/build.sh debian \
-  --inject target_date="2021-07-01" \
+  --inject target_date="2021-08-01" \
   --inject target_suite="bullseye" \
   --inject tags=registry.com/name/image:tag
 ```
@@ -48,9 +48,9 @@ You can control additional aspects of the build passing arguments:
 ```
 # Online, from a bullseye image, with caching into a registry, building only armv6
 ./hack/build.sh debootstrap \
-  --inject target_date="2021-07-01" \
+  --inject target_date="2021-08-01" \
   --inject target_suite="bullseye" \
-  --inject from_image="ghcr.io/dubo-dubon-duponey/debian:bullseye-2021-07-01" \
+  --inject from_image="ghcr.io/dubo-dubon-duponey/debian:bullseye-2021-08-01" \
   --inject from_tarball="nonexistent*" \
   --inject platforms="linux/arm/v6" \
   --inject directory=./context/cache \
@@ -61,7 +61,7 @@ You can control additional aspects of the build passing arguments:
   --inject target_date="2021-06-15" \
   --inject target_suite="sid" \
   --inject from_image="scratch" \
-  --inject from_tarball="bullseye-2021-07-01.tar" \
+  --inject from_tarball="bullseye-2021-08-01.tar" \
 ```
 
 ### Dependencies
