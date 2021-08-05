@@ -23,7 +23,9 @@ import (
 
 	// Connect the image definitions into buildkit (XXX and inject overrides?)
 	_buildkit: {
-		addr: icing.buildkit.address
+		if icing.buildkit.address != _|_ {
+			addr: icing.buildkit.address
+		}
 		tls: {
 			name : icing.buildkit.name
 			ca : icing.buildkit.ca

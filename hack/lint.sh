@@ -6,10 +6,6 @@ set -o errexit -o errtrace -o functrace -o nounset -o pipefail
 root="$(cd "$(dirname "${BASH_SOURCE[0]:-$PWD}")" 2>/dev/null 1>&2 && pwd)/../"
 readonly root
 
-# Make sure we have our tools in place
-# shellcheck source=/dev/null
-. "$root"/hack/setup.sh
-
 # Ignore some hadolint warnings that do not make much sense
 # DL3006 is about "dO nOT UsE --platform", which is really ludicrous
 # DL3029 complains about unpinned images (which is not true, we are just using ARGs for that)
