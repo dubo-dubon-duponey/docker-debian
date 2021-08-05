@@ -4,7 +4,7 @@ set -o errexit -o errtrace -o functrace -o nounset -o pipefail
 export SUITE=bullseye
 export DATE=2021-07-01
 
-export BIN_LOCATION="${BIN_LOCATION:-$HOME/Dubo/bin}"
+export BIN_LOCATION="${BIN_LOCATION:-$HOME/bin}"
 export PATH="$BIN_LOCATION:$PATH"
 readonly IMAGE_TOOLS="${IMAGE_TOOLS:-ghcr.io/dubo-dubon-duponey/tools:$(uname | grep -q Darwin && printf "macos" || printf "linux")-$SUITE-$DATE}"
 

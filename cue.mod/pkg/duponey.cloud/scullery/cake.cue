@@ -11,6 +11,13 @@ import (
 	icing: #Icing
 	hosts: types.#Hosts // [string]: string
 
+	// XXX this is really not quite right, but short term, icing injects into recipe, if the recipe defines an image output
+	// very ghetto, and no better idea at that time
+	// icing should really be a set of properties of the oven, applied to all cakes, let's start with that
+	if icing.output.registries != _|_ if recipe.output.images != _|_ {
+		recipe: output: images: registries: icing.output.registries
+	}
+
 	// XXXWIP
 	// injector: #Injector
 	//for _k, _v in injector {

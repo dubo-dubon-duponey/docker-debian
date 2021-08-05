@@ -21,10 +21,13 @@ jobs:
           key: cache
 
         # XXX move to container tooling
-      - name: Install hadolint
+      - name: Install hadolint and shellcheck
         run: |
-          curl --proto '=https' --tlsv1.3 -sSfL -o hadolint "https://github.com/hadolint/hadolint/releases/download/v2.5.0/hadolint-$(uname -s)-$(uname -m)"
+          curl --proto '=https' --tlsv1.3 -sSfL -o hadolint "https://github.com/hadolint/hadolint/releases/download/v2.6.0/hadolint-$(uname -s)-$(uname -m)"
           chmod 700 ./hadolint
+          curl --proto '=https' --tlsv1.3 -sSfL -o shellcheck.tar.xz "https://github.com/koalaman/shellcheck/releases/download/v0.7.2/shellcheck-v0.7.2.linux.$(uname -m).tar.xz"
+          tar -xf shellcheck.tar.xz
+          mv ./shellcheck-v0.7.2/shellcheck .
 
       # XXX update this to a more recent apt proxy
       - name: Start apt proxy
@@ -55,7 +58,7 @@ jobs:
         run: |
           # Start buildkit
           bkaddr="$(./hack/helpers/start-buildkit.sh)"
-          # Set the path
+          # Set the path and install the tools
           export BIN_LOCATION="$(pwd)"
           ./hack/helpers/install-tools.sh
           export PATH="$BIN_LOCATION:$PATH"
@@ -66,11 +69,19 @@ jobs:
             echo "Cue installation had failed"
             exit 1
           }
+          which cue
+          cue version
           command -v "buildctl" > /dev/null || {
             echo "Cue installation had failed"
             exit 1
           }
+          which buildctl
+          buildctl --version
           buildctl --addr "$bkaddr" debug workers
+          which hadolint
+          hadolint --version
+          which shellcheck
+          shellcheck --version
           docker logs --tail 200 apt-front
           # Lint
           ./hack/lint.sh

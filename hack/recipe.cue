@@ -97,9 +97,6 @@ cakes: {
 
 			output: {
 				images: {
-					registries: {...} | * {
-						"ghcr.io": "dubo-dubon-duponey",
-					},
 					names: [...string] | * ["debian"],
 					tags: [...string] | * ["latest"]
 				}
@@ -156,11 +153,6 @@ cakes: debian: recipe: {
 	process: args: TARGET_DATE: injectors.date
 	process: args: TARGET_SUITE: injectors.suite
 
-	output: images: registries: {
-		"push-registry.local": "dubo-dubon-duponey",
-		"ghcr.io": "dubo-dubon-duponey",
-		"docker.io": "dubodubonduponey"
-	}
 	output: images: tags: [injectors.suite + "-" + injectors.date, injectors.suite + "-latest", "latest"]
 
 	metadata: ref_name: injectors.suite + "-" + injectors.date
