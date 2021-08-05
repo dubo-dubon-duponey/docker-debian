@@ -10,7 +10,7 @@ if ! "$root/hack/build.sh" \
     --inject progress=plain \
 	  --inject date=2021-07-01 \
 	  --inject suite=bullseye \
-    --inject platforms=linux/amd64,linux/386 \
+    --inject platforms=linux/amd64,linux/arm64 \
   	debootstrap "$@"; then
   printf >&2 "Failed building tooling rootfs from online debian\n"
   exit 1
@@ -23,7 +23,7 @@ if ! "$root/hack/build.sh" \
     --inject progress=plain \
 	  --inject date=2021-07-01 \
 	  --inject suite=bullseye \
-    --inject platforms=linux/amd64,linux/386 \
+    --inject platforms=linux/amd64,linux/arm64 \
   	debootstrap "$@"; then
   printf >&2 "Failed building tooling rootfs from existing rootfs\n"
   exit 1
