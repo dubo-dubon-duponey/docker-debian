@@ -19,10 +19,13 @@ setup::buildkit() {
       --user root \
       --privileged \
       "$IMAGE_BLDKT"
-    docker exec --env QEMU_BINARY_PATH=/boot/bin/ -ti dbdbdp-buildkit binfmt --install all
+    docker exec --env QEMU_BINARY_PATH=/boot/bin/ dbdbdp-buildkit binfmt --install all
   }
 }
 
-setup::buildkit >/dev/null 2>&1
+setup::buildkit 1>&2 || {
+  echo >&2 "Something wrong with starting buildkit"
+  exit 1
+}
 
 echo "docker-container://dbdbdp-buildkit"
