@@ -25,8 +25,7 @@ import (
 
 	// Sane defaults
 	resolve_mode: types.#ResolveMode | * types.#ResolveMode.#DEFAULT
-	network_mode: types.#NetworkMode | * types.#NetworkMode.#HOST
-	// SANDBOX
+	network_mode: types.#NetworkMode | * types.#NetworkMode.#SANDBOX
 
   // Mandatory, with sane defaults that are unlikely to need change in most cases
 	dockerfile: types.#Path | *"./"
