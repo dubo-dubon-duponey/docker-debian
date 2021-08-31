@@ -2,7 +2,7 @@
 set -o errexit -o errtrace -o functrace -o nounset -o pipefail
 
 export SUITE=bullseye
-export DATE=2021-07-01
+export DATE=2021-08-01
 
 export BIN_LOCATION="${BIN_LOCATION:-$HOME/bin}"
 export PATH="$BIN_LOCATION:$PATH"
@@ -18,11 +18,11 @@ setup::tools(){
 
   mkdir -p "$location"
   docker rm -f dubo-tools 2>/dev/null || true
-  docker run --pull always --name dubo-tools "$IMAGE_TOOLS" /boot/bin/cue >/dev/null 2>&1 || true
+  docker create --pull always --name dubo-tools "$IMAGE_TOOLS" >/dev/null
   docker cp dubo-tools:/boot/bin/cue "$location"
   docker cp dubo-tools:/boot/bin/buildctl "$location"
   docker cp dubo-tools:/boot/bin/docker "$location"
-  docker rm -f dubo-tools 2>/dev/null || true
+  docker rm -f dubo-tools
 }
 
 # XXX add hado & shellcheck to the images
