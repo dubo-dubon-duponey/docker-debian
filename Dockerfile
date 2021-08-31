@@ -224,6 +224,9 @@ ENV           LANG="C.UTF-8"
 ENV           LC_ALL="C.UTF-8"
 ENV           TZ="America/Los_Angeles"
 
+# Disable weak cryptography in GNUTLS
+ENV           GNUTLS_FORCE_FIPS_MODE=1
+
 # Little helper for our secrets
 ENV           APT_CONFIG=/run/secrets/APT_CONFIG
 RUN           touch "$APT_CONFIG"
