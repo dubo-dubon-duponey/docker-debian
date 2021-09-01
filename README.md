@@ -26,18 +26,26 @@ Be nice to the Debian infrastructure: run your own Debian packages repository mi
 
 ## TL;DR
 
+Point to your buildkit host or use the helper to start one
+
+```bash
+export BUILDKIT_HOST=$(./hack/helpers/start-buildkit.sh 2>/dev/null)
+```
+
 Build
 
-```
-./hack/build.sh debootstrap --inject target_date=2021-08-01 --inject target_suite=bullseye
+```bash
+./hack/build.sh debootstrap \
+  --inject date="2021-08-01" \
+  --inject suite="bullseye"
 ```
 
 Assemble and push
 
-```
+```bash
 ./hack/build.sh debian \
-  --inject target_date="2021-08-01" \
-  --inject target_suite="bullseye" \
+  --inject date="2021-08-01" \
+  --inject suite="bullseye" \
   --inject tags=registry.com/name/image:tag
 ```
 
@@ -45,23 +53,27 @@ Assemble and push
 
 You can control additional aspects of the build passing arguments:
 
+```bash
+# Building a subset of architectures
+./hack/build.sh debootstrap \
+  --inject date="2021-08-01" \
+  --inject suite="bullseye" \
+  --inject platforms="linux/arm/v6"
 ```
-# Online, from a bullseye image, with caching into a registry, building only armv6
-./hack/build.sh debootstrap \
-  --inject target_date="2021-08-01" \
-  --inject target_suite="bullseye" \
-  --inject from_image="ghcr.io/dubo-dubon-duponey/debian:bullseye-2021-08-01" \
-  --inject from_tarball="nonexistent*" \
-  --inject platforms="linux/arm/v6" \
-  --inject directory=./context/cache \
-  --inject cache_base=type=registry,ref=somewhere.com/cache/debian:debian
 
-# If you want to build "offline", from a previously built rootfs:
+Building offline:
+
+```bash
+# If you want to build "offline", you first need to build the required local rootfs (once, online):
+./hack/build.sh debootstrap
+
+# Now, you can build without access to a registry
 ./hack/build.sh debootstrap \
-  --inject target_date="2021-06-15" \
-  --inject target_suite="sid" \
-  --inject from_image="scratch" \
-  --inject from_tarball="bullseye-2021-08-01.tar" \
+  --inject date="2021-08-01" \
+  --inject suite="bullseye" \
+  --inject registry=""
+
+# You can further control networking and other build aspect through a cue environment (see ADVANCED)
 ```
 
 ### Dependencies
@@ -70,29 +82,11 @@ The hack scripts should take care of installing what you need.
 
 That said, or in case that would fail, you do need:
 
- * a working buildkit daemon, that you can point to by specifying `BUILDKIT_HOST`
- * cue
- * buildctl
-
-If you need to manually start a buildkit daemon:
-
-```bash
-docker run --rm -d \
-      --name bldkt \
-      --user root \
-      --privileged \
-      --entrypoint buildkitd \
-      ghcr.io/dubo-dubon-duponey/buildkit
-
-export BUILDKIT_HOST=docker-container://bldkt
-```
-
-If you need to install `cue`, or `buildctl` (on mac):
-
-```bash
-brew install cuelang/tap/cue
-brew install buildkit
-```
+* a working buildkit daemon, that you can point to by specifying `BUILDKIT_HOST`
+* cue
+* buildctl
+* hadolint
+* shellcheck
 
 ## Advanced stuff
 
