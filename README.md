@@ -46,19 +46,30 @@ Assemble and push
 ./hack/build.sh debian \
   --inject date="2021-08-01" \
   --inject suite="bullseye" \
-  --inject tags=registry.com/name/image:tag
 ```
+
+Note that the above will by default try to push to `ghcr.io/dubo-dubon-duponey/debian`.
+Edit `recipe.cue`, or better, use an `env.cue` file (see [advanced](ADVANCED.md) for that) to control
+the push destination.
 
 ## Configuration
 
 You can control additional aspects of the build passing arguments:
 
+Building a subset of architectures:
 ```bash
-# Building a subset of architectures
 ./hack/build.sh debootstrap \
   --inject date="2021-08-01" \
   --inject suite="bullseye" \
   --inject platforms="linux/arm/v6"
+```
+
+Building from a private debian repository instead:
+```bash
+./hack/build.sh debootstrap \
+  --inject date="2021-08-01" \
+  --inject suite="bullseye" \
+  --inject repository="https://private.deb.repo/debian/foo/bar"
 ```
 
 Building offline:
