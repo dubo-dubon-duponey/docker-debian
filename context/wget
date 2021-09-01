@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+
+echo >&2 "Wget deviation: $*"
+
+args=(curl --tlsv1.3 -sSfL --proto "=https,http")
+
+for url in "$@"; do :; done
+
+output=/dev/null
+quiet=
+for com in "$@"; do
+  if [ "$output" == "next" ]; then
+    output="$com"
+    break
+  fi
+  # Wget specifies an output in the next argument, so, flag that and grab it
+  if [ "$com" == "-O" ]; then
+    output=next
+  fi
+  # We want quiet
+  if [ "$com" == "--quiet" ]; then
+    quiet=true
+  fi
+  # We want stdout (also quiet, but irrelevant)
+  if [ "$com" == "-qO-" ]; then
+    output=/dev/stdout
+  fi
+  # We want head
+  if [ "$com" == "--spider" ]; then
+    args+=(-I)
+  fi
+done
+
+up="$(dirname "$output")"
+[ "$up" == /dev ] || mkdir -p "$up"
+
+args+=(-o "$output")
+
+echo >&2 "Curl replacement:" "${args[@]}" "$url"
+
+"${args[@]}" "$url" || {
+  echo >&2 "Failed with return code: $?"
+}
+
+if [ "$quiet" ]; then
+  "${args[@]}" "$url" 2>/dev/null
+else
+  "${args[@]}" "$url"
+fi

@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+set -o errexit -o errtrace -o functrace -o nounset -o pipefail
+
+# The purpose of this fork is to:
+# a. remove unshare which does require extra privileges
+# b. simplify and reduce the use-case of this as we surface more features into the Dockerfile and expose black magic
+
+targetDir="$1"
+cmd="$2"
+shift
+shift
+
+>&2 echo "-------------------------------"
+>&2 echo "Debu patched chroot"
+>&2 echo "-------------------------------"
+>&2 echo "Target: $targetDir"
+>&2 echo "Cmd: $cmd $*"
+>&2 echo "-------------------------------"
+
+if [ "$cmd" == "apt-mark" ] || [ "$cmd" == "apt-get" ]; then
+  >&2 echo "Voluntarily ignoring command invoked from spurious init phase"
+  exit
+fi
+
+epoch="$(< "$targetDir/debuerreotype-epoch")"
+
+export targetDir epoch
+
+# Should ensure the network is down
+# XXX this technically leaves the rootfs without a default here
+echo "" > "$targetDir"/etc/resolv.conf
+
+chroot "$targetDir" /usr/bin/env -i \
+  DEBIAN_FRONTEND="$DEBIAN_FRONTEND" \
+  TERM="$TERM" \
+  LANG="$LANG" \
+  LC_ALL="$LC_ALL" \
+  TZ="$TZ" \
+  PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" \
+  SOURCE_DATE_EPOCH="$epoch" "$cmd" "$@"
