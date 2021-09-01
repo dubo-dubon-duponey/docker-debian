@@ -3,6 +3,7 @@ set -o errexit -o errtrace -o functrace -o nounset -o pipefail
 
 # shellcheck source=/dev/null
 root="$(cd "$(dirname "${BASH_SOURCE[0]:-$PWD}")" 2>/dev/null 1>&2 && pwd)/../"
+readonly root
 
 # Requires a buildkit host and a cue binary
 if ! "$root/hack/build.sh" \
