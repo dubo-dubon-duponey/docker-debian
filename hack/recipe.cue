@@ -18,8 +18,10 @@ cakes: {
 					types.#Platforms.#I386,
 					types.#Platforms.#V7,
 					types.#Platforms.#V6,
+					types.#Platforms.#V5,
 					types.#Platforms.#S390X,
 					types.#Platforms.#PPC64LE,
+					types.#Platforms.#MIPS64LE,
 				]
 			}
 

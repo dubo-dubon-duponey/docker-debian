@@ -1,8 +1,10 @@
 # FROM_REGISTRY controls the base location for the starting image for the debootstrap stage
 # If set to "", the starting image will be scratch instead, and an already built local tarball will be used
-ARG           FROM_REGISTRY=ghcr.io/dubo-dubon-duponey
+#ARG           FROM_REGISTRY=ghcr.io/dubo-dubon-duponey
+ARG           FROM_REGISTRY=index.docker.io
 # FROM_IMAGE_BUILDER further allow changing the image name, tag and digest for the debootstrap stage
-ARG           FROM_IMAGE_BUILDER=debian@sha256:d17b322f1920dd310d30913dd492cbbd6b800b62598f5b6a12d12684aad82296
+#ARG           FROM_IMAGE_BUILDER=debian@sha256:d17b322f1920dd310d30913dd492cbbd6b800b62598f5b6a12d12684aad82296
+ARG           FROM_IMAGE_BUILDER=debian:bullseye-20210721-slim
 # FROM_IMAGE_RUNTIME allows specifying a starting image for the final debian image (defaults to scratch)
 ARG           FROM_IMAGE_RUNTIME=scratch
 
@@ -61,11 +63,13 @@ ENV           CURL_HOME=/run/secrets
 # NOTE: for calls where we do NOT need our overrides (purge, etc), hence where we do not mount the corresponding secrets,
 # apt will issue a warning about not finding the file
 ENV           APT_CONFIG=/run/secrets/APT_CONFIG
+RUN           mkdir -p "$(dirname "$APT_CONFIG")"
 RUN           touch "$APT_CONFIG"
 
 # > STEP 1: install debootstrap
 # Apt downgrades to _apt (uid 100) when doing the actual request
 # NOTE: Using the extension .gpg is required for apt to consider it :s
+# Note: debootstrapping from online non-us image means... we float on the package versions - geeeeeeeezzz
 RUN           --mount=type=secret,uid=100,id=CA \
               --mount=type=secret,uid=100,id=CERTIFICATE \
               --mount=type=secret,uid=100,id=KEY \
@@ -74,9 +78,12 @@ RUN           --mount=type=secret,uid=100,id=CA \
               --mount=type=secret,id=APT_SOURCES \
               --mount=type=secret,id=APT_CONFIG \
               apt-get update -qq && apt-get install -qq --no-install-recommends \
-                debootstrap=1.0.123 \
-                curl=7.74.0-1.2 \
-                xz-utils=5.2.5-2
+                debootstrap \
+                curl \
+                xz-utils
+#                debootstrap=1.0.123 \
+#                curl=7.74.0-1.2 \
+#                xz-utils=5.2.5-2
 
 # > STEP 2: add debuerreotype
 COPY          ./debuerreotype/scripts /usr/sbin/
