@@ -7,7 +7,7 @@ readonly root
 
 # Requires a buildkit host and a cue binary
 if ! "$root/hack/build.sh" \
-    --inject registry="ghcr.io/dubo-dubon-duponey" \
+    --inject registry="index.docker.io/dubodubonduponey" \
     --inject progress=plain \
 	  --inject date=2021-07-01 \
 	  --inject suite=bullseye \

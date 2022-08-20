@@ -48,7 +48,7 @@ Assemble and push
   --inject suite="bullseye" \
 ```
 
-Note that the above will by default try to push to `ghcr.io/dubo-dubon-duponey/debian`.
+Note that the above will by default try to push to `index.docker.io/dubodubonduponey/debian`.
 Edit `recipe.cue`, or better, use an `env.cue` file (see [advanced](ADVANCED.md) for that) to control
 the push destination.
 
