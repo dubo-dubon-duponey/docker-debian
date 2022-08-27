@@ -2,7 +2,7 @@
 set -o errexit -o errtrace -o functrace -o nounset -o pipefail
 
 readonly SUITE=bullseye
-readonly DATE=2021-08-01
+readonly DATE=2022-08-01
 readonly IMAGE_TOOLS="${IMAGE_TOOLS:-dubodubonduponey/tools:$(uname -s | grep -q Darwin && printf "macos" || printf "linux-dev")-$SUITE-$DATE}"
 readonly SHELLCHECK_VERSION=0.8.0
 readonly HADOLINT_VERSION=2.10.0

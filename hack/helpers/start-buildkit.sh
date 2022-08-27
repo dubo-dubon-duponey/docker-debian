@@ -2,7 +2,7 @@
 set -o errexit -o errtrace -o functrace -o nounset -o pipefail
 
 readonly SUITE=bullseye
-readonly DATE=2021-08-01
+readonly DATE=2022-08-01
 readonly IMAGE_BLDKT="${IMAGE_BLDKT:-docker.io/dubodubonduponey/buildkit:$SUITE-$DATE}"
 
 setup::buildkit() {
