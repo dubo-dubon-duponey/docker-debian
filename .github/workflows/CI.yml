@@ -31,8 +31,6 @@ jobs:
 
       - name: Start apt proxy
         run: |
-          # Hiding the read-only token base64 to avoid github disabling it...
-          echo OWMyMGVhYzk4N2NhYWQxYmI3MzhmNTZkODNmOGMwOGJjZjlhNDc4YQo= | base64 -d | docker login ghcr.io -u dubo-dubon-duponey --password-stdin
           docker run --rm -d --expose 443 --expose 80 --pull always \
             --name apt-front \
             --read-only \

@@ -21,4 +21,4 @@ if ! "$root/cache/bin/hadolint" "${hadolint_ignore[@]}" "$root"/*Dockerfile*; th
   exit 1
 fi
 
-find "$root" -iname "*.sh" -not -path "*debuerreotype*" -exec "$root/cache/bin/shellcheck" {} \;
+find "$root" -iname "*.sh" -not -path "*debuerreotype*" -not -path "*cache*" -exec "$root/cache/bin/shellcheck" {} \;
