@@ -2,3 +2,4 @@
 /.idea
 */cache/*
 cache
+buildctl.trace.json

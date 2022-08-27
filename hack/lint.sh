@@ -1,27 +1,24 @@
 #!/usr/bin/env bash
 set -o errexit -o errtrace -o functrace -o nounset -o pipefail
 
-# shellcheck source=/dev/null
 root="$(cd "$(dirname "${BASH_SOURCE[0]:-$PWD}")" 2>/dev/null 1>&2 && pwd)/../"
 readonly root
 
-# shellcheck source=/dev/null
-BIN_LOCATION="${BIN_LOCATION:-$root/cache/bin}" source "$root/hack/helpers/install-tools.sh"
+"$root/hack/helpers/install-tools.sh" "$root/cache/bin"
 
 # Ignore some hadolint warnings that do not make much sense
-# DL3006 is about "dO nOT UsE --platform", which is really ludicrous
-# DL3029 complains about unpinned images (which is not true, we are just using ARGs for that)
+# DL3006 complains about unpinned images (which is not true, we are just using ARGs for that)
+# DL3029 is about "dO nOT UsE --platform", which is really ludicrous
 # DL4006 is about setting pipefail (which we do, in our base SHELL)
 # DL3059 is about not having multiple successive RUN statements, and this is moronic
 # SC2039 is about array ref in POSIX shells (we are using bash, so)
 # SC2027 is about quotes inside quotes, and is moronic too
 
-# XXX For some hard to fathom reason, the CI reports errors that the local test does not - specifically SC3014 SC3054 SC3010, so, also ignoring these since we use bash
-readonly hadolint_ignore=(--ignore DL3006 --ignore DL3029 --ignore DL4006 --ignore DL3059 --ignore SC2039 --ignore SC2027 --ignore SC3014 --ignore SC3054 --ignore SC3010)
+readonly hadolint_ignore=(--ignore DL3006)
 
-if ! hadolint "${hadolint_ignore[@]}" "$root"/*Dockerfile*; then
+if ! "$root/cache/bin/hadolint" "${hadolint_ignore[@]}" "$root"/*Dockerfile*; then
   printf >&2 "Failed linting on Dockerfile\n"
   exit 1
 fi
 
-find "$root" -iname "*.sh" -not -path "*debuerreotype*" -exec shellcheck {} \;
+find "$root" -iname "*.sh" -not -path "*debuerreotype*" -exec "$root/cache/bin/shellcheck" {} \;

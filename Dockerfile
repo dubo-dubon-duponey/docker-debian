@@ -1,7 +1,7 @@
 # FROM_REGISTRY controls the base location for the starting image for the debootstrap stage
 # If set to "", the starting image will be scratch instead, and an already built local tarball will be used
 #ARG           FROM_REGISTRY=ghcr.io/dubo-dubon-duponey
-ARG           FROM_REGISTRY=index.docker.io
+ARG           FROM_REGISTRY=docker.io
 # FROM_IMAGE_BUILDER further allow changing the image name, tag and digest for the debootstrap stage
 #ARG           FROM_IMAGE_BUILDER=debian@sha256:d17b322f1920dd310d30913dd492cbbd6b800b62598f5b6a12d12684aad82296
 ARG           FROM_IMAGE_BUILDER=debian:bullseye-20210721-slim
@@ -70,6 +70,7 @@ RUN           touch "$APT_CONFIG"
 # Apt downgrades to _apt (uid 100) when doing the actual request
 # NOTE: Using the extension .gpg is required for apt to consider it :s
 # Note: debootstrapping from online non-us image means... we float on the package versions - geeeeeeeezzz
+# hadolint ignore=DL3008
 RUN           --mount=type=secret,uid=100,id=CA \
               --mount=type=secret,uid=100,id=CERTIFICATE \
               --mount=type=secret,uid=100,id=KEY \

@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
 set -o errexit -o errtrace -o functrace -o nounset -o pipefail
 
-export SUITE=bullseye
-export DATE=2021-08-01
-
-readonly IMAGE_BLDKT="${IMAGE_BLDKT:-index.docker.io/dubodubonduponey/buildkit:$SUITE-$DATE}"
+readonly SUITE=bullseye
+readonly DATE=2021-08-01
+readonly IMAGE_BLDKT="${IMAGE_BLDKT:-docker.io/dubodubonduponey/buildkit:$SUITE-$DATE}"
 
 setup::buildkit() {
   [ "$(docker container inspect -f '{{.State.Running}}' dbdbdp-buildkit 2>/dev/null)" == "true" ]  || {
@@ -24,8 +23,8 @@ setup::buildkit() {
 }
 
 setup::buildkit 1>&2 || {
-  echo >&2 "Something wrong with starting buildkit"
+  printf >&2 "Something wrong with starting buildkit\n"
   exit 1
 }
 
-echo "docker-container://dbdbdp-buildkit"
+printf "docker-container://dbdbdp-buildkit\n"

@@ -1,27 +1,27 @@
 #!/usr/bin/env bash
 set -o errexit -o errtrace -o functrace -o nounset -o pipefail
 
-export SUITE=bullseye
-export DATE=2021-08-01
-
-export BIN_LOCATION="${BIN_LOCATION:-$HOME/bin}"
-export PATH="$BIN_LOCATION:$PATH"
+readonly SUITE=bullseye
+readonly DATE=2021-08-01
 readonly IMAGE_TOOLS="${IMAGE_TOOLS:-dubodubonduponey/tools:$(uname -s | grep -q Darwin && printf "macos" || printf "linux-dev")-$SUITE-$DATE}"
-
-export SHELLCHECK_VERSION=0.7.2
-export HADOLINT_VERSION=2.7.0
+readonly SHELLCHECK_VERSION=0.8.0
+readonly HADOLINT_VERSION=2.10.0
 
 setup::tools(){
   local location="$1"
-  if  command -v "$location/cue" > /dev/null &&
-      command -v "$location/buildctl" > /dev/null &&
-      command -v "$location/docker" > /dev/null &&
-      command -v "$location/hadolint" > /dev/null &&
-      command -v "$location/shellcheck" > /dev/null; then
-    return
-  fi
-
   mkdir -p "$location"
+
+  local item
+  local missing
+  for item in cue buildctl docker hadolint shellcheck; do
+    command -v "$location/$item" > /dev/null || {
+      missing=true
+      break
+    }
+  done
+
+  [ "${missing:-}" ] || return 0
+
   docker rm -f dubo-tools >/dev/null 2>&1 || true
   docker create --pull always --name dubo-tools "$IMAGE_TOOLS" bash > /dev/null
   docker cp dubo-tools:/boot/bin/cue "$location"
@@ -40,4 +40,4 @@ setup::tools(){
   rm -Rf ./shellcheck-v$SHELLCHECK_VERSION
 }
 
-setup::tools "$BIN_LOCATION"
+setup::tools "${1:-./cache/bin}"
