@@ -52,7 +52,8 @@ jobs:
       - name: test
         run: |
           # Set the path and install the tools
-          BIN_LOCATION="$GITHUB_WORKSPACE/cache/bin" source ./hack/helpers/install-tools.sh
+          export PATH="$GITHUB_WORKSPACE/cache/bin:$PATH"
+          ./hack/helpers/install-tools.sh
           # Start buildkit
           bkaddr="$(./hack/helpers/start-buildkit.sh 2>/dev/null)"
           # Sanity check
