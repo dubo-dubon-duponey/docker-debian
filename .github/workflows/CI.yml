@@ -17,17 +17,17 @@ jobs:
       - name: Enable cache
         uses: actions/cache@v2.1.1
         with:
-          path: $GITHUB_WORKSPACE/cache
+          path: /cache
           key: cache
 
       - name: Prepare directories
         run: |
-          sudo mkdir -p "$GITHUB_WORKSPACE/cache/apt"
-          sudo mkdir -p "$GITHUB_WORKSPACE/cache/certs"
-          sudo mkdir -p "$GITHUB_WORKSPACE/cache/bin"
-          sudo chown -R 2000:root "$GITHUB_WORKSPACE/cache/apt"
-          sudo chown -R 2000:root "$GITHUB_WORKSPACE/cache/certs"
-          sudo chown -R $(id -u) "$GITHUB_WORKSPACE/cache/bin"
+          sudo mkdir -p "/cache/apt"
+          sudo mkdir -p "/cache/certs"
+          sudo mkdir -p "/cache/bin"
+          sudo chown -R 2000:root "/cache/apt"
+          sudo chown -R 2000:root "/cache/certs"
+          sudo chown -R $(id -u) "/cache/bin"
 
       - name: Start apt proxy
         run: |
@@ -43,15 +43,15 @@ jobs:
             --env PORT=443 \
             --env PORT_HTTP=80 \
             --env ADDITIONAL_DOMAINS=*.debian.org \
-            --volume "$GITHUB_WORKSPACE/cache/certs":/certs \
-            --volume "$GITHUB_WORKSPACE/cache/apt":/data \
+            --volume "/cache/certs":/certs \
+            --volume "/cache/apt":/data \
             docker.io/dubodubonduponey/aptutil:bullseye-2021-08-01
 
       - name: test
         run: |
           # Set the path and install the tools
-          export PATH="$GITHUB_WORKSPACE/cache/bin:$PATH"
-          ./hack/helpers/install-tools.sh
+          export PATH="/cache/bin:$PATH"
+          ./hack/helpers/install-tools.sh "/cache/bin"
           # Start buildkit
           bkaddr="$(./hack/helpers/start-buildkit.sh 2>/dev/null)"
           # Sanity check
