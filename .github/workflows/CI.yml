@@ -68,5 +68,5 @@ jobs:
           ./hack/test.sh \
             --inject bk="$bkaddr" \
             --inject ip="$(docker inspect apt-front | jq -rc .[0].NetworkSettings.Networks.bridge.IPAddress)" \
-            --inject trust="$(sudo cat "$GITHUB_WORKSPACE/cache/certs/pki/authorities/local/root.crt")" \
+            --inject trust="$(sudo cat "/cache/certs/pki/authorities/local/root.crt")" \
             ".github/workflows/environment.cue"
