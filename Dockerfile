@@ -237,6 +237,7 @@ ENV           GNUTLS_FORCE_FIPS_MODE=1
 
 # Little helper for our secrets
 ENV           APT_CONFIG=/run/secrets/APT_CONFIG
+RUN           mkdir -p "$(dirname "$APT_CONFIG")"
 RUN           touch "$APT_CONFIG"
 
 # NOTE: this does not quite work as expected unfortunately - this cannot be overloaded in a dockerfile, but can be --build-arg-ed at build time

@@ -15,13 +15,13 @@ cakes: {
 				platforms: types.#Platforms | * [
 					types.#Platforms.#AMD64,
 					types.#Platforms.#ARM64,
-					types.#Platforms.#I386,
-					types.#Platforms.#V7,
-					types.#Platforms.#V6,
-					types.#Platforms.#V5,
-					types.#Platforms.#S390X,
-					types.#Platforms.#PPC64LE,
-					types.#Platforms.#MIPS64LE,
+					// types.#Platforms.#I386,
+					// types.#Platforms.#V7,
+					// types.#Platforms.#V6,
+					// types.#Platforms.#V5,
+					// types.#Platforms.#S390X,
+					// types.#Platforms.#PPC64LE,
+					// types.#Platforms.#MIPS64LE,
 				]
 			}
 
@@ -84,11 +84,11 @@ cakes: {
 				platforms: types.#Platforms | * [
 					types.#Platforms.#AMD64,
 					types.#Platforms.#ARM64,
-					types.#Platforms.#I386,
-					types.#Platforms.#V7,
-					types.#Platforms.#V6,
-					types.#Platforms.#S390X,
-					types.#Platforms.#PPC64LE,
+					// types.#Platforms.#I386,
+					// types.#Platforms.#V7,
+					// types.#Platforms.#V6,
+					// types.#Platforms.#S390X,
+					// types.#Platforms.#PPC64LE,
 				]
 			}
 
@@ -122,7 +122,7 @@ cakes: debian: icing: UserDefined
 // Injectors
 
 injectors: {
-	suite: =~ "^(?:jessie|stretch|buster|bullseye|sid)$" @tag(suite, type=string)
+	suite: =~ "^(?:bullseye|bookworm|trixie|sid)$" @tag(suite, type=string)
 	date: =~ "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" @tag(date, type=string)
 	platforms: string @tag(platforms, type=string)
 	registry: string @tag(registry, type=string)
