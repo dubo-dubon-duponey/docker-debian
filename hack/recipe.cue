@@ -36,30 +36,15 @@ cakes: {
 
 				// Regardless of where we sourced from, we need a full-blown version with security and updates
       	TARGET_SOURCES_COMMIT: string
-      	if TARGET_SUITE != _|_ if TARGET_SUITE != "bullseye" {
-					TARGET_SOURCES_COMMIT: #"""
-						deb http://snapshot.debian.org/archive/debian/\#(strings.Replace(args.TARGET_DATE, "-", "", -1) + "T000000Z") \#(args.TARGET_SUITE) main
-						deb http://snapshot.debian.org/archive/debian-security/\#(strings.Replace(args.TARGET_DATE, "-", "", -1) + "T000000Z") \#(args.TARGET_SUITE)/updates main
-						deb http://snapshot.debian.org/archive/debian/\#(strings.Replace(args.TARGET_DATE, "-", "", -1) + "T000000Z") \#(args.TARGET_SUITE)-updates main
-						deb-src http://snapshot.debian.org/archive/debian/\#(strings.Replace(args.TARGET_DATE, "-", "", -1) + "T000000Z") \#(args.TARGET_SUITE) main
-						deb-src http://snapshot.debian.org/archive/debian-security/\#(strings.Replace(args.TARGET_DATE, "-", "", -1) + "T000000Z") \#(args.TARGET_SUITE)/updates main
-						deb-src http://snapshot.debian.org/archive/debian/\#(strings.Replace(args.TARGET_DATE, "-", "", -1) + "T000000Z") \#(args.TARGET_SUITE)-updates main
+				TARGET_SOURCES_COMMIT: #"""
+					deb http://snapshot.debian.org/archive/debian/\#(strings.Replace(args.TARGET_DATE, "-", "", -1) + "T000000Z") \#(args.TARGET_SUITE) main
+					deb http://snapshot.debian.org/archive/debian-security/\#(strings.Replace(args.TARGET_DATE, "-", "", -1) + "T000000Z") \#(args.TARGET_SUITE)-security main
+					deb http://snapshot.debian.org/archive/debian/\#(strings.Replace(args.TARGET_DATE, "-", "", -1) + "T000000Z") \#(args.TARGET_SUITE)-updates main
+					deb-src http://snapshot.debian.org/archive/debian/\#(strings.Replace(args.TARGET_DATE, "-", "", -1) + "T000000Z") \#(args.TARGET_SUITE) main
+					deb-src http://snapshot.debian.org/archive/debian-security/\#(strings.Replace(args.TARGET_DATE, "-", "", -1) + "T000000Z") \#(args.TARGET_SUITE)-security main
+					deb-src http://snapshot.debian.org/archive/debian/\#(strings.Replace(args.TARGET_DATE, "-", "", -1) + "T000000Z") \#(args.TARGET_SUITE)-updates main
 
-						"""#
-      	}
-      	// Bullseye made security repo urls more sensical
-      	if TARGET_SUITE != _|_ if TARGET_SUITE == "bullseye" {
-					TARGET_SOURCES_COMMIT: #"""
-						deb http://snapshot.debian.org/archive/debian/\#(strings.Replace(args.TARGET_DATE, "-", "", -1) + "T000000Z") \#(args.TARGET_SUITE) main
-						deb http://snapshot.debian.org/archive/debian-security/\#(strings.Replace(args.TARGET_DATE, "-", "", -1) + "T000000Z") \#(args.TARGET_SUITE)-security main
-						deb http://snapshot.debian.org/archive/debian/\#(strings.Replace(args.TARGET_DATE, "-", "", -1) + "T000000Z") \#(args.TARGET_SUITE)-updates main
-						deb-src http://snapshot.debian.org/archive/debian/\#(strings.Replace(args.TARGET_DATE, "-", "", -1) + "T000000Z") \#(args.TARGET_SUITE) main
-						deb-src http://snapshot.debian.org/archive/debian-security/\#(strings.Replace(args.TARGET_DATE, "-", "", -1) + "T000000Z") \#(args.TARGET_SUITE)-security main
-						deb-src http://snapshot.debian.org/archive/debian/\#(strings.Replace(args.TARGET_DATE, "-", "", -1) + "T000000Z") \#(args.TARGET_SUITE)-updates main
-
-						"""#
-
-      	}
+					"""#
       }
 
 			output: {
