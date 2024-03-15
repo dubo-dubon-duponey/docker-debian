@@ -3,20 +3,20 @@
 ## Acknowledgements
 
 The Dockerfile of this project relies heavily on
- * [debuerreotype](https://github.com/debuerreotype/debuerreotype),
+ * [debuerreotype](https://github.com/debuerreotype/debuerreotype)
  * [debootstrap](https://wiki.debian.org/Debootstrap)
 
 The build toolchain relies on:
- * [qemu](https://www.qemu.org/),
+ * [qemu](https://www.qemu.org/)
  * [cue](https://cuelang.org/)
- * [buildkit](https://github.com/moby/buildkit).
+ * [buildkit](https://github.com/moby/buildkit)
 
 ## Cue environment
 
 The build supports advanced environment control, allowing you to use apt mirrors (or proxy cache), complete with TLS,
 authentication and gpg signing.
 
-To access these features, create a cue file, for example `env.cue`, as follow:
+To access these features, create a cue file, for example `env.cue`, as follows:
 
 ```cue
 package cake
@@ -123,9 +123,9 @@ If you experience any issue, please share configuration details.
 
 The `context/cache` folder is part of the build context.
 
-As such, if it grows really big (with many different versions), assembling the final image will become slooooooow.
+As such, if it grows real big (with many different versions), assembling the final image will become slooooooow.
 
-It is recommended to clean-up this folder from older / useless versions from time to time to avoid such adverse side-effects.
+It is recommended to clean up this folder from older / useless versions from time to time to avoid such adverse side-effects.
 
 You may also override the cue `input: context:` and `output: directory` to better control where these artifacts are going.
 

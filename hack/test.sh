@@ -9,7 +9,7 @@ if ! "$root/hack/build.sh" \
     --inject registry="docker.io/dubodubonduponey" \
     --inject progress=plain \
 	  --inject date=2021-08-01 \
-	  --inject suite=bullseye \
+	  --inject suite=bookworm \
     --inject platforms=linux/amd64,linux/arm64 \
   	debootstrap "$@"; then
   printf >&2 "Failed building tooling rootfs from online debian\n"
@@ -22,7 +22,7 @@ if ! "$root/hack/build.sh" \
     --inject registry="" \
     --inject progress=plain \
 	  --inject date=2021-08-01 \
-	  --inject suite=bullseye \
+	  --inject suite=bookworm \
     --inject platforms=linux/amd64,linux/arm64 \
   	debootstrap "$@"; then
   printf >&2 "Failed building tooling rootfs from existing rootfs\n"

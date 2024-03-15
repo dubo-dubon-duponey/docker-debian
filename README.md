@@ -13,12 +13,7 @@ Features:
    * resulting images are in the range of 25MB
  * multi-architecture
    * amd64
-   * 386
    * arm64
-   * arm/v7
-   * arm/v6
-   * s390x
-   * ppc64le
 
 ## Important
 

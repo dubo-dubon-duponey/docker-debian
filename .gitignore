@@ -1,5 +1,4 @@
 .DS_Store
 /.idea
-*/cache/*
-cache
-buildctl.trace.json
+cache/
+/xxx-*

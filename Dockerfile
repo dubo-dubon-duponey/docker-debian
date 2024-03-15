@@ -194,8 +194,8 @@ FROM          $FROM_IMAGE_RUNTIME                                               
 SHELL         ["/bin/bash", "-o", "errexit", "-o", "errtrace", "-o", "functrace", "-o", "nounset", "-o", "pipefail", "-c"]
 
 # What we want
-ARG           TARGET_SUITE="buster"
-ARG           TARGET_DATE="2020-07-01"
+ARG           TARGET_SUITE="bookworm"
+ARG           TARGET_DATE="2024-03-01"
 ARG           TARGETPLATFORM
 
 # Load it!
@@ -245,7 +245,7 @@ ONBUILD ARG   PRELOAD_PACKAGES=""
 ONBUILD ARG   UNLOAD_PACKAGES=""
 ONBUILD ARG   L3=""
 
-# hadolint ignore=DL3008
+# hadolint ignore=DL3008,SC2086
 ONBUILD RUN   --mount=type=secret,uid=100,id=CA \
               --mount=type=secret,uid=100,id=CERTIFICATE \
               --mount=type=secret,uid=100,id=KEY \
