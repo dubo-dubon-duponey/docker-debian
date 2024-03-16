@@ -25,17 +25,17 @@ FROM          ${_private_df:-scratch}                                           
 SHELL         ["/bin/bash", "-o", "errexit", "-o", "errtrace", "-o", "functrace", "-o", "nounset", "-o", "pipefail", "-c"]
 
 # > If the image is built from snapshot.debian.org (eg: if the TARGET_REPOSITORY secret has NOT been set), this will fetch from that date
-ARG           TARGET_DATE="2021-07-01"
+ARG           TARGET_DATE="2024-03-01"
 # > Which Debian suite to fetch (same as above)
-ARG           TARGET_SUITE="bullseye"
+ARG           TARGET_SUITE="bookworm"
 
 # > This is tricky: repeat ARG, so that we can access the value of FROM_IMAGE_BUILDER below
 ARG           _private_df
 # If _DEBOOTSTRAP_FROM is set, then set the tarball to nonexistent* (glob is here to prevent a hard error with Docker)
-# Now, if there is no _DEBOOTSTRAP_FROM (which happens if FROM_REGISTRY is neutered), then use a bullseye tarball from 2021-07-01
+# Now, if there is no _DEBOOTSTRAP_FROM (which happens if FROM_REGISTRY is neutered), then use a bookworm tarball from 2024-03-01
 # (that is expected to have been built)
-ENV           FROM_TARBALL="${_private_df:+nonexistent*}"
-ENV           FROM_TARBALL="${FROM_TARBALL:-bullseye-2021-07-01.tar}"
+ENV           FROM_TARBALL="${_private_df:+.gitkeep}"
+ENV           FROM_TARBALL="${FROM_TARBALL:-bookworm-2024-03-01.tar}"
 
 # > Optionally, the final content to commit to etc/apt/sources.list in the debootstrap
 # If this is not set, /etc/apt/sources.list will point to either snapshot.debian.org or YOURREPO if you were using TARGET_REPOSITORY=TARGET_REPOSITORY/foo
