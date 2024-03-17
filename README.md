@@ -56,7 +56,7 @@ Building a subset of architectures:
 ./hack/build.sh debootstrap \
   --inject date="2024-03-01" \
   --inject suite="bookworm" \
-  --inject platforms="linux/arm/v6"
+  --inject platforms="linux/arm64"
 ```
 
 Building from a private debian repository instead:
