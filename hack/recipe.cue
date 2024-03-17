@@ -15,11 +15,13 @@ cakes: {
 				platforms: types.#Platforms | * [
 					types.#Platforms.#AMD64,
 					types.#Platforms.#ARM64,
-					types.#Platforms.#I386,
-					types.#Platforms.#V7,
-					types.#Platforms.#V6,
-					types.#Platforms.#S390X,
-					types.#Platforms.#PPC64LE,
+					// types.#Platforms.#V7,
+					// types.#Platforms.#I386,
+					// types.#Platforms.#V6,
+					// types.#Platforms.#V5,
+					// types.#Platforms.#S390X,
+					// types.#Platforms.#PPC64LE,
+					// types.#Platforms.#MIPS64LE,
 				]
 			}
 
@@ -34,30 +36,15 @@ cakes: {
 
 				// Regardless of where we sourced from, we need a full-blown version with security and updates
       	TARGET_SOURCES_COMMIT: string
-      	if TARGET_SUITE != _|_ if TARGET_SUITE != "bullseye" {
-					TARGET_SOURCES_COMMIT: #"""
-						deb http://snapshot.debian.org/archive/debian/\#(strings.Replace(args.TARGET_DATE, "-", "", -1) + "T000000Z") \#(args.TARGET_SUITE) main
-						deb http://snapshot.debian.org/archive/debian-security/\#(strings.Replace(args.TARGET_DATE, "-", "", -1) + "T000000Z") \#(args.TARGET_SUITE)/updates main
-						deb http://snapshot.debian.org/archive/debian/\#(strings.Replace(args.TARGET_DATE, "-", "", -1) + "T000000Z") \#(args.TARGET_SUITE)-updates main
-						deb-src http://snapshot.debian.org/archive/debian/\#(strings.Replace(args.TARGET_DATE, "-", "", -1) + "T000000Z") \#(args.TARGET_SUITE) main
-						deb-src http://snapshot.debian.org/archive/debian-security/\#(strings.Replace(args.TARGET_DATE, "-", "", -1) + "T000000Z") \#(args.TARGET_SUITE)/updates main
-						deb-src http://snapshot.debian.org/archive/debian/\#(strings.Replace(args.TARGET_DATE, "-", "", -1) + "T000000Z") \#(args.TARGET_SUITE)-updates main
+				TARGET_SOURCES_COMMIT: #"""
+					deb http://snapshot.debian.org/archive/debian/\#(strings.Replace(args.TARGET_DATE, "-", "", -1) + "T000000Z") \#(args.TARGET_SUITE) main
+					deb http://snapshot.debian.org/archive/debian-security/\#(strings.Replace(args.TARGET_DATE, "-", "", -1) + "T000000Z") \#(args.TARGET_SUITE)-security main
+					deb http://snapshot.debian.org/archive/debian/\#(strings.Replace(args.TARGET_DATE, "-", "", -1) + "T000000Z") \#(args.TARGET_SUITE)-updates main
+					deb-src http://snapshot.debian.org/archive/debian/\#(strings.Replace(args.TARGET_DATE, "-", "", -1) + "T000000Z") \#(args.TARGET_SUITE) main
+					deb-src http://snapshot.debian.org/archive/debian-security/\#(strings.Replace(args.TARGET_DATE, "-", "", -1) + "T000000Z") \#(args.TARGET_SUITE)-security main
+					deb-src http://snapshot.debian.org/archive/debian/\#(strings.Replace(args.TARGET_DATE, "-", "", -1) + "T000000Z") \#(args.TARGET_SUITE)-updates main
 
-						"""#
-      	}
-      	// Bullseye made security repo urls more sensical
-      	if TARGET_SUITE != _|_ if TARGET_SUITE == "bullseye" {
-					TARGET_SOURCES_COMMIT: #"""
-						deb http://snapshot.debian.org/archive/debian/\#(strings.Replace(args.TARGET_DATE, "-", "", -1) + "T000000Z") \#(args.TARGET_SUITE) main
-						deb http://snapshot.debian.org/archive/debian-security/\#(strings.Replace(args.TARGET_DATE, "-", "", -1) + "T000000Z") \#(args.TARGET_SUITE)-security main
-						deb http://snapshot.debian.org/archive/debian/\#(strings.Replace(args.TARGET_DATE, "-", "", -1) + "T000000Z") \#(args.TARGET_SUITE)-updates main
-						deb-src http://snapshot.debian.org/archive/debian/\#(strings.Replace(args.TARGET_DATE, "-", "", -1) + "T000000Z") \#(args.TARGET_SUITE) main
-						deb-src http://snapshot.debian.org/archive/debian-security/\#(strings.Replace(args.TARGET_DATE, "-", "", -1) + "T000000Z") \#(args.TARGET_SUITE)-security main
-						deb-src http://snapshot.debian.org/archive/debian/\#(strings.Replace(args.TARGET_DATE, "-", "", -1) + "T000000Z") \#(args.TARGET_SUITE)-updates main
-
-						"""#
-
-      	}
+					"""#
       }
 
 			output: {
@@ -82,11 +69,11 @@ cakes: {
 				platforms: types.#Platforms | * [
 					types.#Platforms.#AMD64,
 					types.#Platforms.#ARM64,
-					types.#Platforms.#I386,
-					types.#Platforms.#V7,
-					types.#Platforms.#V6,
-					types.#Platforms.#S390X,
-					types.#Platforms.#PPC64LE,
+					// types.#Platforms.#V7,
+					// types.#Platforms.#I386,
+					// types.#Platforms.#V6,
+					// types.#Platforms.#S390X,
+					// types.#Platforms.#PPC64LE,
 				]
 			}
 
@@ -120,7 +107,7 @@ cakes: debian: icing: UserDefined
 // Injectors
 
 injectors: {
-	suite: =~ "^(?:jessie|stretch|buster|bullseye|sid)$" @tag(suite, type=string)
+	suite: =~ "^(?:bullseye|bookworm|trixie|sid)$" @tag(suite, type=string)
 	date: =~ "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" @tag(date, type=string)
 	platforms: string @tag(platforms, type=string)
 	registry: string @tag(registry, type=string)

@@ -13,12 +13,7 @@ Features:
    * resulting images are in the range of 25MB
  * multi-architecture
    * amd64
-   * 386
    * arm64
-   * arm/v7
-   * arm/v6
-   * s390x
-   * ppc64le
 
 ## Important
 
@@ -36,29 +31,40 @@ Build
 
 ```bash
 ./hack/build.sh debootstrap \
-  --inject date="2021-08-01" \
-  --inject suite="bullseye"
+  --inject date="2024-03-01" \
+  --inject suite="bookworm"
 ```
 
-Assemble and push
+Assemble and push 
 
 ```bash
 ./hack/build.sh debian \
-  --inject date="2021-08-01" \
-  --inject suite="bullseye" \
-  --inject tags=registry.com/name/image:tag
+  --inject date="2024-03-01" \
+  --inject suite="bookworm" \
 ```
+
+Note that the above will by default try to push to `docker.io/dubodubonduponey/debian`.
+Edit `recipe.cue`, or better, use an `env.cue` file (see [advanced](ADVANCED.md) for that) to control
+the push destination.
 
 ## Configuration
 
 You can control additional aspects of the build passing arguments:
 
+Building a subset of architectures:
 ```bash
-# Building a subset of architectures
 ./hack/build.sh debootstrap \
-  --inject date="2021-08-01" \
-  --inject suite="bullseye" \
-  --inject platforms="linux/arm/v6"
+  --inject date="2024-03-01" \
+  --inject suite="bookworm" \
+  --inject platforms="linux/arm64"
+```
+
+Building from a private debian repository instead:
+```bash
+./hack/build.sh debootstrap \
+  --inject date="2024-03-01" \
+  --inject suite="bookworm" \
+  --inject repository="https://private.deb.repo/debian/foo/bar"
 ```
 
 Building offline:
@@ -69,8 +75,8 @@ Building offline:
 
 # Now, you can build without access to a registry
 ./hack/build.sh debootstrap \
-  --inject date="2021-08-01" \
-  --inject suite="bullseye" \
+  --inject date="2024-03-01" \
+  --inject suite="bookworm" \
   --inject registry=""
 
 # You can further control networking and other build aspect through a cue environment (see ADVANCED)

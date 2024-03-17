@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-thisDir="$(dirname "$(readlink -f "$BASH_SOURCE")")"
+thisDir="$(dirname "$(readlink -vf "$BASH_SOURCE")")"
 source "$thisDir/.constants.sh" \
 	--flags 'debian,debian-eol,debian-ports,non-debian' \
 	--flags 'debootstrap:' \
@@ -75,7 +75,8 @@ else
 		} | awk -F ': ' '$1 == "Date" { print $2; exit }'
 	)" || :
 	[ -n "$timestamp" ]
-	# TODO re-calculate "timestamp" during debuerreotype-tar/fixup (possibly scraping from /var/lib/apt/lists/*Release* instead?)
+
+	# see "debuerreotype-recalculate-epoch" for a simple way to update this value appropriately after "sources.list" is updated and "apt-get update" has been run (which will be more accurate)
 fi
 
 epoch="$(date --date "$timestamp" '+%s')"
@@ -105,20 +106,17 @@ else
 	debootstrapArgs+=( --no-check-gpg )
 fi
 
-minbaseSupported="$(
-	scriptFile="$(
-		if [ -n "$script" ]; then
-			readlink -f "$script"
-		else
-			cd /usr/share/debootstrap/scripts
-			readlink -f "$suite"
-		fi
-	)"
-	if grep -q 'minbase' "$scriptFile"; then
-		echo 1
+: "${script:=$suite}"
+script="$(
+	if [ -s "$thisDir/.debootstrap-scripts/$script" ]; then
+		readlink -vf "$thisDir/.debootstrap-scripts/$script"
+	elif [ -s "/usr/share/debootstrap/scripts/$script" ]; then
+		readlink -vf "/usr/share/debootstrap/scripts/$script"
+	else
+		readlink -vf "$script"
 	fi
 )"
-if [ -n "$minbaseSupported" ]; then
+if grep -q 'minbase' "$script"; then
 	# --debian-eol sarge and older do not support minbase
 	debootstrapArgs+=( --variant=minbase )
 fi
@@ -130,11 +128,16 @@ fi
 [ -z "$exclude" ] || debootstrapArgs+=( --exclude="$exclude" )
 
 debootstrapArgs+=(
-	"$suite" "$targetDir" "$mirror"
+	"$suite" "$targetDir" "$mirror" "$script"
 )
-[ -z "$script" ] || debootstrapArgs+=( "$script" )
 
-: "${debootstrap:=debootstrap}"
+unshare-debootstrap() {
+	# avoid bugs in packages that might leave things mounted ("/run/shm" is a common one that sometimes ends up dangling)
+	#unshare --mount debootstrap "$@"
+	debootstrap "$@"
+}
+
+: "${debootstrap:=unshare-debootstrap}"
 if ! "$debootstrap" "${debootstrapArgs[@]}"; then
 	if [ -f "$targetDir/debootstrap/debootstrap.log" ]; then
 		echo >&2
@@ -177,10 +180,6 @@ fi
 ' -- "$include"
 
 echo 'debuerreotype' > "$targetDir/etc/hostname"
-echo "$epoch" \
-	| md5sum \
-	| cut -f1 -d' ' \
-	> "$targetDir/etc/machine-id" # TODO should we only do this if "/etc/machine-id" already exists?
 {
 	echo '# https://1.1.1.1 (privacy-focused, highly-available DNS service)'
 	echo 'nameserver 1.1.1.1'
@@ -188,7 +187,6 @@ echo "$epoch" \
 } > "$targetDir/etc/resolv.conf"
 chmod 0644 \
 	"$targetDir/etc/hostname" \
-	"$targetDir/etc/machine-id" \
 	"$targetDir/etc/resolv.conf"
 
 # fix ownership/permissions on / (otherwise "debootstrap" leaves them as-is which causes reproducibility issues)

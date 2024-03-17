@@ -1,16 +1,13 @@
 #!/usr/bin/env bash
 set -o errexit -o errtrace -o functrace -o nounset -o pipefail
 
-# shellcheck source=/dev/null
-root="$(cd "$(dirname "${BASH_SOURCE[0]:-$PWD}")" 2>/dev/null 1>&2 && pwd)/../"
+root="$(cd "$(dirname "${BASH_SOURCE[0]}")" 2>/dev/null 1>&2 && pwd)/../"
 readonly root
 
-# Requires a buildkit host and a cue binary
 if ! "$root/hack/build.sh" \
-    --inject registry="ghcr.io/dubo-dubon-duponey" \
     --inject progress=plain \
-	  --inject date=2021-07-01 \
-	  --inject suite=bullseye \
+	  --inject date=2024-03-01 \
+	  --inject suite=bookworm \
     --inject platforms=linux/amd64,linux/arm64 \
   	debootstrap "$@"; then
   printf >&2 "Failed building tooling rootfs from online debian\n"
@@ -22,8 +19,8 @@ result1="$(cat "$root"/context/cache/**/*.sha)"
 if ! "$root/hack/build.sh" \
     --inject registry="" \
     --inject progress=plain \
-	  --inject date=2021-07-01 \
-	  --inject suite=bullseye \
+	  --inject date=2024-03-01 \
+	  --inject suite=bookworm \
     --inject platforms=linux/amd64,linux/arm64 \
   	debootstrap "$@"; then
   printf >&2 "Failed building tooling rootfs from existing rootfs\n"
