@@ -1,20 +1,18 @@
-# FROM_REGISTRY controls the base location for the starting image for the debootstrap stage
-# If set to "", the starting image will be scratch instead, and an already built local tarball will be used
-#ARG           FROM_REGISTRY=ghcr.io/dubo-dubon-duponey
+# If FROM_REGISTRY is set, we will use FROM_REGISTRY/FROM_IMAGE_BUILDER as a starting point.
+# If not set, we will use scratch (and use a local rootfs tarball insteaad)
 ARG           FROM_REGISTRY=docker.io
-# FROM_IMAGE_BUILDER further allow changing the image name, tag and digest for the debootstrap stage
-#ARG           FROM_IMAGE_BUILDER=debian@sha256:d17b322f1920dd310d30913dd492cbbd6b800b62598f5b6a12d12684aad82296
-ARG           FROM_IMAGE_BUILDER=debian:bullseye-20210721-slim
-# FROM_IMAGE_RUNTIME allows specifying a starting image for the final debian image (defaults to scratch)
+# FROM_IMAGE_BUILDER further allows changing the image being used for the first debootstrap
+ARG           FROM_IMAGE_BUILDER=debian:bookworm-20240211-slim
+# FROM_IMAGE_RUNTIME controls what base image we are going to use for the final debian image (defaults to scratch)
 ARG           FROM_IMAGE_RUNTIME=scratch
 
 # Private helper
 ARG           _private_df="${FROM_REGISTRY:+$FROM_REGISTRY/$FROM_IMAGE_BUILDER}"
 
 ########################################################################################################################
-# The debootstrap stage is meant to prepare a Debian rootfs in the form of a tarball.
+# The debootstrap stage is meant to prepare a Debian rootfs tarball.
 # The starting point may be either an online Debian image (as defined by FROM_REGISTRY/FROM_IMAGE_BUILDER),
-# or an already existing local debian rootfs (in case FROM_REGISTRY == "")
+# or an already existing local debian rootfs (if FROM_REGISTRY == "")
 # By default, snapshot.debian.org is being used as a source to debootstrap, for TARGET_SUITE and TARGET_DATE
 # Alternatively, you can build from a private / specific Debian repository by specifying the TARGET_REPOSITORY secret
 # In that case, TARGET_SUITE and TARGET_DATE are no-ops
@@ -31,8 +29,8 @@ ARG           TARGET_SUITE="bookworm"
 
 # > This is tricky: repeat ARG, so that we can access the value of FROM_IMAGE_BUILDER below
 ARG           _private_df
-# If _DEBOOTSTRAP_FROM is set, then set the tarball to nonexistent* (glob is here to prevent a hard error with Docker)
-# Now, if there is no _DEBOOTSTRAP_FROM (which happens if FROM_REGISTRY is neutered), then use a bookworm tarball from 2024-03-01
+# If _private_df is set, then set the tarball to .gitkeep (glob is here to prevent a hard error with Docker)
+# Now, if there is no _private_df (which happens if FROM_REGISTRY is ""), then use a bookworm tarball from 2024-03-01
 # (that is expected to have been built)
 ENV           FROM_TARBALL="${_private_df:+.gitkeep}"
 ENV           FROM_TARBALL="${FROM_TARBALL:-bookworm-2024-03-01.tar}"
@@ -69,7 +67,7 @@ RUN           touch "$APT_CONFIG"
 # > STEP 1: install debootstrap
 # Apt downgrades to _apt (uid 100) when doing the actual request
 # NOTE: Using the extension .gpg is required for apt to consider it :s
-# Note: debootstrapping from online non-us image means... we float on the package versions - geeeeeeeezzz
+# Note: debootstrapping from online non-us image means... we float on the package versions
 # hadolint ignore=DL3008
 RUN           --mount=type=secret,uid=100,id=CA \
               --mount=type=secret,uid=100,id=CERTIFICATE \
@@ -82,17 +80,14 @@ RUN           --mount=type=secret,uid=100,id=CA \
                 debootstrap \
                 curl \
                 xz-utils
-#                debootstrap=1.0.123 \
-#                curl=7.74.0-1.2 \
-#                xz-utils=5.2.5-2
 
 # > STEP 2: add debuerreotype
 COPY          ./debuerreotype/scripts /usr/sbin/
 
-# Copy over our deviation script
+# Copy over our patched scripts
 # See comments inline for reason to have this
 # NOTE: other scripts insist in calling a script in the SAME dir, so /usr/sbin it is
-COPY          ./debuerreotype-chroot  /usr/sbin/
+COPY          ./patch/*  /usr/sbin/
 
 # This is our simplified chroot for use-cases we do control
 COPY          ./dubo-chroot  /usr/sbin/
