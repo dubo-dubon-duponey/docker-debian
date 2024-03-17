@@ -28,6 +28,10 @@ jobs:
           sudo chown -R 2000:root "$GITHUB_WORKSPACE/cache/apt"
           sudo chown -R 2000:root "$GITHUB_WORKSPACE/cache/certs"
           sudo chown -R $(id -u) "$GITHUB_WORKSPACE/cache/bin"
+          ls -lA $GITHUB_WORKSPACE/
+          ls -lA $GITHUB_WORKSPACE/cache
+          touch $GITHUB_WORKSPACE/cache/foo
+          ls -lA $GITHUB_WORKSPACE/cache/
 
       - name: Start apt proxy
         run: |
