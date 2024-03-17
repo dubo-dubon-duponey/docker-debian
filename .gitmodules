@@ -1,3 +1,3 @@
-[submodule "context/debootstrap/debuerreotype"]
-	path = context/debootstrap/debuerreotype
+[submodule "context/debuerreotype"]
+	path = context/debuerreotype
 	url = https://github.com/debuerreotype/debuerreotype
