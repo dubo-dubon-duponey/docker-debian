@@ -31,7 +31,7 @@ Build
 
 ```bash
 ./hack/build.sh debootstrap \
-  --inject date="2024-03-01" \
+  --inject date="2025-05-01" \
   --inject suite="bookworm"
 ```
 
@@ -39,7 +39,7 @@ Assemble and push
 
 ```bash
 ./hack/build.sh debian \
-  --inject date="2024-03-01" \
+  --inject date="2025-05-01" \
   --inject suite="bookworm" \
 ```
 
@@ -54,7 +54,7 @@ You can control additional aspects of the build passing arguments:
 Building a subset of architectures:
 ```bash
 ./hack/build.sh debootstrap \
-  --inject date="2024-03-01" \
+  --inject date="2025-05-01" \
   --inject suite="bookworm" \
   --inject platforms="linux/arm64"
 ```
@@ -62,7 +62,7 @@ Building a subset of architectures:
 Building from a private debian repository instead:
 ```bash
 ./hack/build.sh debootstrap \
-  --inject date="2024-03-01" \
+  --inject date="2025-05-01" \
   --inject suite="bookworm" \
   --inject repository="https://private.deb.repo/debian/foo/bar"
 ```
@@ -75,7 +75,7 @@ Building offline:
 
 # Now, you can build without access to a registry
 ./hack/build.sh debootstrap \
-  --inject date="2024-03-01" \
+  --inject date="2025-05-01" \
   --inject suite="bookworm" \
   --inject registry=""
 

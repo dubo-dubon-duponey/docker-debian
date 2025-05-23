@@ -6,7 +6,7 @@ readonly root
 
 if ! "$root/hack/build.sh" \
     --inject progress=plain \
-	  --inject date=2024-03-01 \
+	  --inject date=2025-05-01 \
 	  --inject suite=bookworm \
     --inject platforms=linux/amd64,linux/arm64 \
   	debootstrap "$@"; then
@@ -19,7 +19,7 @@ result1="$(cat "$root"/context/cache/**/*.sha)"
 if ! "$root/hack/build.sh" \
     --inject registry="" \
     --inject progress=plain \
-	  --inject date=2024-03-01 \
+	  --inject date=2025-05-01 \
 	  --inject suite=bookworm \
     --inject platforms=linux/amd64,linux/arm64 \
   	debootstrap "$@"; then
